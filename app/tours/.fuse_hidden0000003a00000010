@@ -1,0 +1,57 @@
+import type { Metadata } from "next";
+import { PageHeader, TourCard, CTABand, SectionHeading } from "@/components/ui";
+import { getTours } from "@/lib/data";
+import { img } from "@/lib/images";
+
+export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Tours & Packages — Day Tours, Multi-Day Journeys & Safaris",
+  description:
+    "Private Sri Lanka tour packages: day tours to Sigiriya, Kandy, Ella and Galle, multi-day island circuits, and leopard & elephant safaris — all with your own driver.",
+  alternates: { canonical: "/tours" },
+};
+
+const groups = [
+  { key: "Multi-Day", eyebrow: "Multi-day journeys", title: "The island, end to end" },
+  { key: "Day Tour", eyebrow: "Day tours", title: "One perfect day" },
+  { key: "Safari", eyebrow: "Safaris", title: "Into the wild" },
+] as const;
+
+export default async function ToursPage() {
+  const tours = await getTours();
+  return (
+    <>
+      <PageHeader
+        eyebrow="Tours & packages"
+        title="Journeys crafted, never copied"
+        intro="Every tour below is a starting point — we adapt routes, hotels and pacing to you. Prices are indicative per person and confirmed in your personal quote."
+        image={img.beachAerial}
+      />
+
+      {groups.map((g, gi) => {
+        const list = tours.filter((t) => t.category === g.key);
+        return (
+          <section
+            key={g.key}
+            className={`py-16 md:py-24 ${gi % 2 ? "bg-dune/60" : ""}`}
+          >
+            <div className="mx-auto max-w-wrap px-5 md:px-8">
+              <SectionHeading eyebrow={g.eyebrow} title={g.title} />
+              <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {list.map((t, i) => (
+                  <TourCard key={t.slug} tour={t} index={i} />
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })}
+
+      <CTABand
+        title="Don't see your perfect trip?"
+        body="Most of our journeys are tailor-made from scratch. Tell us your dates and interests and we'll design a route that's yours alone."
+      />
+    </>
+  );
+}

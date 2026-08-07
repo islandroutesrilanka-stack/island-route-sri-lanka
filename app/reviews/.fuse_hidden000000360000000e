@@ -1,0 +1,38 @@
+import type { Metadata } from "next";
+import { PageHeader, ReviewCard, CTABand } from "@/components/ui";
+import { getReviews } from "@/lib/data";
+import { img } from "@/lib/images";
+
+export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Reviews — What Our Guests Say",
+  description:
+    "Five-star reviews from Island Route guests around the world — honeymoons, family adventures, surf trips and grand island circuits across Sri Lanka.",
+  alternates: { canonical: "/reviews" },
+};
+
+export default async function ReviewsPage() {
+  const reviews = await getReviews();
+  return (
+    <>
+      <PageHeader
+        eyebrow="Guest stories"
+        title="The reviews we work for"
+        intro="Every journey ends with a goodbye at the airport — and, more often than not, words like these."
+        image={img.beachChairs}
+      />
+      <section className="py-16 md:py-24">
+        <div className="mx-auto max-w-wrap px-5 md:px-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {reviews.map((r, i) => (
+            <ReviewCard key={r.name} r={r} index={i % 3} />
+          ))}
+        </div>
+      </section>
+      <CTABand
+        title="Ready to write your own?"
+        body="Join travellers from more than thirty countries who've trusted us with their Sri Lankan adventure."
+      />
+    </>
+  );
+}

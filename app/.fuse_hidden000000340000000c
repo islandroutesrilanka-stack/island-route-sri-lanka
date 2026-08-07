@@ -1,0 +1,352 @@
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, ShieldCheck, Clock, Award, HeartHandshake } from "lucide-react";
+import { HeroLine, Reveal } from "@/components/motion";
+import {
+  SectionHeading,
+  TourCard,
+  DestinationCard,
+  ReviewCard,
+  CTABand,
+} from "@/components/ui";
+import { img } from "@/lib/images";
+import {
+  getServices,
+  getReviews,
+  getFeaturedTours,
+  getDestinations,
+  getPosts,
+} from "@/lib/data";
+import { waLink, defaultWaMessage, site } from "@/lib/site";
+
+export const revalidate = 60;
+
+export default async function HomePage() {
+  const [services, reviews, featuredTours, destinations, posts] =
+    await Promise.all([
+      getServices(),
+      getReviews(),
+      getFeaturedTours(),
+      getDestinations(),
+      getPosts(),
+    ]);
+  return (
+    <>
+      {/* ---------------------------------- Hero ---------------------------------- */}
+      <section className="relative min-h-[100svh] flex items-end overflow-hidden bg-deep">
+        <Image
+          src={img.heroTrain}
+          alt="The highland railway winding through Sri Lanka's tea country"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-deep via-deep/30 to-deep/40" />
+
+        <div className="relative z-10 mx-auto w-full max-w-wrap px-5 md:px-8 pb-20 md:pb-28 pt-40">
+          <HeroLine delay={0.1}>
+            <p className="eyebrow text-copper-light">
+              Private journeys · Sri Lanka
+            </p>
+          </HeroLine>
+          <HeroLine delay={0.25}>
+            <h1 className="h-display mt-4 text-[13vw] leading-[0.95] sm:text-6xl md:text-8xl text-sand max-w-4xl">
+              One island.
+              <br />
+              <em className="text-copper-light">A thousand</em> routes.
+            </h1>
+          </HeroLine>
+          <HeroLine delay={0.45}>
+            <p className="mt-6 max-w-xl text-sand/75 leading-relaxed md:text-lg">
+              Chauffeur-driven tours, seamless transfers and tailor-made
+              itineraries across beaches, tea country and leopard territory —
+              crafted by people who call Sri Lanka home.
+            </p>
+          </HeroLine>
+          <HeroLine delay={0.6}>
+            <div className="mt-9 flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/book"
+                className="bg-copper text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-copper-light transition-colors"
+              >
+                Plan my trip
+              </Link>
+              <a
+                href={waLink(defaultWaMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-sand/40 text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-sand hover:text-deep transition-colors"
+              >
+                WhatsApp {site.phoneDisplay}
+              </a>
+            </div>
+          </HeroLine>
+
+          <HeroLine delay={0.8}>
+            <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-sand/15 pt-7 text-sand/70">
+              {[
+                ["10+ years", "on the island's roads"],
+                ["2,400+", "journeys completed"],
+                ["5.0 ★", "guest rating"],
+                ["24/7", "WhatsApp support"],
+              ].map(([big, small]) => (
+                <div key={big as string}>
+                  <p className="font-display text-2xl md:text-3xl text-sand">{big}</p>
+                  <p className="text-xs mt-1 uppercase tracking-[0.14em] text-sand/50">
+                    {small}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </HeroLine>
+        </div>
+      </section>
+
+      {/* ------------------------------ Editorial intro ---------------------------- */}
+      <section className="py-20 md:py-32">
+        <div className="mx-auto max-w-wrap px-5 md:px-8 grid gap-12 md:grid-cols-12 md:items-center">
+          <div className="md:col-span-6">
+            <SectionHeading
+              eyebrow="Welcome to Island Route"
+              title="Travel Sri Lanka the way it deserves to be travelled"
+              intro="Forget rigid coach tours and roadside guesswork. With your own English-speaking chauffeur-guide, the island unfolds at your pace — a sunrise climb here, an unplanned beach there, lunch where the locals actually eat. We handle every kilometre; you collect the moments."
+            />
+            <Reveal index={2}>
+              <Link
+                href="/about"
+                className="link-line mt-8 inline-flex items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-copper"
+              >
+                Our story <ArrowRight size={15} />
+              </Link>
+            </Reveal>
+          </div>
+          <div className="md:col-span-6 grid grid-cols-2 gap-4 md:gap-6">
+            <Reveal index={1} className="img-frame aspect-[3/4] mt-8">
+              <Image src={img.beachPalms} alt="Palm-lined southern beach" fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
+            </Reveal>
+            <Reveal index={2} className="img-frame aspect-[3/4]">
+              <Image src={img.leopard} alt="Leopard in Yala National Park" fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------- Services ------------------------------- */}
+      <section className="bg-dune/60 py-20 md:py-28">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              eyebrow="What we do"
+              title="Every journey, handled"
+              intro="From a single airport pickup to a month-long circuit of the island — one trusted team, one number on WhatsApp."
+            />
+            <Reveal>
+              <Link
+                href="/services"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper"
+              >
+                All services →
+              </Link>
+            </Reveal>
+          </div>
+
+          <div className="mt-12 grid gap-px bg-ink/10 border border-ink/10 sm:grid-cols-2 lg:grid-cols-3">
+            {services.slice(0, 6).map((s, i) => (
+              <Reveal key={s.slug} index={i} className="bg-sand">
+                <Link
+                  href={`/services#${s.slug}`}
+                  className="group block p-7 md:p-9 h-full hover:bg-white/70 transition-colors"
+                >
+                  <p className="font-display text-3xl text-copper/70">
+                    {String(i + 1).padStart(2, "0")}
+                  </p>
+                  <h3 className="font-display text-2xl text-ink mt-4">{s.name}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-ink/60">
+                    {s.tagline}
+                  </p>
+                  <p className="mt-5 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] text-ink/50 group-hover:text-copper transition-colors">
+                    Learn more <ArrowRight size={13} />
+                  </p>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------- Featured tours ----------------------------- */}
+      <section className="py-20 md:py-28">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              eyebrow="Signature journeys"
+              title="Tours our guests dream about for years"
+            />
+            <Reveal>
+              <Link
+                href="/tours"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper"
+              >
+                All tours →
+              </Link>
+            </Reveal>
+          </div>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredTours.map((t, i) => (
+              <TourCard key={t.slug} tour={t} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------- Destinations ------------------------------- */}
+      <section className="bg-deep grain relative py-20 md:py-28 overflow-hidden">
+        <div className="mx-auto max-w-wrap px-5 md:px-8 relative z-10">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              dark
+              eyebrow="Where we'll take you"
+              title="Nine islands in one"
+              intro="Beaches, cloud forests, ancient kingdoms and leopard country — often all in a single week."
+            />
+            <Reveal>
+              <Link
+                href="/destinations"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-light"
+              >
+                All destinations →
+              </Link>
+            </Reveal>
+          </div>
+          <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+            {destinations.slice(0, 8).map((d, i) => (
+              <DestinationCard key={d.slug} d={d} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --------------------------------- Why us ---------------------------------- */}
+      <section className="py-20 md:py-28">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <SectionHeading
+            align="center"
+            eyebrow="The Island Route difference"
+            title="Why travellers book direct with us"
+          />
+          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: ShieldCheck,
+                title: "Safe & licensed",
+                body: "Registered tour operator, insured modern fleet, and drivers vetted over years — not booked off an app minutes ago.",
+              },
+              {
+                icon: HeartHandshake,
+                title: "Direct & personal",
+                body: "No middlemen or faceless portals. You speak with us on WhatsApp before, during and after every journey.",
+              },
+              {
+                icon: Clock,
+                title: "Always on time",
+                body: "Flights tracked, dawn safaris made, trains met. Punctuality is the quiet luxury we're known for.",
+              },
+              {
+                icon: Award,
+                title: "Local mastery",
+                body: "Our chauffeur-guides grew up on these roads. The best viewpoint, the honest café, the shortcut — it's all in the service.",
+              },
+            ].map((f, i) => (
+              <Reveal key={f.title} index={i} className="text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-copper/10 text-copper">
+                  <f.icon size={24} strokeWidth={1.6} />
+                </div>
+                <h3 className="font-display text-xl text-ink mt-5">{f.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-ink/60">{f.body}</p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --------------------------------- Reviews --------------------------------- */}
+      <section className="bg-dune/60 py-20 md:py-28">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              eyebrow="Guest stories"
+              title="Rated 5.0 by travellers from 30+ countries"
+            />
+            <Reveal>
+              <Link
+                href="/reviews"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper"
+              >
+                All reviews →
+              </Link>
+            </Reveal>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {reviews.slice(0, 3).map((r, i) => (
+              <ReviewCard key={r.name} r={r} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------- Journal -------------------------------- */}
+      <section className="py-20 md:py-28">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              eyebrow="The journal"
+              title="Notes from the road"
+            />
+            <Reveal>
+              <Link
+                href="/blog"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper"
+              >
+                All stories →
+              </Link>
+            </Reveal>
+          </div>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            {posts.slice(0, 3).map((p, i) => (
+              <Reveal key={p.slug} index={i}>
+                <Link href={`/blog/${p.slug}`} className="group block">
+                  <div className="img-frame aspect-[16/10]">
+                    <Image
+                      src={p.image}
+                      alt={p.title}
+                      fill
+                      sizes="(max-width:768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
+                    />
+                  </div>
+                  <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-ink/40">
+                    {new Date(p.date).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}{" "}
+                    · {p.readTime}
+                  </p>
+                  <h3 className="font-display text-2xl text-ink mt-2 leading-snug group-hover:text-copper transition-colors">
+                    {p.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-ink/60 leading-relaxed">
+                    {p.excerpt}
+                  </p>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <CTABand />
+    </>
+  );
+}

@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sand: #f6f1e6;
+  --deep: #0b1f19;
+  --copper: #b26a3b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-sand text-ink font-body antialiased;
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: #b26a3b;
+  color: #f6f1e6;
+}
+
+/* Visible keyboard focus everywhere — never remove without replacing */
+:focus-visible {
+  outline: 2px solid #b26a3b;
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+.on-dark :focus-visible,
+.bg-deep :focus-visible {
+  outline-color: #d08a55;
+}
+
+/* Skip link: hidden until focused */
+.skip-link {
+  @apply sr-only;
+}
+.skip-link:focus {
+  @apply not-sr-only fixed left-4 top-4 z-[100] bg-ink px-5 py-3 text-sm text-sand;
+}
+
+/* Respect the OS "reduce motion" setting */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Editorial display defaults */
+.h-display {
+  @apply font-display font-light leading-[1.05] tracking-tight;
+  text-wrap: balance;
+}
+
+.eyebrow {
+  @apply text-[11px] uppercase tracking-widest2 font-semibold;
+}
+
+/* Fine hairline used across sections */
+.hairline {
+  @apply border-t border-ink/10;
+}
+
+/* Grain overlay for atmosphere */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+}
+
+/* Image frames get a warm placeholder so slow loads still look designed */
+.img-frame {
+  @apply relative overflow-hidden bg-gradient-to-br from-dune to-mist/40;
+}
+
+/* Underline link animation */
+.link-line {
+  position: relative;
+}
+.link-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.link-line:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Hide scrollbars on carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(env)",
+      "Bash(node scripts/_verify-supabase.mjs)",
+      "Bash(curl -s -i \"https://weiwhqhvtdpcwzdwlazd.supabase.co/rest/v1/\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlaXdocWh2dGRwY3d6ZHdsYXpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMDMzNjksImV4cCI6MjEwMTY3OTM2OX0.a8xUuU7f3FPAYx_GZd-V8fW_kEzLyE0v4_Ng3gqUxFc\")",
+      "Bash(npm run *)",
+      "Bash(echo \"started with PID $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3457/ --max-time 15)",
+      "Bash(curl -s http://localhost:3457/ --max-time 15)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -o /dev/null -w \"GET /admin -> %{http_code}, redirect: %{redirect_url}\\\\n\" http://localhost:3457/admin --max-time 15)",
+      "Bash(curl -s -o /dev/null -w \"GET /admin/login -> %{http_code}\\\\n\" http://localhost:3457/admin/login --max-time 15)",
+      "Bash(taskkill //F //IM node.exe //FI \"WINDOWTITLE eq *3457*\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill *)",
+      "Bash(node *)"
+    ]
+  }
+}

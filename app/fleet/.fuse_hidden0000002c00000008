@@ -1,0 +1,83 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { Users, Briefcase, Check } from "lucide-react";
+import { PageHeader, CTABand } from "@/components/ui";
+import { Reveal } from "@/components/motion";
+import { getFleet } from "@/lib/data";
+import { img } from "@/lib/images";
+
+export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Our Fleet — Modern, Insured, Chauffeur-Driven Vehicles",
+  description:
+    "Executive sedans, premium SUVs, high-roof vans, mini coaches and safari 4×4s — Island Route's fully insured, air-conditioned fleet with professional chauffeurs.",
+};
+
+export default async function FleetPage() {
+  const fleet = await getFleet();
+  return (
+    <>
+      <PageHeader
+        eyebrow="The fleet"
+        title="Travel in quiet comfort"
+        intro="Every vehicle is late-model, meticulously maintained, fully insured and driven by a professional English-speaking chauffeur. Choose your ride — or let us match one to your route."
+        image={img.drivingWheel}
+      />
+
+      <section className="py-16 md:py-24">
+        <div className="mx-auto max-w-wrap px-5 md:px-8 space-y-14">
+          {fleet.map((v, i) => (
+            <Reveal key={v.slug}>
+              <div className="grid gap-0 md:grid-cols-12 border border-ink/10 bg-white/50 overflow-hidden">
+                <div className={`img-frame aspect-[16/10] md:aspect-auto md:col-span-5 ${i % 2 ? "md:order-2" : ""}`}>
+                  <Image
+                    src={v.image}
+                    alt={v.name}
+                    fill
+                    sizes="(max-width:768px) 100vw, 42vw"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="md:col-span-7 p-7 md:p-10">
+                  <p className="eyebrow text-copper">{v.category}</p>
+                  <h2 className="h-display text-3xl md:text-4xl text-ink mt-2">
+                    {v.name}
+                  </h2>
+                  <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink/60">
+                    <span className="inline-flex items-center gap-2">
+                      <Users size={15} className="text-copper" /> Up to {v.passengers} guests
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Briefcase size={15} className="text-copper" /> {v.luggage}
+                    </span>
+                  </div>
+                  <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                    {v.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-ink/70">
+                        <Check size={15} className="mt-0.5 shrink-0 text-copper" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-5 text-sm text-ink/55 italic">{v.idealFor}</p>
+                  <Link
+                    href={`/book?service=${encodeURIComponent("Private Driver Hire")}&tour=${encodeURIComponent(v.name)}`}
+                    className="mt-7 inline-block bg-ink text-sand px-7 py-3.5 text-[12px] uppercase tracking-[0.16em] hover:bg-copper transition-colors"
+                  >
+                    Book this vehicle
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      <CTABand
+        title="Not sure which vehicle fits?"
+        body="Tell us your group size, luggage and route — we'll recommend the right vehicle and include it in your quote at no obligation."
+      />
+    </>
+  );
+}

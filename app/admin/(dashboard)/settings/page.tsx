@@ -1,0 +1,137 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Loader2, Save, Check } from "lucide-react";
+import { getBrowserSupabase } from "@/lib/supabase/client";
+
+const groups: { title: string; note?: string; keys: { key: string; label: string; long?: boolean; help?: string }[] }[] = [
+  {
+    title: "Contact details",
+    note: "Used across the site header, footer and contact page.",
+    keys: [
+      { key: "site_name", label: "Business name" },
+      { key: "phone_display", label: "Phone (display)", help: "e.g. +94 77 801 0391" },
+      { key: "phone_e164", label: "Phone (dialing format)", help: "e.g. +94778010391" },
+      { key: "whatsapp_number", label: "WhatsApp number (digits only)", help: "e.g. 94778010391" },
+      { key: "email", label: "Email" },
+      { key: "address", label: "Address / base" },
+    ],
+  },
+  {
+    title: "SEO",
+    note: "Search-engine defaults for the whole site. Individual tours, destinations and posts generate their own titles automatically.",
+    keys: [
+      { key: "seo_title", label: "Site title (browser tab & Google)" },
+      { key: "seo_description", label: "Meta description", long: true },
+      { key: "seo_keywords", label: "Keywords (comma-separated)", long: true },
+      { key: "tagline", label: "Brand tagline" },
+    ],
+  },
+];
+
+const allKeys = groups.flatMap((g) => g.keys.map((k) => k.key));
+
+export default function SettingsPage() {
+  const sb = getBrowserSupabase();
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!sb) return;
+    (async () => {
+      const { data } = await sb.from("site_settings").select("*");
+      const v: Record<string, string> = {};
+      data?.forEach((r: { key: string; value: string | null }) => {
+        v[r.key] = r.value ?? "";
+      });
+      setValues(v);
+      setLoading(false);
+    })();
+  }, [sb]);
+
+  if (!sb)
+    return (
+      <div className="border border-copper/40 bg-copper/5 p-6 text-sm text-ink/70">
+        Supabase isn&apos;t configured yet — see SETUP.md.
+      </div>
+    );
+
+  const save = async () => {
+    setSaving(true);
+    await sb
+      .from("site_settings")
+      .upsert(allKeys.map((key) => ({ key, value: values[key] ?? "" })));
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  return (
+    <div className="max-w-3xl">
+      <h1 className="font-display text-3xl text-ink">Site & SEO</h1>
+      <p className="mt-1 text-sm text-ink/55">
+        Contact details and search-engine content. Changes appear on the live
+        site within a minute.
+      </p>
+
+      {loading ? (
+        <p className="mt-8 flex items-center gap-2 text-sm text-ink/50">
+          <Loader2 size={15} className="animate-spin" /> Loading…
+        </p>
+      ) : (
+        <>
+          {groups.map((g) => (
+            <div key={g.title} className="mt-8 border border-ink/10 bg-white/70 p-6 md:p-8">
+              <h2 className="font-display text-2xl text-ink">{g.title}</h2>
+              {g.note && <p className="mt-1 text-sm text-ink/50">{g.note}</p>}
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                {g.keys.map((k) => (
+                  <div key={k.key} className={k.long ? "sm:col-span-2" : ""}>
+                    <label className="eyebrow text-ink/50 block mb-1.5">{k.label}</label>
+                    {k.long ? (
+                      <textarea
+                        rows={3}
+                        className="w-full border border-ink/15 bg-white px-3.5 py-2.5 text-[14px] text-ink focus:outline-none focus:border-copper"
+                        value={values[k.key] ?? ""}
+                        onChange={(e) =>
+                          setValues((v) => ({ ...v, [k.key]: e.target.value }))
+                        }
+                      />
+                    ) : (
+                      <input
+                        className="w-full border border-ink/15 bg-white px-3.5 py-2.5 text-[14px] text-ink focus:outline-none focus:border-copper"
+                        value={values[k.key] ?? ""}
+                        onChange={(e) =>
+                          setValues((v) => ({ ...v, [k.key]: e.target.value }))
+                        }
+                      />
+                    )}
+                    {k.help && <p className="mt-1 text-xs text-ink/40">{k.help}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="mt-6 flex items-center gap-4">
+            <button
+              onClick={save}
+              disabled={saving}
+              className="inline-flex items-center gap-2 bg-ink px-6 py-3 text-[12px] uppercase tracking-[0.14em] text-sand hover:bg-copper transition-colors disabled:opacity-60"
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              Save settings
+            </button>
+            {saved && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-moss">
+                <Check size={15} /> Saved — live within a minute
+              </span>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

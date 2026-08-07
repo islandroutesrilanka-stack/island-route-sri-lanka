@@ -1,0 +1,104 @@
+import type { Metadata } from "next";
+import { PageHeader } from "@/components/ui";
+import { Reveal } from "@/components/motion";
+import BookingForm from "@/components/BookingForm";
+import { img } from "@/lib/images";
+import { site } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Plan My Trip — Request a Personal Quote",
+  description:
+    "Request a personal quote for tours, transfers, safaris and tailor-made Sri Lanka itineraries. We reply within hours on WhatsApp or email.",
+};
+
+const normalize: Record<string, string> = {
+  "Day Tour": "Day Tour",
+  "Multi-Day": "Multi-Day Tour",
+  "Multi-Day Tour": "Multi-Day Tour",
+  Safari: "Safari Tour",
+  "Safari Tour": "Safari Tour",
+  "Airport Transfer": "Airport Transfer",
+  "Airport Transfers": "Airport Transfer",
+  "Private Driver Hire": "Private Driver Hire",
+  "Taxi Services": "Taxi / Point-to-Point",
+  "Surf Transfers": "Surf Transfer",
+  "Surf Transfer": "Surf Transfer",
+  "Hotel Transfers": "Hotel Transfer",
+  "Hotel Transfer": "Hotel Transfer",
+  "Custom Travel Itineraries": "Custom Itinerary",
+  "Custom Itinerary": "Custom Itinerary",
+  "Day Tours": "Day Tour",
+  "Multi-Day Tours": "Multi-Day Tour",
+  "Safari Tours": "Safari Tour",
+};
+
+export default function BookPage({
+  searchParams,
+}: {
+  searchParams: { service?: string; tour?: string };
+}) {
+  const defaultService = searchParams.service
+    ? normalize[searchParams.service] ?? ""
+    : "";
+  const defaultMessage = searchParams.tour
+    ? `I'm interested in: ${searchParams.tour}`
+    : "";
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Plan my trip"
+        title="Tell us your dream. We'll route it."
+        intro="Share a few details and we'll reply within hours with a personal quote — no deposits, no obligation, just honest island expertise."
+        image={img.lakeCanoe}
+      />
+
+      <section className="py-16 md:py-24">
+        <div className="mx-auto max-w-wrap px-5 md:px-8 grid gap-12 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <Reveal>
+              <BookingForm
+                defaultService={defaultService}
+                defaultMessage={defaultMessage}
+              />
+            </Reveal>
+          </div>
+          <aside className="lg:col-span-5">
+            <Reveal className="border border-ink/10 bg-white/60 p-7 md:p-9">
+              <p className="eyebrow text-copper">How booking works</p>
+              <ol className="mt-6 space-y-6">
+                {[
+                  ["Tell us your plans", "Send the form, or just message us on WhatsApp — whichever is easier."],
+                  ["Get a personal quote", "Within hours you'll have a route, vehicle and transparent price, refined until it's right."],
+                  ["Confirm & relax", "No online payment needed. We confirm your driver and stay in touch from touchdown to takeoff."],
+                ].map(([t, b], i) => (
+                  <li key={t} className="flex gap-4">
+                    <span className="font-display text-3xl text-copper/60 leading-none">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-ink">{t}</p>
+                      <p className="mt-1 text-sm text-ink/60 leading-relaxed">{b}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-8 border-t border-ink/10 pt-6 text-sm text-ink/60">
+                <p>
+                  Prefer to talk now? WhatsApp{" "}
+                  <a
+                    href={`https://wa.me/${site.whatsappNumber}`}
+                    className="text-copper underline"
+                  >
+                    {site.phoneDisplay}
+                  </a>{" "}
+                  — we&apos;re online around the clock.
+                </p>
+              </div>
+            </Reveal>
+          </aside>
+        </div>
+      </section>
+    </>
+  );
+}

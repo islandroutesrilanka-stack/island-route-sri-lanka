@@ -1,0 +1,92 @@
+import Link from "next/link";
+import { site, waLink, defaultWaMessage } from "@/lib/site";
+
+export default function Footer() {
+  return (
+    <footer className="bg-deep text-sand/80">
+      <div className="mx-auto max-w-wrap px-5 md:px-8 py-16 md:py-20">
+        <div className="grid gap-12 md:grid-cols-12">
+          <div className="md:col-span-5">
+            <p className="font-display text-3xl text-sand">Island Route</p>
+            <p className="eyebrow text-copper-light mt-1">Sri Lanka</p>
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-sand/60">
+              Private, chauffeur-driven journeys across the pearl of the Indian
+              Ocean — crafted by people who call the island home.
+            </p>
+            <a
+              href={waLink(defaultWaMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-block border border-sand/30 px-6 py-3 text-[12px] uppercase tracking-[0.18em] text-sand hover:bg-sand hover:text-deep transition-colors"
+            >
+              WhatsApp us — {site.phoneDisplay}
+            </a>
+          </div>
+
+          <div className="md:col-span-2">
+            <p className="eyebrow text-sand/65 mb-4">Explore</p>
+            <ul className="space-y-2.5 text-sm">
+              {[
+                ["Tours", "/tours"],
+                ["Destinations", "/destinations"],
+                ["Services", "/services"],
+                ["Fleet", "/fleet"],
+                ["Gallery", "/gallery"],
+              ].map(([label, href]) => (
+                <li key={href}>
+                  <Link href={href} className="hover:text-copper-light transition-colors">
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="md:col-span-2">
+            <p className="eyebrow text-sand/65 mb-4">Company</p>
+            <ul className="space-y-2.5 text-sm">
+              {[
+                ["About", "/about"],
+                ["Reviews", "/reviews"],
+                ["Journal", "/blog"],
+                ["Contact", "/contact"],
+                ["Plan my trip", "/book"],
+              ].map(([label, href]) => (
+                <li key={href}>
+                  <Link href={href} className="hover:text-copper-light transition-colors">
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="md:col-span-3">
+            <p className="eyebrow text-sand/65 mb-4">Contact</p>
+            <ul className="space-y-2.5 text-sm text-sand/60">
+              <li>{site.address}</li>
+              <li>
+                <a href={`tel:${site.phoneE164}`} className="hover:text-copper-light transition-colors">
+                  {site.phoneDisplay}
+                </a>
+              </li>
+              <li>
+                <a href={`mailto:${site.email}`} className="hover:text-copper-light transition-colors break-all">
+                  {site.email}
+                </a>
+              </li>
+              <li className="pt-2 text-sand/65">
+                Available 24/7 · English-speaking team
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-14 pt-7 border-t border-sand/10 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-sand/65">
+          <p>© {new Date().getFullYear()} {site.name}. All rights reserved.</p>
+          <p>Licensed Sri Lankan tour operator · Fully insured fleet</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
