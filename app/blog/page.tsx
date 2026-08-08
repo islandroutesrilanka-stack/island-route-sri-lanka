@@ -5,6 +5,7 @@ import { PageHeader, CTABand } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { getPosts } from "@/lib/data";
 import { img } from "@/lib/images";
+import { formatDate, toIsoDate } from "@/utils/format";
 
 export const revalidate = 60;
 
@@ -40,11 +41,7 @@ export default async function BlogPage() {
                   />
                 </div>
                 <p className="mt-5 text-[11px] uppercase tracking-[0.16em] text-ink/65">
-                  {new Date(p.date).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}{" "}
+                  <time dateTime={toIsoDate(p.date)}>{formatDate(p.date)}</time>{" "}
                   · {p.readTime}
                 </p>
                 <h2 className="font-display text-3xl text-ink mt-2 leading-snug group-hover:text-copper-deep transition-colors">

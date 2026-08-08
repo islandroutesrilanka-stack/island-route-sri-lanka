@@ -5,3 +5,11 @@ out
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# Filesystem artefacts — created when a file is deleted while still open
+.fuse_hidden*
+Thumbs.db
+
+# Bundle analyzer output
+.next/analyze
+analyze

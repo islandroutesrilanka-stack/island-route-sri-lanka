@@ -8,7 +8,7 @@ import { img } from "@/lib/images";
 export const metadata: Metadata = {
   title: "About Island Route",
   description:
-    "Island Route Sri Lanka is a locally-owned travel company crafting private, chauffeur-driven journeys with a decade of experience on the island's roads.",
+    "Island Route Sri Lanka is a locally-owned travel company crafting private, chauffeur-driven journeys across the island — direct, personal and never a group coach.",
   alternates: { canonical: "/about" },
 };
 
@@ -26,37 +26,27 @@ export default function AboutPage() {
         <div className="mx-auto max-w-wrap px-5 md:px-8 grid gap-12 md:grid-cols-12 md:items-center">
           <div className="md:col-span-6">
             <Reveal>
+              {/* Copy kept free of unverified figures — see Phase 0 notes. */}
               <p className="text-[17px] leading-relaxed text-ink/75">
-                A decade ago, we noticed something on airport runs: travellers
-                arrived with spreadsheets of dreams and left having seen a
-                fraction of them — lost to bad timing, tourist-trap detours and
-                drivers paid in commissions rather than smiles.
+                We noticed something on airport runs: travellers arrived with
+                spreadsheets of dreams and left having seen a fraction of them —
+                lost to bad timing, tourist-trap detours and drivers paid in
+                commissions rather than smiles.
               </p>
               <p className="mt-5 text-[17px] leading-relaxed text-ink/75">
                 So we built the company we&apos;d want as guests: honest fixed
                 quotes, drivers who are genuine hosts, and routes designed
                 around light, weather and quiet moments — not gift-shop stops.
-                Today our small fleet and hand-picked team of chauffeur-guides
-                carry a few hundred travellers a year. Never more than we can
-                look after personally.
+                Our fleet is small and our chauffeur-guides are hand-picked, and
+                we take on no more travellers than we can look after personally.
               </p>
             </Reveal>
-            <Reveal index={1}>
-              <div className="mt-9 grid grid-cols-3 gap-6 border-t border-ink/10 pt-7">
-                {[
-                  ["10+", "years on the road"],
-                  ["2,400+", "journeys completed"],
-                  ["30+", "guest nationalities"],
-                ].map(([n, l]) => (
-                  <div key={l}>
-                    <p className="font-display text-3xl text-copper-deep">{n}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ink/65">
-                      {l}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
+            {/*
+              A "10+ / 2,400+ / 30+" statistics row stood here. The figures were
+              never verified, so they were removed in Phase 0 rather than
+              shipped as fact. Supply the real numbers and this block returns —
+              the three-column layout is kept in the design system for it.
+            */}
           </div>
           <div className="md:col-span-6 grid grid-cols-2 gap-4 md:gap-6">
             <Reveal index={1} className="img-frame aspect-[3/4]">

@@ -12,6 +12,16 @@ import { waLink, site } from "@/lib/site";
 
 export const revalidate = 60;
 
+/**
+ * Prebuild every tour page at deploy time rather than rendering each one on
+ * its first request. With a catalogue this size there is no reason for any
+ * visitor to pay the cost of a cold render.
+ */
+export async function generateStaticParams() {
+  const tours = await getTours();
+  return tours.map((t) => ({ slug: t.slug }));
+}
+
 export async function generateMetadata({
   params,
 }: {

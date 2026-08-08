@@ -1,7 +1,7 @@
-/** @type {import('next').NextConfig} */
+import withBundleAnalyzer from "@next/bundle-analyzer";
 
-  const nextConfig = {
- 
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   poweredByHeader: false,
   compress: true,
   images: {
@@ -54,4 +54,7 @@
   },
 };
 
-export default nextConfig;
+// Run `ANALYZE=true npm run build` to inspect what is actually shipping to the browser.
+export default withBundleAnalyzer({ enabled: process.env.ANALYZE === "true" })(
+  nextConfig
+);

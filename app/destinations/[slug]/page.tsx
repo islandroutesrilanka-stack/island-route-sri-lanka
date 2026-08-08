@@ -7,10 +7,16 @@ import { clampDesc } from "@/lib/seo";
 import { MapPin, CalendarDays, Check } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import { CTABand, TourCard } from "@/components/ui";
-import { getDestinationBySlug, getTours } from "@/lib/data";
+import { getDestinationBySlug, getDestinations, getTours } from "@/lib/data";
 import { waLink } from "@/lib/site";
 
 export const revalidate = 60;
+
+/** Prebuild every destination page at deploy time. */
+export async function generateStaticParams() {
+  const destinations = await getDestinations();
+  return destinations.map((d) => ({ slug: d.slug }));
+}
 
 export async function generateMetadata({
   params,

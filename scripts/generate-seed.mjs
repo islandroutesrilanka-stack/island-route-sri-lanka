@@ -62,12 +62,21 @@ sql += "\n\n" + fleet
   )
   .join("\n");
 
-sql += "\n\n" + reviews
-  .map(
-    (r, i) =>
-      `insert into public.reviews (name,country,trip,rating,text,sort) values (${q(r.name)},${q(r.country)},${q(r.trip)},${r.rating},${q(r.text)},${i});`
-  )
-  .join("\n");
+// Reviews are only ever seeded from real, attributable content. The array in
+// lib/content.ts is intentionally empty (see the note there), so this emits a
+// comment rather than inserts — and will start emitting inserts again by itself
+// the moment genuine reviews are added.
+sql +=
+  "\n\n" +
+  (reviews.length
+    ? reviews
+        .map(
+          (r, i) =>
+            `insert into public.reviews (name,country,trip,rating,text,sort) values (${q(r.name)},${q(r.country)},${q(r.trip)},${r.rating},${q(r.text)},${i});`
+        )
+        .join("\n")
+    : "-- No reviews seeded: lib/content.ts holds no verified reviews yet.\n" +
+      "-- Add real ones via the admin dashboard, or to lib/content.ts and re-run this script.");
 
 sql += "\n\n" + posts
   .map(

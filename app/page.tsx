@@ -18,6 +18,7 @@ import {
   getPosts,
 } from "@/lib/data";
 import { waLink, defaultWaMessage, site } from "@/lib/site";
+import { formatDate, toIsoDate } from "@/utils/format";
 
 export const revalidate = 60;
 
@@ -83,13 +84,22 @@ export default async function HomePage() {
             </div>
           </HeroLine>
 
+          {/*
+            The proof strip previously claimed "10+ years", "2,400+ journeys"
+            and a "5.0 ★ guest rating". None of those figures are verified, so
+            they were removed in Phase 0 rather than shipped.
+
+            What remains is only what is demonstrably true of how the business
+            operates. Restore the numeric strip once the real figures are
+            confirmed — the layout below is deliberately built to take them.
+          */}
           <HeroLine delay={0.8}>
             <div className="mt-10 sm:mt-14 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5 border-t border-sand/15 pt-7 text-sand/70">
               {[
-                ["10+ years", "on the island's roads"],
-                ["2,400+", "journeys completed"],
-                ["5.0 ★", "guest rating"],
-                ["24/7", "WhatsApp support"],
+                ["Locally owned", "and locally driven"],
+                ["Private", "never a group coach"],
+                ["Direct", "no agency in between"],
+                ["WhatsApp", "one number, start to finish"],
               ].map(([big, small]) => (
                 <div key={big as string}>
                   <p className="font-display text-2xl md:text-3xl text-sand">{big}</p>
@@ -270,30 +280,36 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* --------------------------------- Reviews --------------------------------- */}
-      <section className="bg-dune/60 py-20 md:py-28">
-        <div className="mx-auto max-w-wrap px-5 md:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHeading
-              eyebrow="Guest stories"
-              title="Rated 5.0 by travellers from 30+ countries"
-            />
-            <Reveal>
-              <Link
-                href="/reviews"
-                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
-              >
-                All reviews →
-              </Link>
-            </Reveal>
+      {/* --------------------------------- Reviews ---------------------------------
+          Renders only when real reviews exist. The previous heading claimed a
+          5.0 rating from 30+ countries against eight invented testimonials;
+          both were removed in Phase 0. Add real reviews in the admin dashboard
+          and this section reappears on its own. */}
+      {reviews.length > 0 && (
+        <section className="bg-dune/60 py-20 md:py-28">
+          <div className="mx-auto max-w-wrap px-5 md:px-8">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <SectionHeading
+                eyebrow="Guest stories"
+                title="In our guests' own words"
+              />
+              <Reveal>
+                <Link
+                  href="/reviews"
+                  className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
+                >
+                  All reviews →
+                </Link>
+              </Reveal>
+            </div>
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {reviews.slice(0, 3).map((r, i) => (
+                <ReviewCard key={r.name} r={r} index={i} />
+              ))}
+            </div>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {reviews.slice(0, 3).map((r, i) => (
-              <ReviewCard key={r.name} r={r} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ---------------------------------- Journal -------------------------------- */}
       <section className="py-20 md:py-28">
@@ -326,11 +342,7 @@ export default async function HomePage() {
                     />
                   </div>
                   <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-ink/65">
-                    {new Date(p.date).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}{" "}
+                    <time dateTime={toIsoDate(p.date)}>{formatDate(p.date)}</time>{" "}
                     · {p.readTime}
                   </p>
                   <h3 className="font-display text-2xl text-ink mt-2 leading-snug group-hover:text-copper-deep transition-colors">

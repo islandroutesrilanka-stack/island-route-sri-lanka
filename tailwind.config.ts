@@ -25,8 +25,10 @@ const config: Config = {
         "wa-dark": "#0B5C50",
       },
       fontFamily: {
-        display: ["Fraunces", "Georgia", "serif"],
-        body: ["Archivo", "system-ui", "sans-serif"],
+        // Variables are supplied by next/font in app/layout.tsx, which
+        // self-hosts both faces and injects matched fallback metrics.
+        display: ["var(--font-display)", "Georgia", "serif"],
+        body: ["var(--font-body)", "system-ui", "sans-serif"],
       },
       letterSpacing: {
         widest2: "0.28em",

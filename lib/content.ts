@@ -205,64 +205,27 @@ export type Review = {
   text: string;
 };
 
-export const reviews: Review[] = [
-  {
-    name: "Charlotte & James",
-    country: "United Kingdom",
-    trip: "14-day Grand Island Circuit",
-    rating: 5,
-    text: "From the moment we landed to our final sunset in Galle, everything was flawless. Our driver felt like a friend who happened to know every hidden corner of Sri Lanka. The best travel decision we've ever made.",
-  },
-  {
-    name: "Mia Lindqvist",
-    country: "Sweden",
-    trip: "Surf transfers, Arugam Bay season",
-    rating: 5,
-    text: "Boards handled with care, 4 a.m. starts with a smile, and always on time. Island Route moved our whole crew across the island twice. Wouldn't trust anyone else with a quiver.",
-  },
-  {
-    name: "The Fischer Family",
-    country: "Germany",
-    trip: "10-day family tour with safari",
-    rating: 5,
-    text: "Travelling with two young kids, we needed patience and flexibility — we got both, plus child seats, snack stops and a leopard sighting in Yala the children will never forget.",
-  },
-  {
-    name: "Aiko & Kenji",
-    country: "Japan",
-    trip: "Honeymoon — custom itinerary",
-    rating: 5,
-    text: "They designed our honeymoon around tea country sunrises and quiet beaches. Every hotel pickup was seamless and the private candlelit dinner surprise in Ella made the trip.",
-  },
-  {
-    name: "Daniel O'Connor",
-    country: "Australia",
-    trip: "Airport transfer + Kandy day tour",
-    rating: 5,
-    text: "Flight landed three hours late — driver was still there, name board up, zero fuss. The next day's Kandy tour was superb. Professional outfit from start to finish.",
-  },
-  {
-    name: "Sophie Moreau",
-    country: "France",
-    trip: "7-day Essential Sri Lanka",
-    rating: 5,
-    text: "Impeccable vehicle, thoughtful pacing, and a driver-guide whose knowledge of history and food elevated everything. Sri Lanka is stunning; Island Route made it effortless.",
-  },
-  {
-    name: "Ravi & Priya Patel",
-    country: "United States",
-    trip: "Hill Country & Tea Trails",
-    rating: 5,
-    text: "The train-and-car combination through the highlands was genius — we rode the famous blue train while our luggage travelled ahead. Five stars isn't enough.",
-  },
-  {
-    name: "Emma Verhoeven",
-    country: "Netherlands",
-    trip: "Solo traveller — 12 days",
-    rating: 5,
-    text: "As a solo female traveller, safety was my priority. I felt completely looked after the entire trip, with total freedom to change plans. Absolutely recommend.",
-  },
-];
+/**
+ * Guest reviews.
+ *
+ * INTENTIONALLY EMPTY. This array previously held eight invented testimonials
+ * attributed to named individuals in the UK, Sweden, Germany, Japan, Australia,
+ * France, the US and the Netherlands. They were removed in Phase 0 because:
+ *
+ *   1. The project's own content rules forbid fabricated reviews.
+ *   2. Attributing invented praise to named consumers is a regulatory problem
+ *      in exactly the markets those names came from (UK CPUTR / EU UCPD).
+ *   3. Any `aggregateRating` structured data built on them would breach
+ *      Google's review-snippet policy and risk a manual action.
+ *
+ * To populate: add real reviews through the admin dashboard (Reviews), ideally
+ * with a link back to the original Google, TripAdvisor or written source. One
+ * verifiable review is worth more here than eight invented ones.
+ *
+ * Every component that consumes this handles the empty case by hiding its
+ * section entirely — see ReviewCard call sites.
+ */
+export const reviews: Review[] = [];
 
 /* ---------------------------------- Gallery ----------------------------------- */
 

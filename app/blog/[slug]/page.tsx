@@ -9,8 +9,15 @@ import { Reveal } from "@/components/motion";
 import { CTABand } from "@/components/ui";
 import { getPosts, getPostBySlug } from "@/lib/data";
 import { site } from "@/lib/site";
+import { formatDate, toIsoDate } from "@/utils/format";
 
 export const revalidate = 60;
+
+/** Prebuild every journal post at deploy time. */
+export async function generateStaticParams() {
+  const posts = await getPosts();
+  return posts.map((p) => ({ slug: p.slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -84,11 +91,7 @@ export default async function BlogPost({ params }: { params: { slug: string } })
               {post.title}
             </h1>
             <p className="mt-5 text-[12px] uppercase tracking-[0.16em] text-sand/65">
-              {new Date(post.date).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}{" "}
+              <time dateTime={toIsoDate(post.date)}>{formatDate(post.date)}</time>{" "}
               · {post.readTime}
             </p>
           </Reveal>

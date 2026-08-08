@@ -3,7 +3,14 @@
  * Reads from Supabase when configured AND the table has published rows;
  * otherwise falls back to the built-in starter content in lib/.
  * Public pages revalidate every 60s, so admin edits appear within a minute.
+ *
+ * Every public getter is wrapped in React.cache, which memoises the result for
+ * the lifetime of a single server render. Without it, a page that reads site
+ * settings in generateMetadata and again in the layout makes two round trips
+ * for identical data — and the homepage, which reads five collections, would
+ * re-query on every component that needed them.
  */
+import { cache } from "react";
 import { getAnonSupabase } from "./supabase/server";
 import { tours as seedTours, type Tour } from "./tours";
 import {
@@ -23,6 +30,20 @@ import {
 import { posts as seedPosts, type Post } from "./blog";
 import { site as seedSite } from "./site";
 
+/**
+ * How long any single public content query may take before we give up and
+ * serve the built-in fallback content instead.
+ *
+ * This matters more than it looks. The try/catch below was written to make the
+ * site survive an unavailable backend — but a catch block cannot rescue you
+ * from a request that never settles. Without an explicit deadline, an
+ * unreachable or slow Supabase does not trigger the fallback; it stalls page
+ * generation indefinitely, which turns a degraded backend into a failed build
+ * or a hung request. Six seconds is generous for a query returning tens of
+ * rows and still well inside any sensible serverless budget.
+ */
+const QUERY_TIMEOUT_MS = 6000;
+
 async function fromTable<Row, T>(
   table: string,
   fallback: T[],
@@ -35,10 +56,14 @@ async function fromTable<Row, T>(
     let q = sb.from(table).select("*");
     if (opts.published !== false) q = q.eq("published", true);
     if (opts.order) q = q.order(opts.order, { ascending: true });
-    const { data, error } = await q;
+    const { data, error } = await q.abortSignal(
+      AbortSignal.timeout(QUERY_TIMEOUT_MS)
+    );
     if (error || !data || data.length === 0) return fallback;
     return (data as Row[]).map(map);
   } catch {
+    // Unreachable, slow, or misconfigured backend — serve seed content rather
+    // than an error page. The site stays up; the admin sees stale data.
     return fallback;
   }
 }
@@ -66,7 +91,9 @@ const mapTour = (r: TourRow): Tour => ({
   featured: r.featured,
 });
 
-export const getTours = () => fromTable<TourRow, Tour>("tours", seedTours, mapTour);
+export const getTours = cache(() =>
+  fromTable<TourRow, Tour>("tours", seedTours, mapTour)
+);
 export async function getTourBySlug(slug: string) {
   return (await getTours()).find((t) => t.slug === slug);
 }
@@ -94,8 +121,9 @@ const mapDest = (r: DestRow): Destination => ({
   image: r.image ?? "",
 });
 
-export const getDestinations = () =>
-  fromTable<DestRow, Destination>("destinations", seedDestinations, mapDest);
+export const getDestinations = cache(() =>
+  fromTable<DestRow, Destination>("destinations", seedDestinations, mapDest)
+);
 export async function getDestinationBySlug(slug: string) {
   return (await getDestinations()).find((d) => d.slug === slug);
 }
@@ -107,7 +135,7 @@ type ServiceRow = {
   image: string | null; icon: Service["icon"] | null;
 };
 
-export const getServices = () =>
+export const getServices = cache(() =>
   fromTable<ServiceRow, Service>("services", seedServices, (r) => ({
     slug: r.slug,
     name: r.name,
@@ -115,7 +143,8 @@ export const getServices = () =>
     description: r.description ?? "",
     image: r.image ?? "",
     icon: r.icon ?? "car",
-  }));
+  }))
+);
 
 /* ---------------------------------- Fleet ----------------------------------- */
 
@@ -125,7 +154,7 @@ type VehicleRow = {
   image: string | null;
 };
 
-export const getFleet = () =>
+export const getFleet = cache(() =>
   fromTable<VehicleRow, Vehicle>("vehicles", seedFleet, (r) => ({
     slug: r.slug,
     name: r.name,
@@ -135,7 +164,8 @@ export const getFleet = () =>
     features: r.features ?? [],
     idealFor: r.ideal_for ?? "",
     image: r.image ?? "",
-  }));
+  }))
+);
 
 /* --------------------------------- Reviews ---------------------------------- */
 
@@ -143,14 +173,15 @@ type ReviewRow = {
   name: string; country: string | null; trip: string | null; rating: number; text: string;
 };
 
-export const getReviews = () =>
+export const getReviews = cache(() =>
   fromTable<ReviewRow, Review>("reviews", seedReviews, (r) => ({
     name: r.name,
     country: r.country ?? "",
     trip: r.trip ?? "",
     rating: r.rating,
     text: r.text,
-  }));
+  }))
+);
 
 /* ---------------------------------- Posts ----------------------------------- */
 
@@ -159,16 +190,22 @@ type PostRow = {
   read_time: string | null; image: string | null; sections: Post["sections"] | null;
 };
 
-export const getPosts = () =>
-  fromTable<PostRow, Post>("posts", seedPosts, (r) => ({
-    slug: r.slug,
-    title: r.title,
-    excerpt: r.excerpt ?? "",
-    date: r.date,
-    readTime: r.read_time ?? "",
-    image: r.image ?? "",
-    sections: r.sections ?? [],
-  }), { published: true, order: "date" });
+export const getPosts = cache(() =>
+  fromTable<PostRow, Post>(
+    "posts",
+    seedPosts,
+    (r) => ({
+      slug: r.slug,
+      title: r.title,
+      excerpt: r.excerpt ?? "",
+      date: r.date,
+      readTime: r.read_time ?? "",
+      image: r.image ?? "",
+      sections: r.sections ?? [],
+    }),
+    { published: true, order: "date" }
+  )
+);
 
 export async function getPostBySlug(slug: string) {
   return (await getPosts()).find((p) => p.slug === slug);
@@ -178,12 +215,13 @@ export async function getPostBySlug(slug: string) {
 
 type GalleryRow = { src: string; caption: string | null; category: GalleryItem["category"] };
 
-export const getGallery = () =>
+export const getGallery = cache(() =>
   fromTable<GalleryRow, GalleryItem>("gallery", seedGallery, (r) => ({
     src: r.src,
     caption: r.caption ?? "",
     category: r.category,
-  }));
+  }))
+);
 
 /* ------------------------------- Site settings ------------------------------ */
 
@@ -228,11 +266,19 @@ const settingsKeyMap: Record<string, keyof SiteSettings> = {
   seo_keywords: "seoKeywords",
 };
 
-export async function getSettings(): Promise<SiteSettings> {
+/**
+ * Read once per render. `app/layout.tsx` needs settings in both
+ * `generateMetadata` and the layout body — previously two Supabase round trips
+ * on literally every page view.
+ */
+export const getSettings = cache(async (): Promise<SiteSettings> => {
   const sb = getAnonSupabase();
   if (!sb) return defaultSettings;
   try {
-    const { data, error } = await sb.from("site_settings").select("*");
+    const { data, error } = await sb
+      .from("site_settings")
+      .select("*")
+      .abortSignal(AbortSignal.timeout(QUERY_TIMEOUT_MS));
     if (error || !data?.length) return defaultSettings;
     const merged = { ...defaultSettings };
     for (const row of data as { key: string; value: string | null }[]) {
@@ -243,4 +289,38 @@ export async function getSettings(): Promise<SiteSettings> {
   } catch {
     return defaultSettings;
   }
-}
+});
+
+/* ------------------------------ Sitemap support ----------------------------- */
+
+export type SitemapRow = { slug: string; updatedAt?: string };
+
+/**
+ * Slugs plus real modification timestamps, for sitemap.xml.
+ *
+ * Kept separate from the domain getters on purpose: `updated_at` is metadata
+ * that no page renders, and threading it through Tour/Destination/Post would
+ * pollute types that exist to describe content. Falls back to slugs with no
+ * timestamp when Supabase is unconfigured or the column is absent, in which
+ * case the sitemap simply omits `lastModified` rather than inventing one.
+ */
+export const getSitemapRows = cache(
+  async (table: "tours" | "destinations" | "posts"): Promise<SitemapRow[]> => {
+    const sb = getAnonSupabase();
+    if (!sb) return [];
+    try {
+      const { data, error } = await sb
+        .from(table)
+        .select("slug, updated_at")
+        .eq("published", true)
+        .abortSignal(AbortSignal.timeout(QUERY_TIMEOUT_MS));
+      if (error || !data?.length) return [];
+      return (data as { slug: string; updated_at: string | null }[]).map((r) => ({
+        slug: r.slug,
+        updatedAt: r.updated_at ?? undefined,
+      }));
+    } catch {
+      return [];
+    }
+  }
+);
