@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Img from "@/components/media/Img";
+import { fromCmsUrl } from "@/lib/media/registry";
 import Link from "next/link";
 import { Users, Briefcase, Check } from "lucide-react";
 import { PageHeader, CTABand } from "@/components/ui";
@@ -33,12 +34,13 @@ export default async function FleetPage() {
             <Reveal key={v.slug}>
               <div className="grid gap-0 md:grid-cols-12 border border-ink/10 bg-white/50 overflow-hidden">
                 <div className={`img-frame aspect-[16/10] md:aspect-auto md:min-h-[22rem] md:col-span-5 ${i % 2 ? "md:order-2" : ""}`}>
-                  <Image
-                    src={v.image}
-                    alt={v.name}
-                    fill
+                  {/* Via <Img> so a retired or absent image degrades to the
+                      gradient treatment instead of throwing on an empty src.
+                      No verification gate: a vehicle makes no place claim. */}
+                  <Img
+                    asset={fromCmsUrl(v.image, v.name)}
                     sizes="(max-width:768px) 100vw, 42vw"
-                    className="object-cover"
+                    fallbackTone="moss"
                   />
                 </div>
                 <div className="md:col-span-7 p-7 md:p-10">

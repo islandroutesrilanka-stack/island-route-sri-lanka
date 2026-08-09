@@ -27,6 +27,59 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       { key: "tagline", label: "Brand tagline" },
     ],
   },
+  {
+    title: "Homepage hero",
+    note: "The first thing visitors see. Leave any field blank to fall back to the approved default — the hero can never render empty.",
+    keys: [
+      { key: "hero_headline", label: "Headline", help: "Approved: “Sri Lanka, Unscripted.”" },
+      { key: "hero_subcopy", label: "Supporting line", long: true },
+      { key: "hero_cta_primary_label", label: "Primary button text" },
+      { key: "hero_cta_primary_href", label: "Primary button link", help: "e.g. /book" },
+      { key: "hero_cta_secondary_label", label: "Secondary button text" },
+      { key: "hero_cta_secondary_href", label: "Secondary button link", help: "#explore scrolls to the map section" },
+      {
+        key: "hero_poster_url",
+        label: "Hero image URL",
+        help: "Leave blank until an image is verified — the hero shows an elegant gradient instead. Never use an image whose location you haven't confirmed.",
+      },
+      { key: "hero_poster_alt", label: "Hero image description (alt text)", long: true },
+      {
+        key: "hero_video_url",
+        label: "Hero video URL — desktop",
+        help: "Leave blank until you have original footage. Adding a URL here switches the hero to video with no code change.",
+      },
+      {
+        key: "hero_video_mobile_url",
+        label: "Hero video URL — mobile",
+        help: "Recommended: leave blank. Phones use the image, which saves visitors a large download.",
+      },
+    ],
+  },
+  {
+    title: "Featured journey (homepage)",
+    note: "One hand-picked journey, shown as an editorial feature. Nothing rotates automatically.",
+    keys: [
+      {
+        key: "featured_journey_slug",
+        label: "Tour URL slug",
+        help: "e.g. essential-sri-lanka-7-days. Blank uses the first featured tour.",
+      },
+      { key: "featured_journey_note", label: "Route note", long: true, help: "One line about the route. Optional." },
+      { key: "featured_journey_image_1", label: "Supporting image 1 URL" },
+      { key: "featured_journey_image_2", label: "Supporting image 2 URL" },
+      { key: "featured_journey_image_3", label: "Supporting image 3 URL" },
+    ],
+  },
+  {
+    title: "Featured chauffeur-guide (homepage)",
+    note: "Your strongest differentiator — a real person, hand-picked. Leave every field blank and the section simply shows the Why Island Route content. Never invent a guide.",
+    keys: [
+      { key: "featured_guide_name", label: "Guide name" },
+      { key: "featured_guide_role", label: "Role / years driving", help: "e.g. Chauffeur-guide · Hill Country" },
+      { key: "featured_guide_note", label: "In their own words", long: true, help: "Two sentences, in the guide's voice." },
+      { key: "featured_guide_image", label: "Portrait URL" },
+    ],
+  },
 ];
 
 const allKeys = groups.flatMap((g) => g.keys.map((k) => k.key));

@@ -7,14 +7,36 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { site, waLink, defaultWaMessage } from "@/lib/site";
 
+/**
+ * Primary navigation — organised around the visitor's journey rather than the
+ * company's internal categories.
+ *
+ * Nine top-level items was a filing cabinet: Services, Fleet and Gallery are
+ * things the business has, not things a traveller is looking for. Those routes
+ * are untouched and still reachable from the footer; only their prominence
+ * changed. Nothing is removed.
+ *
+ * "Journeys" points at /tours — the URL is preserved for SEO, the label speaks
+ * the brand's language.
+ *
+ * "Experiences" points at the homepage section until the standalone route
+ * exists. A real anchor, not a dead link, and it becomes /experiences later
+ * with a one-line change here.
+ */
 const links = [
-  { href: "/tours", label: "Tours" },
+  { href: "/tours", label: "Journeys" },
   { href: "/destinations", label: "Destinations" },
+  { href: "/#experiences", label: "Experiences" },
+  { href: "/blog", label: "Journal" },
+  { href: "/about", label: "About" },
+];
+
+/** Kept accessible, given less weight. Mirrored in the footer. */
+const secondaryLinks = [
   { href: "/services", label: "Services" },
   { href: "/fleet", label: "Fleet" },
   { href: "/gallery", label: "Gallery" },
-  { href: "/blog", label: "Journal" },
-  { href: "/about", label: "About" },
+  { href: "/reviews", label: "Reviews" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -82,7 +104,8 @@ export default function Navbar() {
 
           <nav aria-label="Main" className="hidden lg:flex items-center gap-7">
             {links.map((l) => {
-              const active = pathname.startsWith(l.href);
+              // Anchor links ("/#experiences") are never "the current page".
+              const active = !l.href.includes("#") && pathname.startsWith(l.href);
               return (
                 <Link
                   key={l.href}
@@ -108,7 +131,7 @@ export default function Navbar() {
                   : "bg-sand text-ink hover:bg-copper-deep hover:text-sand"
               }`}
             >
-              Plan my trip
+              Plan your journey
             </Link>
           </nav>
 
@@ -148,18 +171,37 @@ export default function Navbar() {
                 >
                   <Link
                     href={l.href}
-                    aria-current={pathname.startsWith(l.href) ? "page" : undefined}
+                    aria-current={
+                      !l.href.includes("#") && pathname.startsWith(l.href)
+                        ? "page"
+                        : undefined
+                    }
                     className="block py-3 font-display text-2xl text-ink border-b border-ink/5"
                   >
                     {l.label}
                   </Link>
                 </motion.div>
               ))}
+
+              {/* Secondary — present and reachable, given less weight */}
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+                {secondaryLinks.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      className="text-[12px] uppercase tracking-[0.14em] text-ink/60"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
               <Link
                 href="/book"
-                className="mt-5 bg-ink text-sand text-center py-3.5 text-[13px] uppercase tracking-[0.14em]"
+                className="mt-6 bg-ink text-sand text-center py-3.5 text-[13px] uppercase tracking-[0.14em]"
               >
-                Plan my trip
+                Plan your journey
               </Link>
               <a
                 href={waLink(defaultWaMessage)}

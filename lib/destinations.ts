@@ -28,7 +28,7 @@ export const destinations: Destination[] = [
   {
     slug: "kandy",
     name: "Kandy",
-    region: "Hill Capital",
+    region: "Hill Country",
     headline: "The last royal city, wrapped around a sacred lake",
     description:
       "Home to the Temple of the Sacred Tooth Relic and gateway to the highlands, Kandy blends devotion, colonial architecture and misty hills. Time your visit for evening puja at the temple, then lose an afternoon in the Peradeniya Royal Botanical Gardens.",
@@ -52,7 +52,7 @@ export const destinations: Destination[] = [
   {
     slug: "nuwara-eliya",
     name: "Nuwara Eliya",
-    region: "Tea Country",
+    region: "Hill Country",
     headline: "Little England, two thousand metres up",
     description:
       "Rose gardens, Tudor cottages and lake mists — Sri Lanka's highest town is the heart of Ceylon tea country. Tour a working factory, sip single-estate brews where they're grown, and hike the otherworldly Horton Plains plateau to World's End.",
@@ -64,7 +64,7 @@ export const destinations: Destination[] = [
   {
     slug: "yala",
     name: "Yala",
-    region: "Deep South",
+    region: "The Wild South",
     headline: "Leopard country — the island at its wildest",
     description:
       "Yala National Park holds the densest leopard population on Earth, sharing its lagoons and rock outcrops with elephants, sloth bears, crocodiles and painted storks. Dawn drives give the best light and sightings; we arrange private jeeps only.",
@@ -112,14 +112,21 @@ export const destinations: Destination[] = [
   {
     slug: "colombo",
     name: "Colombo",
-    region: "Western Capital",
+    region: "West Coast & Colombo",
     headline: "Temples, tuk-tuks and a fast-rising food scene",
     description:
       "Most journeys begin or end in the capital — give it a day. Colonial-era Fort and Pettah's bazaars, Gangaramaya Temple, Galle Face Green at sunset, and a dinner scene that now rivals any city in South Asia.",
     bestFor: ["City culture", "Food", "First/last nights"],
     bestTime: "Year-round",
     highlights: ["Gangaramaya Temple", "Pettah markets", "Galle Face sunset", "Independence Square"],
-    image: img.cityLights,
+    /*
+      Intentionally empty. This previously used `cityLights` — a generic night
+      cityscape identified in the media audit as not Sri Lanka. It has not been
+      swapped for another unverified image: an empty slot renders the contour
+      treatment, which is honest, whereas a plausible-looking wrong photograph
+      captioned "Colombo" is not.
+    */
+    image: "",
   },
 ];
 

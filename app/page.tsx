@@ -1,364 +1,354 @@
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Clock, Award, HeartHandshake } from "lucide-react";
 import { HeroLine, Reveal } from "@/components/motion";
+import { SectionHeading, TourCard, DestinationCard } from "@/components/ui";
+import VideoHero from "@/components/media/VideoHero";
+import IslandMap from "@/components/patterns/IslandMap";
+import ExperienceRail from "@/components/patterns/ExperienceRail";
+import FleetStrip from "@/components/patterns/FleetStrip";
+import GuideFeature, {
+  type FeaturedGuide,
+} from "@/components/patterns/GuideFeature";
+import TrustBand from "@/components/patterns/TrustBand";
+import JourneyStory, {
+  buildFeaturedJourney,
+} from "@/components/patterns/JourneyStory";
+import PlannerEntry from "@/components/patterns/PlannerEntry";
+import FaqPreview from "@/components/patterns/FaqPreview";
+import { HOMEPAGE_FAQS } from "@/lib/faqs";
+import Img from "@/components/media/Img";
+import GradientPanel from "@/components/media/GradientPanel";
+import { fromCmsUrl } from "@/lib/media/registry";
+import { resolveHero } from "@/lib/media/hero";
+import { regions } from "@/lib/regions";
 import {
-  SectionHeading,
-  TourCard,
-  DestinationCard,
-  ReviewCard,
-  CTABand,
-} from "@/components/ui";
-import { img } from "@/lib/images";
-import {
-  getServices,
-  getReviews,
+  getSettings,
   getFeaturedTours,
+  getTours,
   getDestinations,
   getPosts,
+  getFleet,
+  getReviews,
 } from "@/lib/data";
-import { waLink, defaultWaMessage, site } from "@/lib/site";
 import { formatDate, toIsoDate } from "@/utils/format";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [services, reviews, featuredTours, destinations, posts] =
+  const [settings, featuredTours, tours, destinations, posts, fleet, reviews] =
     await Promise.all([
-      getServices(),
-      getReviews(),
+      getSettings(),
       getFeaturedTours(),
+      getTours(),
       getDestinations(),
       getPosts(),
+      getFleet(),
+      getReviews(),
     ]);
+
+  const hero = resolveHero(settings);
+
+  /* Guide — rendered only when real content exists. Never invented. */
+  const guide: FeaturedGuide | null = settings.featuredGuideName.trim()
+    ? {
+        name: settings.featuredGuideName.trim(),
+        role: settings.featuredGuideRole.trim(),
+        note: settings.featuredGuideNote.trim(),
+        imageUrl: settings.featuredGuideImage.trim(),
+      }
+    : null;
+
+  const featuredJourney = buildFeaturedJourney(tours, settings, reviews);
+
+  /* FAQPage structured data, matching what is actually on the page. */
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: HOMEPAGE_FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+
   return (
     <>
-      {/* ---------------------------------- Hero ---------------------------------- */}
-      <section className="relative min-h-[100svh] flex items-end overflow-hidden bg-deep">
-        <Image
-          src={img.heroTrain}
-          alt="The highland railway winding through Sri Lanka's tea country"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-deep via-deep/30 to-deep/40" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
 
-        <div className="relative z-10 mx-auto w-full max-w-wrap px-5 md:px-8 pb-16 sm:pb-20 md:pb-28 pt-32 sm:pt-40">
+      {/* ══════════════════ 01 — CINEMATIC HERO ══════════════════
+          Full height on phones, where a tall frame is the natural shape.
+          On large screens it settles to roughly 21:9 — a film aspect — while
+          never collapsing below 42rem or exceeding the viewport. */}
+      <section className="relative flex min-h-[100svh] items-end overflow-hidden bg-deep lg:min-h-0 lg:h-[max(42rem,min(94svh,calc(100vw*9/21)))]">
+        <VideoHero video={hero.video} />
+
+        <div className="relative z-20 mx-auto w-full max-w-wrap px-5 pb-14 pt-32 sm:pb-16 sm:pt-40 md:px-8 md:pb-20">
           <HeroLine delay={0.1}>
-            <p className="eyebrow text-copper-light">
-              Private journeys · Sri Lanka
+            {/* Editorial index rule — a quiet piece of magazine furniture that
+                anchors the type block without adding UI decoration. */}
+            <p className="flex items-center gap-4 text-copper-light">
+              <span aria-hidden className="h-px w-10 bg-copper-light/50" />
+              <span className="eyebrow">Private journeys · Sri Lanka</span>
             </p>
           </HeroLine>
+
           <HeroLine delay={0.25}>
-            <h1 className="h-display mt-4 text-[clamp(2.75rem,11vw,8rem)] leading-[0.95] text-sand max-w-4xl">
-              One island.
-              <br />
-              <em className="text-copper-light">A thousand</em> routes.
+            {/* Break authored after the comma — a two-beat statement, not
+                left to text-wrap:balance to guess at. */}
+            <h1 className="h-display mt-4 max-w-4xl text-[clamp(2.75rem,10vw,7rem)] leading-[0.95] text-sand">
+              {hero.headline.includes(",") ? (
+                <>
+                  {hero.headline.split(",")[0]},
+                  <br />
+                  <span className="text-copper-light">
+                    {hero.headline.split(",").slice(1).join(",").trim()}
+                  </span>
+                </>
+              ) : (
+                hero.headline
+              )}
             </h1>
           </HeroLine>
-          <HeroLine delay={0.45}>
-            <p className="mt-6 max-w-xl text-sand/75 leading-relaxed md:text-lg">
-              Chauffeur-driven tours, seamless transfers and tailor-made
-              itineraries across beaches, tea country and leopard territory —
-              crafted by people who call Sri Lanka home.
-            </p>
-          </HeroLine>
-          <HeroLine delay={0.6}>
-            <div className="mt-9 flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/book"
-                className="bg-copper-deep text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-copper-light hover:text-deep transition-colors"
-              >
-                Plan my trip
-              </Link>
-              <a
-                href={waLink(defaultWaMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border border-sand/40 text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-sand hover:text-deep transition-colors"
-              >
-                WhatsApp {site.phoneDisplay}
-              </a>
-            </div>
-          </HeroLine>
 
-          {/*
-            The proof strip previously claimed "10+ years", "2,400+ journeys"
-            and a "5.0 ★ guest rating". None of those figures are verified, so
-            they were removed in Phase 0 rather than shipped.
+          {/* Subcopy and CTAs sit on one editorial line at desktop width, which
+              keeps the hero's lower edge calm and lets the media breathe. */}
+          <div className="mt-8 flex flex-col gap-8 md:mt-10 md:flex-row md:items-end md:justify-between md:gap-12">
+            <HeroLine delay={0.45}>
+              <p className="max-w-[42ch] leading-relaxed text-sand/75 md:text-lg">
+                {hero.subcopy}
+              </p>
+            </HeroLine>
 
-            What remains is only what is demonstrably true of how the business
-            operates. Restore the numeric strip once the real figures are
-            confirmed — the layout below is deliberately built to take them.
-          */}
-          <HeroLine delay={0.8}>
-            <div className="mt-10 sm:mt-14 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5 border-t border-sand/15 pt-7 text-sand/70">
-              {[
-                ["Locally owned", "and locally driven"],
-                ["Private", "never a group coach"],
-                ["Direct", "no agency in between"],
-                ["WhatsApp", "one number, start to finish"],
-              ].map(([big, small]) => (
-                <div key={big as string}>
-                  <p className="font-display text-2xl md:text-3xl text-sand">{big}</p>
-                  <p className="text-xs mt-1 uppercase tracking-[0.14em] text-sand/65">
-                    {small}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </HeroLine>
-        </div>
-      </section>
-
-      {/* ------------------------------ Editorial intro ---------------------------- */}
-      <section className="py-20 md:py-32">
-        <div className="mx-auto max-w-wrap px-5 md:px-8 grid gap-12 md:grid-cols-12 md:items-center">
-          <div className="md:col-span-6">
-            <SectionHeading
-              eyebrow="Welcome to Island Route"
-              title="Travel Sri Lanka the way it deserves to be travelled"
-              intro="Forget rigid coach tours and roadside guesswork. With your own English-speaking chauffeur-guide, the island unfolds at your pace — a sunrise climb here, an unplanned beach there, lunch where the locals actually eat. We handle every kilometre; you collect the moments."
-            />
-            <Reveal index={2}>
-              <Link
-                href="/about"
-                className="link-line mt-8 inline-flex items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-copper-deep"
-              >
-                Our story <ArrowRight size={15} />
-              </Link>
-            </Reveal>
-          </div>
-          <div className="md:col-span-6 grid grid-cols-2 gap-4 md:gap-6">
-            <Reveal index={1} className="img-frame aspect-[3/4] mt-8">
-              <Image src={img.beachPalms} alt="Palm-lined southern beach" fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
-            </Reveal>
-            <Reveal index={2} className="img-frame aspect-[3/4]">
-              <Image src={img.leopard} alt="Leopard in Yala National Park" fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------------------------- Services ------------------------------- */}
-      <section className="bg-dune/60 py-20 md:py-28">
-        <div className="mx-auto max-w-wrap px-5 md:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHeading
-              eyebrow="What we do"
-              title="Every journey, handled"
-              intro="From a single airport pickup to a month-long circuit of the island — one trusted team, one number on WhatsApp."
-            />
-            <Reveal>
-              <Link
-                href="/services"
-                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
-              >
-                All services →
-              </Link>
-            </Reveal>
-          </div>
-
-          <div className="mt-12 grid gap-px bg-ink/10 border border-ink/10 sm:grid-cols-2 lg:grid-cols-3">
-            {services.slice(0, 6).map((s, i) => (
-              <Reveal key={s.slug} index={i} className="bg-sand">
+            <HeroLine delay={0.6}>
+              <div className="flex flex-col gap-4 sm:flex-row md:shrink-0">
                 <Link
-                  href={`/services#${s.slug}`}
-                  className="group block p-7 md:p-9 h-full hover:bg-white/70 transition-colors"
+                  href={hero.ctaPrimary.href}
+                  className="bg-copper-deep px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-light hover:text-deep"
                 >
-                  <p className="font-display text-3xl text-copper-deep/70">
-                    {String(i + 1).padStart(2, "0")}
-                  </p>
-                  <h3 className="font-display text-2xl text-ink mt-4">{s.name}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-ink/70">
-                    {s.tagline}
-                  </p>
-                  <p className="mt-5 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] text-ink/65 group-hover:text-copper-deep transition-colors">
-                    Learn more <ArrowRight size={13} />
-                  </p>
+                  {hero.ctaPrimary.label}
                 </Link>
-              </Reveal>
-            ))}
+                <Link
+                  href={hero.ctaSecondary.href}
+                  className="border border-sand/40 px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-sand hover:text-deep"
+                >
+                  {hero.ctaSecondary.label}
+                </Link>
+              </div>
+            </HeroLine>
+          </div>
+        </div>
+
+        {/* The four claims moved out of the hero into their own band below —
+            crowded under the headline they read as feature bullets. */}
+      </section>
+
+      {/* ══════════════════ WHY ISLAND ROUTE — three pillars ══════════════════ */}
+      <TrustBand />
+
+      {/* ══════════════════ 02 — EXPLORE SRI LANKA ══════════════════ */}
+      <section
+        id="explore"
+        className="grain relative scroll-mt-20 overflow-hidden bg-deep py-24 md:py-36"
+      >
+        <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
+          <SectionHeading
+            dark
+            eyebrow="Explore Sri Lanka"
+            title="One island, seven very different countries"
+            intro="Two opposing monsoons and a central mountain range mean the island is never doing only one thing at once. Choose a region and see what it does best."
+          />
+          <div className="mt-14">
+            <IslandMap />
           </div>
         </div>
       </section>
 
-      {/* ------------------------------- Featured tours ----------------------------- */}
-      <section className="py-20 md:py-28">
+      {/* ══════════════════ 03 — DESTINATIONS ══════════════════ */}
+      <section className="py-24 md:py-36">
         <div className="mx-auto max-w-wrap px-5 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading
-              eyebrow="Signature journeys"
-              title="Tours our guests dream about for years"
-            />
-            <Reveal>
-              <Link
-                href="/tours"
-                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
-              >
-                All tours →
-              </Link>
-            </Reveal>
-          </div>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredTours.map((t, i) => (
-              <TourCard key={t.slug} tour={t} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------- Destinations ------------------------------- */}
-      <section className="bg-deep grain relative py-20 md:py-28 overflow-hidden">
-        <div className="mx-auto max-w-wrap px-5 md:px-8 relative z-10">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHeading
-              dark
-              eyebrow="Where we'll take you"
-              title="Nine islands in one"
-              intro="Beaches, cloud forests, ancient kingdoms and leopard country — often all in a single week."
+              eyebrow="Destinations"
+              title="Places worth the drive"
+              intro="Ancient capitals, tea terraces, leopard country and the long southern coast — often within a single week."
             />
             <Reveal>
               <Link
                 href="/destinations"
-                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-light"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
               >
                 All destinations →
               </Link>
             </Reveal>
           </div>
+
           <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {destinations.slice(0, 8).map((d, i) => (
               <DestinationCard key={d.slug} d={d} index={i} />
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* --------------------------------- Why us ---------------------------------- */}
-      <section className="py-20 md:py-28">
-        <div className="mx-auto max-w-wrap px-5 md:px-8">
-          <SectionHeading
-            align="center"
-            eyebrow="The Island Route difference"
-            title="Why travellers book direct with us"
-          />
-          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: ShieldCheck,
-                title: "Safe & licensed",
-                body: "Registered tour operator, insured modern fleet, and drivers vetted over years — not booked off an app minutes ago.",
-              },
-              {
-                icon: HeartHandshake,
-                title: "Direct & personal",
-                body: "No middlemen or faceless portals. You speak with us on WhatsApp before, during and after every journey.",
-              },
-              {
-                icon: Clock,
-                title: "Always on time",
-                body: "Flights tracked, dawn safaris made, trains met. Punctuality is the quiet luxury we're known for.",
-              },
-              {
-                icon: Award,
-                title: "Local mastery",
-                body: "Our chauffeur-guides grew up on these roads. The best viewpoint, the honest café, the shortcut — it's all in the service.",
-              },
-            ].map((f, i) => (
-              <Reveal key={f.title} index={i} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-copper/10 text-copper-deep">
-                  <f.icon size={24} strokeWidth={1.6} />
-                </div>
-                <h3 className="font-display text-xl text-ink mt-5">{f.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-ink/70">{f.body}</p>
-              </Reveal>
-            ))}
+          {/* Regions as an editorial index beneath the places */}
+          <div className="mt-14 border-t border-ink/10 pt-10">
+            <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+              {regions.map((r) => (
+                <li key={r.slug}>
+                  <Link
+                    href={`/destinations?region=${r.slug}`}
+                    className="group block"
+                  >
+                    <p className="font-display text-lg text-ink transition-colors group-hover:text-copper-deep">
+                      {r.name}
+                    </p>
+                    <p className="mt-1 text-[13px] leading-relaxed text-ink/65">
+                      {r.character}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* --------------------------------- Reviews ---------------------------------
-          Renders only when real reviews exist. The previous heading claimed a
-          5.0 rating from 30+ countries against eight invented testimonials;
-          both were removed in Phase 0. Add real reviews in the admin dashboard
-          and this section reappears on its own. */}
-      {reviews.length > 0 && (
-        <section className="bg-dune/60 py-20 md:py-28">
+      {/* ══════════════════ 04 — EXPERIENCES ══════════════════ */}
+      <section id="experiences" className="scroll-mt-20 bg-dune/50 py-24 md:py-36">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              eyebrow="Experiences"
+              title="Travel by what moves you"
+              intro="Wildlife at dawn, a working tea estate, a swell that only arrives in July. Start with the feeling and we'll build the route around it."
+            />
+          </div>
+          <ExperienceRail />
+        </div>
+      </section>
+
+      {/* ══════════════════ 05 — SIGNATURE TOURS (+ fleet strip) ══════════════════ */}
+      <section className="grain relative overflow-hidden bg-deep py-24 md:py-36">
+        <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading
+              dark
+              eyebrow="Signature journeys"
+              title="Routes we've refined over years"
+              intro="Starting points, not fixed departures. Every one of these is reshaped around your dates, pace and interests."
+            />
+            <Reveal>
+              <Link
+                href="/tours"
+                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-light"
+              >
+                All journeys →
+              </Link>
+            </Reveal>
+          </div>
+
+          {/* Hierarchy, not four identical tiles: one lead journey at editorial
+              scale on its own row, three supporting beneath. Kept as separate
+              rows rather than a side column so the heights can't fight each
+              other — a 16:11 feature beside three stacked 4:5 cards is a
+              three-to-one mismatch at desktop width. */}
+          {featuredTours.length > 0 && (
+            <>
+              <div className="mt-14 md:mt-16">
+                <TourCard tour={featuredTours[0]} index={0} variant="feature" dark />
+              </div>
+              {featuredTours.length > 1 && (
+                <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+                  {featuredTours.slice(1, 4).map((t, i) => (
+                    <TourCard key={t.slug} tour={t} index={i + 1} dark />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          <FleetStrip fleet={fleet} />
+        </div>
+      </section>
+
+      {/* ══════════════════ 06 — WHY ISLAND ROUTE (+ guide) ══════════════════ */}
+      <section className="py-24 md:py-36">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <GuideFeature guide={guide} />
+        </div>
+      </section>
+
+      {/* ══════════════════ 07 — FEATURED JOURNEY ══════════════════ */}
+      {featuredJourney && (
+        <section className="bg-dune/50 py-24 md:py-36">
+          <div className="mx-auto max-w-wrap px-5 md:px-8">
+            <JourneyStory feature={featuredJourney} />
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════════ 08 — JOURNAL ══════════════════ */}
+      {posts.length > 0 && (
+        <section className="py-24 md:py-36">
           <div className="mx-auto max-w-wrap px-5 md:px-8">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <SectionHeading
-                eyebrow="Guest stories"
-                title="In our guests' own words"
+                eyebrow="Sri Lanka stories"
+                title="Notes from the road"
               />
               <Reveal>
                 <Link
-                  href="/reviews"
+                  href="/blog"
                   className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
                 >
-                  All reviews →
+                  All stories →
                 </Link>
               </Reveal>
             </div>
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {reviews.slice(0, 3).map((r, i) => (
-                <ReviewCard key={r.name} r={r} index={i} />
-              ))}
+
+            <div className="mt-12 grid gap-8 md:grid-cols-3">
+              {posts.slice(0, 3).map((p, i) => {
+                const cover = fromCmsUrl(p.image, p.title);
+                return (
+                  <Reveal key={p.slug} index={i}>
+                    <Link href={`/blog/${p.slug}`} className="group block">
+                      <div className="img-frame relative aspect-[16/10]">
+                        {cover ? (
+                          <Img
+                            asset={cover}
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            className="transition-transform duration-[1.4s] group-hover:scale-105"
+                          />
+                        ) : (
+                          <GradientPanel tone="dune" className="h-full w-full" />
+                        )}
+                      </div>
+                      <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-ink/65">
+                        <time dateTime={toIsoDate(p.date)}>{formatDate(p.date)}</time>
+                        {p.readTime && ` · ${p.readTime}`}
+                      </p>
+                      <h3 className="mt-2 font-display text-2xl leading-snug text-ink transition-colors group-hover:text-copper-deep">
+                        {p.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-ink/70">
+                        {p.excerpt}
+                      </p>
+                    </Link>
+                  </Reveal>
+                );
+              })}
             </div>
           </div>
         </section>
       )}
 
-      {/* ---------------------------------- Journal -------------------------------- */}
-      <section className="py-20 md:py-28">
-        <div className="mx-auto max-w-wrap px-5 md:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHeading
-              eyebrow="The journal"
-              title="Notes from the road"
-            />
-            <Reveal>
-              <Link
-                href="/blog"
-                className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-deep"
-              >
-                All stories →
-              </Link>
-            </Reveal>
-          </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {posts.slice(0, 3).map((p, i) => (
-              <Reveal key={p.slug} index={i}>
-                <Link href={`/blog/${p.slug}`} className="group block">
-                  <div className="img-frame aspect-[16/10]">
-                    <Image
-                      src={p.image}
-                      alt={p.title}
-                      fill
-                      sizes="(max-width:768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
-                    />
-                  </div>
-                  <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-ink/65">
-                    <time dateTime={toIsoDate(p.date)}>{formatDate(p.date)}</time>{" "}
-                    · {p.readTime}
-                  </p>
-                  <h3 className="font-display text-2xl text-ink mt-2 leading-snug group-hover:text-copper-deep transition-colors">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-ink/70 leading-relaxed">
-                    {p.excerpt}
-                  </p>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
+      {/* ══════════════════ 09 — PLAN YOUR JOURNEY (+ FAQ) ══════════════════ */}
+      <section className="grain relative overflow-hidden bg-deep py-24 md:py-36">
+        <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
+          <PlannerEntry />
+          <FaqPreview />
         </div>
       </section>
-
-      <CTABand />
     </>
   );
 }

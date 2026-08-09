@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Img from "@/components/media/Img";
+import { fromCmsUrl } from "@/lib/media/registry";
 import Link from "next/link";
 import { PageHeader, CTABand } from "@/components/ui";
 import { Reveal } from "@/components/motion";
@@ -39,12 +40,13 @@ export default async function ServicesPage() {
                 className={`md:col-span-6 ${i % 2 ? "md:order-2" : ""}`}
               >
                 <div className="img-frame aspect-[16/11]">
-                  <Image
-                    src={s.image}
-                    alt={s.name}
-                    fill
+                  {/* Via <Img> so a retired or absent image degrades to the
+                      gradient treatment instead of throwing on an empty src.
+                      No verification gate: a service makes no place claim. */}
+                  <Img
+                    asset={fromCmsUrl(s.image, s.name)}
                     sizes="(max-width:768px) 100vw, 50vw"
-                    className="object-cover"
+                    fallbackTone="moss"
                   />
                 </div>
               </Reveal>

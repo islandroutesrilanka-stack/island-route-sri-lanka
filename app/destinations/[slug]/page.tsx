@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { toOgImage } from "@/lib/images";
+import Img from "@/components/media/Img";
+import { destinationAsset, toVerifiedOgImage } from "@/lib/media/registry";
 import { clampDesc } from "@/lib/seo";
 import { MapPin, CalendarDays, Check } from "lucide-react";
 import { Reveal } from "@/components/motion";
@@ -36,7 +36,20 @@ export async function generateMetadata({
       locale: "en_GB",
       title: d.name,
       description: d.headline,
-      images: [{ url: toOgImage(d.image), width: 1200, height: 630, alt: d.name }],
+      /*
+        Gated on the same verification predicate the page render uses. An
+        unverified destination photograph must not be shared captioned with the
+        place name any more than it may be displayed under one — it falls back
+        to the neutral brand card, which depicts nowhere.
+      */
+      images: [
+        {
+          url: toVerifiedOgImage(destinationAsset(d)),
+          width: 1200,
+          height: 630,
+          alt: `${d.name} — Island Route Sri Lanka`,
+        },
+      ],
     },
   };
 }
@@ -50,25 +63,40 @@ export default async function DestinationPage({
   if (!d) notFound();
   const tours = await getTours();
 
+  /*
+    Explicit relationship, not substring matching.
+
+    The previous filter checked whether the destination name appeared anywhere
+    in a tour's title, excerpt or highlights. That is why the Ella page listed a
+    Galle day tour (it mentions "Dala·wella") and the Galle page listed a
+    wildlife tour (it mentions "Tan·galle"). Slugs are exact, so a place can no
+    longer be matched by being spelled inside another place's name.
+
+    A destination with no linked journey renders no section at all, rather than
+    a relationship being invented for it.
+  */
   const relatedTours = tours
-    .filter(
-      (t) =>
-        t.title.toLowerCase().includes(d.name.toLowerCase()) ||
-        t.excerpt.toLowerCase().includes(d.name.toLowerCase()) ||
-        t.highlights.some((h) => h.toLowerCase().includes(d.name.toLowerCase()))
-    )
+    .filter((t) => t.destinationSlugs?.includes(d.slug))
     .slice(0, 3);
 
   return (
     <>
       <section className="relative bg-deep pt-32 md:pt-44 pb-16 md:pb-24 overflow-hidden">
-        <Image
-          src={d.image}
-          alt={d.name}
-          fill
-          priority
+        {/*
+          Same verification gate as DestinationCard. This hero sits directly
+          behind the destination's name, so it makes the same location claim and
+          must not show an unverified photograph. Also the reason this can't stay
+          a raw next/image: Colombo now has no image at all, and an empty src
+          throws at render.
+        */}
+        <Img
+          asset={destinationAsset(d)}
           sizes="100vw"
-          className="object-cover opacity-45"
+          priority
+          requireVerifiedLocation
+          fallbackTone="deep"
+          fallbackPattern="contour"
+          className="opacity-45"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-deep/60 via-deep/40 to-deep" />
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">

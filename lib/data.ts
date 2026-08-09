@@ -75,6 +75,12 @@ type TourRow = {
   price_from: number | null; image: string | null; excerpt: string | null;
   highlights: string[] | null; includes: string[] | null;
   itinerary: Tour["itinerary"] | null; featured: boolean;
+  /**
+   * Optional. No such column exists yet — `select("*")` simply omits it, which
+   * yields undefined and an empty link list. Adding a `destination_slugs jsonb`
+   * column later starts populating this with no code change here.
+   */
+  destination_slugs?: string[] | null;
 };
 
 const mapTour = (r: TourRow): Tour => ({
@@ -89,6 +95,7 @@ const mapTour = (r: TourRow): Tour => ({
   includes: r.includes ?? [],
   itinerary: r.itinerary ?? undefined,
   featured: r.featured,
+  destinationSlugs: r.destination_slugs ?? [],
 });
 
 export const getTours = cache(() =>
@@ -236,6 +243,39 @@ export type SiteSettings = {
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string;
+
+  /* ---- Homepage hero (editable in Admin → Settings) ----
+     Brand messaging can be refined without touching component code.
+     Every one of these has a hard-coded default below, so a missing row or an
+     unreachable backend still renders the approved hero rather than an empty band. */
+  heroHeadline: string;
+  heroSubcopy: string;
+  heroCtaPrimaryLabel: string;
+  heroCtaPrimaryHref: string;
+  heroCtaSecondaryLabel: string;
+  heroCtaSecondaryHref: string;
+  /** Empty until a poster is verified — hero renders the gradient treatment. */
+  heroPosterUrl: string;
+  heroPosterAlt: string;
+  /** Empty by decision. Populate to enable the cinematic video hero. */
+  heroVideoUrl: string;
+  /** Empty by decision — mobile uses the poster only. */
+  heroVideoMobileUrl: string;
+
+  /* ---- Featured journey (homepage §07) — one curated journey, no carousel ---- */
+  featuredJourneySlug: string;
+  featuredJourneyNote: string;
+  featuredJourneyImage1: string;
+  featuredJourneyImage2: string;
+  featuredJourneyImage3: string;
+
+  /* ---- Featured chauffeur-guide (homepage §06) ----
+     Empty by default. Nothing is invented: with no guide configured the section
+     renders the Why Island Route argument alone. */
+  featuredGuideName: string;
+  featuredGuideRole: string;
+  featuredGuideNote: string;
+  featuredGuideImage: string;
 };
 
 const defaultSettings: SiteSettings = {
@@ -251,6 +291,35 @@ const defaultSettings: SiteSettings = {
     "Private chauffeur-driven tours, airport transfers and tailor-made itineraries across Sri Lanka. Trusted local drivers, direct booking, 24/7 WhatsApp.",
   seoKeywords:
     "Sri Lanka tours, Sri Lanka private driver, Colombo airport transfer, Yala safari",
+
+  // Approved brand copy. These ship whenever the CMS says nothing.
+  heroHeadline: "Sri Lanka, Unscripted.",
+  heroSubcopy:
+    "Private journeys through an island of wild landscapes, living culture and extraordinary encounters.",
+  heroCtaPrimaryLabel: "Plan Your Journey",
+  heroCtaPrimaryHref: "/book",
+  heroCtaSecondaryLabel: "Explore Sri Lanka",
+  heroCtaSecondaryHref: "#explore",
+  // Intentionally empty: no hero poster has been verified yet, and no
+  // unverified image ships as production content.
+  heroPosterUrl: "",
+  heroPosterAlt: "",
+  // Intentionally empty: no stock hero video, by decision.
+  heroVideoUrl: "",
+  heroVideoMobileUrl: "",
+
+  // Empty → §07 falls back to the first featured tour.
+  featuredJourneySlug: "",
+  featuredJourneyNote: "",
+  featuredJourneyImage1: "",
+  featuredJourneyImage2: "",
+  featuredJourneyImage3: "",
+
+  // Empty → §06 renders without a guide. Nothing invented.
+  featuredGuideName: "",
+  featuredGuideRole: "",
+  featuredGuideNote: "",
+  featuredGuideImage: "",
 };
 
 const settingsKeyMap: Record<string, keyof SiteSettings> = {
@@ -264,6 +333,28 @@ const settingsKeyMap: Record<string, keyof SiteSettings> = {
   seo_title: "seoTitle",
   seo_description: "seoDescription",
   seo_keywords: "seoKeywords",
+
+  hero_headline: "heroHeadline",
+  hero_subcopy: "heroSubcopy",
+  hero_cta_primary_label: "heroCtaPrimaryLabel",
+  hero_cta_primary_href: "heroCtaPrimaryHref",
+  hero_cta_secondary_label: "heroCtaSecondaryLabel",
+  hero_cta_secondary_href: "heroCtaSecondaryHref",
+  hero_poster_url: "heroPosterUrl",
+  hero_poster_alt: "heroPosterAlt",
+  hero_video_url: "heroVideoUrl",
+  hero_video_mobile_url: "heroVideoMobileUrl",
+
+  featured_journey_slug: "featuredJourneySlug",
+  featured_journey_note: "featuredJourneyNote",
+  featured_journey_image_1: "featuredJourneyImage1",
+  featured_journey_image_2: "featuredJourneyImage2",
+  featured_journey_image_3: "featuredJourneyImage3",
+
+  featured_guide_name: "featuredGuideName",
+  featured_guide_role: "featuredGuideRole",
+  featured_guide_note: "featuredGuideNote",
+  featured_guide_image: "featuredGuideImage",
 };
 
 /**

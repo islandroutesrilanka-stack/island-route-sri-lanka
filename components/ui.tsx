@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star, ArrowRight } from "lucide-react";
 import { Reveal } from "./motion";
+import Img from "./media/Img";
+import { destinationAsset } from "@/lib/media/registry";
 import type { Tour } from "@/lib/tours";
 import type { Destination } from "@/lib/destinations";
 import type { Review } from "@/lib/content";
@@ -50,35 +52,80 @@ export function SectionHeading({
 
 /* --------------------------------- Tour card --------------------------------- */
 
-export function TourCard({ tour, index = 0 }: { tour: Tour; index?: number }) {
+/**
+ * Tour card.
+ *
+ * `variant="feature"` is the same component at editorial scale — a wider crop,
+ * larger type and the excerpt shown. It exists so a tour grid can have a
+ * hierarchy (one lead journey, several supporting) instead of four identical
+ * tiles, without a second component to keep in sync.
+ */
+export function TourCard({
+  tour,
+  index = 0,
+  variant = "default",
+  dark = false,
+}: {
+  tour: Tour;
+  index?: number;
+  variant?: "default" | "feature";
+  /** Set on dark-ground sections — the caption below the card sits on the
+   *  section background, not the image, so it needs the inverse colour. */
+  dark?: boolean;
+}) {
+  const feature = variant === "feature";
+
   return (
     <Reveal index={index}>
       <Link href={`/tours/${tour.slug}`} className="group block">
-        <div className="img-frame aspect-[4/5]">
+        <div
+          className={`img-frame ${
+            feature ? "aspect-[4/5] md:aspect-[16/11]" : "aspect-[4/5]"
+          }`}
+        >
           <Image
             src={tour.image}
             alt={tour.title}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes={
+              feature
+                ? "(max-width: 768px) 100vw, 58vw"
+                : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            }
             className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/45 to-transparent" />
           <span className="absolute left-4 top-4 bg-sand/90 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-ink">
             {tour.category}
           </span>
-          <div className="absolute inset-x-0 bottom-0 p-5">
+          <div className={`absolute inset-x-0 bottom-0 ${feature ? "p-6 md:p-9" : "p-5"}`}>
             <p className="text-[11px] uppercase tracking-[0.18em] text-sand/80">
               {tour.duration}
             </p>
-            <h3 className="font-display text-2xl text-sand mt-1 leading-snug">
+            <h3
+              className={`font-display text-sand mt-1 leading-snug ${
+                feature ? "text-3xl md:text-5xl" : "text-2xl"
+              }`}
+            >
               {tour.title}
             </h3>
-            <p className="mt-2 text-sm text-sand/80">
+            {feature && (
+              <p className="mt-4 hidden max-w-lg text-[15px] leading-relaxed text-sand/75 md:block">
+                {tour.excerpt}
+              </p>
+            )}
+            <p className={`text-sand/80 ${feature ? "mt-4 text-[15px]" : "mt-2 text-sm"}`}>
               From <span className="text-copper-light font-semibold">${tour.priceFrom}</span> per person
             </p>
           </div>
         </div>
-        <p className="mt-3 flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] text-ink/70 group-hover:text-copper-deep transition-colors">
+        <p
+          className={`mt-3 flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] transition-colors ${
+            dark
+              ? "text-sand/70 group-hover:text-copper-light"
+              : "text-ink/70 group-hover:text-copper-deep"
+          }`}
+        >
           View journey <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
         </p>
       </Link>
@@ -99,12 +146,20 @@ export function DestinationCard({
     <Reveal index={index}>
       <Link href={`/destinations/${d.slug}`} className="group block">
         <div className="img-frame aspect-[3/4]">
-          <Image
-            src={d.image}
-            alt={d.name}
-            fill
+          {/*
+            Routed through <Img> with requireVerifiedLocation rather than raw
+            next/image. This card captions its picture with a place name, which
+            makes it a location claim — so an unverified photograph must not
+            appear here. Blocked slots fall back to the contour treatment and
+            keep the name and region in type.
+          */}
+          <Img
+            asset={destinationAsset(d)}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-105"
+            requireVerifiedLocation
+            fallbackTone="moss"
+            fallbackPattern="contour"
+            className="transition-transform duration-[1.4s] ease-out group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/35 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-4">

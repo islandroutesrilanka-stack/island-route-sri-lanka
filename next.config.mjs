@@ -9,10 +9,17 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
     // Optimised images stay cached for 31 days
     minimumCacheTTL: 2678400,
+    /*
+     * Every image host must be listed here. next/image returns a 400 for any
+     * hostname that isn't — and the image silently disappears rather than
+     * erroring, which makes it an easy fault to ship. Supabase Storage is
+     * listed ahead of need so uploading original photography can never break
+     * images the day it happens.
+     */
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
-      // Add your own image host here when you move off Unsplash, e.g.
-      // { protocol: "https", hostname: "YOUR-PROJECT.supabase.co" },
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
   async headers() {

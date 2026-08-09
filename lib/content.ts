@@ -27,7 +27,10 @@ export const services: Service[] = [
     tagline: "Land softly. We're already waiting.",
     description:
       "Meet-and-greet at Bandaranaike International with a name board, cold water and air-conditioned comfort. Fixed prices, flight tracking, and a driver who knows exactly where your hotel is — day or night.",
-    image: img.cityLights,
+    /* Retired: previously `cityLights`, a generic night cityscape identified
+       in the media audit as not Sri Lanka. Left empty rather than swapped for
+       another unverified image — the slot renders the gradient treatment. */
+    image: "",
     icon: "plane",
   },
   {
@@ -176,7 +179,10 @@ export const fleet: Vehicle[] = [
       "Experienced long-route drivers",
     ],
     idealFor: "Wedding parties, retreats and larger tour groups.",
-    image: img.cityLights,
+    /* Retired: previously `cityLights`, a generic night cityscape identified
+       in the media audit as not Sri Lanka. Left empty rather than swapped for
+       another unverified image — the slot renders the gradient treatment. */
+    image: "",
   },
   {
     slug: "safari-jeep",
