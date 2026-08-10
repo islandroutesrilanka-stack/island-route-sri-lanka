@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader, CTABand } from "@/components/ui";
+import EmptyState from "@/components/patterns/EmptyState";
 import GalleryGrid from "@/components/GalleryGrid";
 import { getGallery } from "@/lib/data";
 import { img } from "@/lib/images";
@@ -23,11 +24,25 @@ export default async function GalleryPage() {
         intro="A few of the moments waiting on the road ahead."
         image={img.beachSunset}
       />
-      <section className="py-16 md:py-24">
-        <div className="mx-auto max-w-wrap px-5 md:px-8">
-          <GalleryGrid gallery={gallery} />
-        </div>
-      </section>
+      {gallery.length === 0 && (
+        <section className="py-16 md:py-24">
+          <div className="mx-auto max-w-wrap px-5 md:px-8">
+            <EmptyState
+              eyebrow="Gallery"
+              title="No photographs published yet"
+              body="There are no photographs published here at the moment."
+              action={{ label: "Plan your journey", href: "/book" }}
+            />
+          </div>
+        </section>
+      )}
+      {gallery.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className="mx-auto max-w-wrap px-5 md:px-8">
+            <GalleryGrid gallery={gallery} />
+          </div>
+        </section>
+      )}
       <CTABand />
     </>
   );

@@ -3,6 +3,9 @@ import { PageHeader } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import BookingForm from "@/components/BookingForm";
 import { img } from "@/lib/images";
+import { describeFilters, parseTourFilters } from "@/lib/tour-filters";
+import { experienceCategories } from "@/lib/experiences";
+import { destinations } from "@/lib/destinations";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -36,14 +39,42 @@ const normalize: Record<string, string> = {
 export default function BookPage({
   searchParams,
 }: {
-  searchParams: { service?: string; tour?: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const defaultService = searchParams.service
-    ? normalize[searchParams.service] ?? ""
+  const one = (v: string | string[] | undefined) =>
+    (Array.isArray(v) ? v[0] : v)?.trim() || undefined;
+
+  const service = one(searchParams.service);
+  const tour = one(searchParams.tour);
+
+  // Unchanged: service normalisation and the tour prefill behave exactly as
+  // before, including the Safari / Day Tour / Multi-Day mappings.
+  const defaultService = service ? normalize[service] ?? "" : "";
+  const tourLine = tour ? `I'm interested in: ${tour}` : "";
+
+  /*
+    Planner context.
+
+    /tours forwards the filters a visitor chose (theme, duration, destination,
+    party) when it can't match a set journey. They were previously carried in
+    the URL and then dropped — the visitor arrived at a blank form having just
+    told us exactly what they wanted.
+
+    Rather than adding fields, the choices are written into the existing message
+    textarea as a readable line the visitor can edit or delete. `party` is
+    included here because it is genuinely useful context for a quote even though
+    it cannot filter the catalogue.
+  */
+  const context = describeFilters(parseTourFilters(searchParams), {
+    themeName: (slug) => experienceCategories.find((c) => c.slug === slug)?.name,
+    destinationName: (slug) => destinations.find((d) => d.slug === slug)?.name,
+  });
+
+  const contextLine = context.length
+    ? `Looking for: ${context.map((c) => `${c.label.toLowerCase()} — ${c.value}`).join("; ")}`
     : "";
-  const defaultMessage = searchParams.tour
-    ? `I'm interested in: ${searchParams.tour}`
-    : "";
+
+  const defaultMessage = [tourLine, contextLine].filter(Boolean).join("\n");
 
   return (
     <>
@@ -61,6 +92,7 @@ export default function BookPage({
               <BookingForm
                 defaultService={defaultService}
                 defaultMessage={defaultMessage}
+                defaultTourTitle={tour}
               />
             </Reveal>
           </div>

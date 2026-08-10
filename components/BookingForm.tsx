@@ -24,10 +24,21 @@ const inputCls =
 export default function BookingForm({
   defaultService,
   defaultMessage,
+  defaultTourTitle,
   kind = "booking",
 }: {
   defaultService?: string;
   defaultMessage?: string;
+  /**
+   * The tour name to store against the booking.
+   *
+   * Previously this was reverse-engineered out of `defaultMessage` by stripping
+   * a known prefix, which meant anything else added to the message leaked into
+   * a structured database column. Passing it explicitly keeps the two separate;
+   * when it is omitted the old extraction still runs, so existing callers are
+   * unaffected.
+   */
+  defaultTourTitle?: string;
   kind?: "booking" | "inquiry";
 }) {
   const [form, setForm] = useState({
@@ -75,7 +86,9 @@ export default function BookingForm({
               email: form.email,
               phone: form.phone,
               service: form.service,
-              tourTitle: defaultMessage?.replace(/^I'm interested in: /, ""),
+              tourTitle:
+                defaultTourTitle ??
+                defaultMessage?.replace(/^I'm interested in: /, ""),
               travelDate: form.date || undefined,
               travellers: form.travellers,
               message: form.message,

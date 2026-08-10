@@ -81,6 +81,8 @@ type TourRow = {
    * column later starts populating this with no code change here.
    */
   destination_slugs?: string[] | null;
+  /** Optional, same as destination_slugs — no column exists yet. */
+  theme_slugs?: string[] | null;
 };
 
 const mapTour = (r: TourRow): Tour => ({
@@ -96,6 +98,7 @@ const mapTour = (r: TourRow): Tour => ({
   itinerary: r.itinerary ?? undefined,
   featured: r.featured,
   destinationSlugs: r.destination_slugs ?? [],
+  themeSlugs: r.theme_slugs ?? [],
 });
 
 export const getTours = cache(() =>

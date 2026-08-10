@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader, DestinationCard, CTABand } from "@/components/ui";
+import EmptyState from "@/components/patterns/EmptyState";
 import { getDestinations } from "@/lib/data";
+import { getRegion } from "@/lib/regions";
 import { clampDesc } from "@/lib/seo";
 import { img } from "@/lib/images";
 
@@ -31,8 +34,33 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function DestinationsPage() {
-  const destinations = await getDestinations();
+export default async function DestinationsPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
+  const all = await getDestinations();
+
+  /*
+    ?region= is emitted by the homepage island map, the homepage region index
+    and the region links inside this page's own copy. It was previously ignored,
+    so all seven regions landed on the same unfiltered grid.
+
+    Matching is by region slug via lib/regions.ts rather than by comparing the
+    destination's region *name*, so a wording change to a region label can't
+    quietly break the filter.
+  */
+  const raw = searchParams.region;
+  const regionSlug = (Array.isArray(raw) ? raw[0] : raw)?.trim() || undefined;
+  const region = regionSlug ? getRegion(regionSlug) : undefined;
+
+  const destinations = region
+    ? all.filter((d) => region.destinationSlugs.includes(d.slug))
+    : all;
+
+  // An unrecognised slug is treated as no filter rather than an empty page.
+  const filtering = Boolean(region);
+
   return (
     <>
       {/*
@@ -47,15 +75,70 @@ export default async function DestinationsPage() {
         intro="Few places on Earth pack this much variety into a drivable week — golden coasts, cloud forests, ancient citadels and big-cat country."
         image={img.mistyHills}
       />
+      {/* Region filter summary — only rendered when a region is applied, so the
+          unfiltered page looks exactly as it did. */}
+      {filtering && region && (
+        <section className="border-b border-ink/10 py-6">
+          <div className="mx-auto flex max-w-wrap flex-wrap items-center gap-x-5 gap-y-3 px-5 md:px-8">
+            <p className="text-[12px] uppercase tracking-[0.16em] text-ink/65">
+              {destinations.length}{" "}
+              {destinations.length === 1 ? "destination" : "destinations"}
+            </p>
+            <span className="border border-copper/30 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-copper-deep">
+              Region: {region.name}
+            </span>
+            <Link
+              href="/destinations"
+              className="link-line ml-auto text-[12px] uppercase tracking-[0.16em] text-copper-deep"
+            >
+              All destinations
+            </Link>
+          </div>
+        </section>
+      )}
+
       <section className="py-16 md:py-24" aria-labelledby="all-destinations">
         <h2 id="all-destinations" className="sr-only">
-          All destinations
+          {region ? `Destinations in ${region.name}` : "All destinations"}
         </h2>
-        <div className="mx-auto max-w-wrap px-5 md:px-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-          {destinations.map((d, i) => (
-            <DestinationCard key={d.slug} d={d} index={i % 3} />
-          ))}
-        </div>
+        {destinations.length === 0 ? (
+          <div className="mx-auto max-w-wrap px-5 md:px-8">
+            <EmptyState
+              eyebrow={region ? region.name : "Destinations"}
+              title={
+                region
+                  ? `We haven't published a ${region.name} guide yet`
+                  : "Our destination guides are being updated"
+              }
+              /*
+                Neutral by necessity: this renders for regions with no published
+                destinations — currently The North — and we cannot assert what
+                is or isn't operated there. It states only what is verifiable
+                from the site itself: nothing is published yet, and you can ask.
+              */
+              body={
+                region
+                  ? "There are no published guides for this region yet. If you're considering it, ask us and we'll tell you what's possible."
+                  : "Nothing is listed here just now. Tell us where you'd like to go and we'll take it from there."
+              }
+              action={{ label: "Ask us about this region", href: "/book" }}
+            >
+              <p className="mt-6 text-[13px] text-ink/60">
+                Or{" "}
+                <Link href="/destinations" className="link-line text-copper-deep">
+                  see every destination
+                </Link>
+                .
+              </p>
+            </EmptyState>
+          </div>
+        ) : (
+          <div className="mx-auto max-w-wrap px-5 md:px-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+            {destinations.map((d, i) => (
+              <DestinationCard key={d.slug} d={d} index={i % 3} />
+            ))}
+          </div>
+        )}
       </section>
       <CTABand
         title="Can't choose? You don't have to."

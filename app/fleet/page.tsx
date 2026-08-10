@@ -4,6 +4,7 @@ import { fromCmsUrl } from "@/lib/media/registry";
 import Link from "next/link";
 import { Users, Briefcase, Check } from "lucide-react";
 import { PageHeader, CTABand } from "@/components/ui";
+import EmptyState from "@/components/patterns/EmptyState";
 import { Reveal } from "@/components/motion";
 import { getFleet } from "@/lib/data";
 import { img } from "@/lib/images";
@@ -28,54 +29,68 @@ export default async function FleetPage() {
         image={img.drivingWheel}
       />
 
-      <section className="py-16 md:py-24">
-        <div className="mx-auto max-w-wrap px-5 md:px-8 space-y-14">
-          {fleet.map((v, i) => (
-            <Reveal key={v.slug}>
-              <div className="grid gap-0 md:grid-cols-12 border border-ink/10 bg-white/50 overflow-hidden">
-                <div className={`img-frame aspect-[16/10] md:aspect-auto md:min-h-[22rem] md:col-span-5 ${i % 2 ? "md:order-2" : ""}`}>
-                  {/* Via <Img> so a retired or absent image degrades to the
-                      gradient treatment instead of throwing on an empty src.
-                      No verification gate: a vehicle makes no place claim. */}
-                  <Img
-                    asset={fromCmsUrl(v.image, v.name)}
-                    sizes="(max-width:768px) 100vw, 42vw"
-                    fallbackTone="moss"
-                  />
-                </div>
-                <div className="md:col-span-7 p-7 md:p-10">
-                  <p className="eyebrow text-copper-deep">{v.category}</p>
-                  <h2 className="h-display text-3xl md:text-4xl text-ink mt-2">
-                    {v.name}
-                  </h2>
-                  <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink/70">
-                    <span className="inline-flex items-center gap-2">
-                      <Users size={15} className="text-copper-deep" /> Up to {v.passengers} guests
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <Briefcase size={15} className="text-copper-deep" /> {v.luggage}
-                    </span>
+      {fleet.length === 0 && (
+        <section className="py-16 md:py-24">
+          <div className="mx-auto max-w-wrap px-5 md:px-8">
+            <EmptyState
+              eyebrow="The fleet"
+              title="Fleet details are being updated"
+              body="Vehicle listings aren't live at the moment. Tell us your group size and route and we'll confirm exactly what you'll travel in."
+              action={{ label: "Plan your journey", href: "/book" }}
+            />
+          </div>
+        </section>
+      )}
+      {fleet.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className="mx-auto max-w-wrap px-5 md:px-8 space-y-14">
+            {fleet.map((v, i) => (
+              <Reveal key={v.slug}>
+                <div className="grid gap-0 md:grid-cols-12 border border-ink/10 bg-white/50 overflow-hidden">
+                  <div className={`img-frame aspect-[16/10] md:aspect-auto md:min-h-[22rem] md:col-span-5 ${i % 2 ? "md:order-2" : ""}`}>
+                    {/* Via <Img> so a retired or absent image degrades to the
+                        gradient treatment instead of throwing on an empty src.
+                        No verification gate: a vehicle makes no place claim. */}
+                    <Img
+                      asset={fromCmsUrl(v.image, v.name)}
+                      sizes="(max-width:768px) 100vw, 42vw"
+                      fallbackTone="moss"
+                    />
                   </div>
-                  <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
-                    {v.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-sm text-ink/70">
-                        <Check size={15} className="mt-0.5 shrink-0 text-copper-deep" /> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-5 text-sm text-ink/70 italic">{v.idealFor}</p>
-                  <Link
-                    href={`/book?service=${encodeURIComponent("Private Driver Hire")}&tour=${encodeURIComponent(v.name)}`}
-                    className="mt-7 inline-block bg-ink text-sand px-7 py-3.5 text-[12px] uppercase tracking-[0.16em] hover:bg-copper-deep transition-colors"
-                  >
-                    Book this vehicle
-                  </Link>
+                  <div className="md:col-span-7 p-7 md:p-10">
+                    <p className="eyebrow text-copper-deep">{v.category}</p>
+                    <h2 className="h-display text-3xl md:text-4xl text-ink mt-2">
+                      {v.name}
+                    </h2>
+                    <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink/70">
+                      <span className="inline-flex items-center gap-2">
+                        <Users size={15} className="text-copper-deep" /> Up to {v.passengers} guests
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <Briefcase size={15} className="text-copper-deep" /> {v.luggage}
+                      </span>
+                    </div>
+                    <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                      {v.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-sm text-ink/70">
+                          <Check size={15} className="mt-0.5 shrink-0 text-copper-deep" /> {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-5 text-sm text-ink/70 italic">{v.idealFor}</p>
+                    <Link
+                      href={`/book?service=${encodeURIComponent("Private Driver Hire")}&tour=${encodeURIComponent(v.name)}`}
+                      className="mt-7 inline-block bg-ink text-sand px-7 py-3.5 text-[12px] uppercase tracking-[0.16em] hover:bg-copper-deep transition-colors"
+                    >
+                      Book this vehicle
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      )}
 
       <CTABand
         title="Not sure which vehicle fits?"

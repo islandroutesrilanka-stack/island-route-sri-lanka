@@ -24,6 +24,13 @@ export type Tour = {
    * mention in prose.
    */
   destinationSlugs?: string[];
+  /**
+   * Experience categories this journey genuinely covers, by slug from
+   * lib/experiences.ts. Populated only from the tour's own itinerary and
+   * highlights — never from an incidental word in the excerpt, for the same
+   * reason destinationSlugs is explicit.
+   */
+  themeSlugs?: string[];
 };
 
 export const tours: Tour[] = [
@@ -31,6 +38,7 @@ export const tours: Tour[] = [
   {
     slug: "essential-sri-lanka-7-days",
     destinationSlugs: ["sigiriya", "kandy", "ella", "yala", "galle"],
+    themeSlugs: ["culture-heritage", "wildlife", "slow-travel"],
     title: "Essential Sri Lanka",
     category: "Multi-Day",
     duration: "7 days · 6 nights",
@@ -66,6 +74,7 @@ export const tours: Tour[] = [
   {
     slug: "grand-island-circuit-14-days",
     destinationSlugs: ["sigiriya", "kandy", "nuwara-eliya", "ella", "yala", "mirissa", "galle"],
+    themeSlugs: ["culture-heritage", "wildlife", "tea-country", "beaches"],
     title: "Grand Island Circuit",
     category: "Multi-Day",
     duration: "14 days · 13 nights",
@@ -102,6 +111,7 @@ export const tours: Tour[] = [
   {
     slug: "hill-country-tea-trails-5-days",
     destinationSlugs: ["colombo", "kandy", "nuwara-eliya", "ella"],
+    themeSlugs: ["tea-country", "nature", "slow-travel"],
     title: "Hill Country & Tea Trails",
     category: "Multi-Day",
     duration: "5 days · 4 nights",
@@ -132,6 +142,7 @@ export const tours: Tour[] = [
   {
     slug: "wild-coast-safari-beaches-10-days",
     destinationSlugs: ["yala", "mirissa"],
+    themeSlugs: ["wildlife", "beaches"],
     title: "Wild Coast — Safari & Beaches",
     category: "Multi-Day",
     duration: "10 days · 9 nights",
@@ -155,6 +166,7 @@ export const tours: Tour[] = [
   {
     slug: "surf-soul-east-coast-8-days",
     destinationSlugs: ["arugam-bay"],
+    themeSlugs: ["surf-ocean", "wildlife"],
     title: "Surf & Soul — East Coast",
     category: "Multi-Day",
     duration: "8 days · 7 nights",
@@ -180,6 +192,7 @@ export const tours: Tour[] = [
   {
     slug: "sigiriya-dambulla-day-tour",
     destinationSlugs: ["sigiriya"],
+    themeSlugs: ["culture-heritage"],
     title: "Sigiriya & Dambulla in a Day",
     category: "Day Tour",
     duration: "Full day · from Colombo/Kandy/Negombo",
@@ -199,6 +212,7 @@ export const tours: Tour[] = [
   {
     slug: "kandy-cultural-day-tour",
     destinationSlugs: ["kandy"],
+    themeSlugs: ["culture-heritage", "tea-country"],
     title: "Kandy — The Sacred City",
     category: "Day Tour",
     duration: "Full day · from Colombo/Negombo",
@@ -217,6 +231,7 @@ export const tours: Tour[] = [
   {
     slug: "ella-nine-arch-day-tour",
     destinationSlugs: ["ella"],
+    themeSlugs: ["nature", "slow-travel"],
     title: "Ella & the Nine Arch Bridge",
     category: "Day Tour",
     duration: "Full day · from south coast/hill country",
@@ -235,6 +250,7 @@ export const tours: Tour[] = [
   {
     slug: "galle-south-coast-day-tour",
     destinationSlugs: ["galle"],
+    themeSlugs: ["culture-heritage", "beaches"],
     title: "Galle Fort & the South Coast",
     category: "Day Tour",
     duration: "Full day · from Colombo/south coast",
@@ -255,6 +271,7 @@ export const tours: Tour[] = [
   {
     slug: "yala-leopard-safari",
     destinationSlugs: ["yala"],
+    themeSlugs: ["wildlife"],
     title: "Yala Leopard Safari",
     category: "Safari",
     duration: "Half or full day · dawn & dusk drives",
@@ -274,6 +291,7 @@ export const tours: Tour[] = [
   {
     slug: "minneriya-elephant-gathering",
     destinationSlugs: ["sigiriya"],
+    themeSlugs: ["wildlife"],
     title: "Minneriya — The Gathering",
     category: "Safari",
     duration: "Half day · afternoon drive",
@@ -292,6 +310,7 @@ export const tours: Tour[] = [
   {
     slug: "udawalawe-elephant-safari",
     destinationSlugs: [],
+    themeSlugs: ["wildlife"],
     title: "Udawalawe Elephant Safari",
     category: "Safari",
     duration: "Half day · dawn or dusk",
