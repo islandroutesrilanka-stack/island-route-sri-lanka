@@ -189,7 +189,7 @@ export default function Navbar() {
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-[12px] uppercase tracking-[0.14em] text-ink/60"
+                      className="text-[12px] uppercase tracking-[0.14em] text-ink/65"
                     >
                       {l.label}
                     </Link>

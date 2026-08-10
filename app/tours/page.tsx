@@ -102,7 +102,7 @@ export default async function ToursPage({
                 href: `/book${filtersToQuery(filters)}`,
               }}
             >
-              <p className="mt-6 text-[13px] text-ink/60">
+              <p className="mt-6 text-[13px] text-ink/65">
                 Or{" "}
                 <Link href="/tours" className="link-line text-copper-deep">
                   browse every journey

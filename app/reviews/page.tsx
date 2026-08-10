@@ -70,7 +70,7 @@ export default async function ReviewsPage() {
                   href="/book"
                   className="bg-ink text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-copper-deep transition-colors"
                 >
-                  Plan my trip
+                  Plan your journey
                 </Link>
                 <a
                   href={waLink(defaultWaMessage)}

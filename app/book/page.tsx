@@ -79,7 +79,7 @@ export default function BookPage({
   return (
     <>
       <PageHeader
-        eyebrow="Plan my trip"
+        eyebrow="Plan your journey"
         title="Tell us your dream. We'll route it."
         intro="Share a few details and we'll reply within hours with a personal quote — no deposits, no obligation, just honest island expertise."
         image={img.lakeCanoe}

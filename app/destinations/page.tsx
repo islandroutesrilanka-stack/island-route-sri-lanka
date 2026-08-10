@@ -123,7 +123,7 @@ export default async function DestinationsPage({
               }
               action={{ label: "Ask us about this region", href: "/book" }}
             >
-              <p className="mt-6 text-[13px] text-ink/60">
+              <p className="mt-6 text-[13px] text-ink/65">
                 Or{" "}
                 <Link href="/destinations" className="link-line text-copper-deep">
                   see every destination

@@ -50,7 +50,7 @@ export default function Footer() {
                 ["Reviews", "/reviews"],
                 ["Journal", "/blog"],
                 ["Contact", "/contact"],
-                ["Plan my trip", "/book"],
+                ["Plan your journey", "/book"],
               ].map(([label, href]) => (
                 <li key={href}>
                   <Link href={href} className="hover:text-copper-light transition-colors">
