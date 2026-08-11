@@ -31,7 +31,7 @@ export default function FaqPreview({ faqs = HOMEPAGE_FAQS }: { faqs?: Faq[] }) {
             The questions we get most
           </h2>
           <Link
-            href="/contact"
+            href="/book#contact"
             className="link-line mt-5 inline-block text-[13px] uppercase tracking-[0.16em] text-copper-light"
           >
             Ask us anything →

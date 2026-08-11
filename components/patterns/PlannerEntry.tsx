@@ -18,6 +18,8 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import { waLink, defaultWaMessage, site } from "@/lib/site";
 import { experienceCategories } from "@/lib/experiences";
+import { filterTours } from "@/lib/tour-filters";
+import type { Tour } from "@/lib/tours";
 
 const DURATIONS = [
   { label: "3–4 days", value: "3-4" },
@@ -70,7 +72,36 @@ function Chips({
   );
 }
 
-export default function PlannerEntry() {
+/**
+ * A chip is only offered when it actually leads somewhere.
+ *
+ * Measured against the real catalogue, two of these promised journeys that do
+ * not exist: "3–4 days" matched nothing, and so did "Wellness". The tours page
+ * handles an empty result honestly, but a chip that can never match is a
+ * control advertising a product we don't have — the visitor's first click on
+ * the homepage lands on "no set journey matches that combination".
+ *
+ * Filtering here rather than editing the lists keeps this self-correcting: add
+ * a wellness journey or a short break and the chip returns on its own. The
+ * taxonomy in lib/experiences.ts is untouched — this decides what is offered,
+ * not what exists.
+ *
+ * `party` is excluded on purpose. It never filters the catalogue (nothing in
+ * the data supports a suitability claim); it is enquiry context that is carried
+ * through to the booking form, so every option remains meaningful.
+ */
+function offered(
+  items: { label: string; value: string }[],
+  tours: Tour[],
+  key: "theme" | "duration"
+) {
+  return items.filter((i) => filterTours(tours, { [key]: i.value }).length > 0);
+}
+
+export default function PlannerEntry({ tours }: { tours: Tour[] }) {
+  const interests = offered(INTERESTS, tours, "theme");
+  const durations = offered(DURATIONS, tours, "duration");
+
   return (
     <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
       {/* ------------------------------ Ready to talk ----------------------------- */}
@@ -115,8 +146,12 @@ export default function PlannerEntry() {
             from there.
           </p>
 
-          <Chips legend="What moves you" items={INTERESTS} param="theme" />
-          <Chips legend="How long" items={DURATIONS} param="duration" />
+          {interests.length > 0 && (
+            <Chips legend="What moves you" items={interests} param="theme" />
+          )}
+          {durations.length > 0 && (
+            <Chips legend="How long" items={durations} param="duration" />
+          )}
           <Chips legend="Travelling as" items={PARTIES} param="party" />
 
           <Link

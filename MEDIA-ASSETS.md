@@ -230,10 +230,33 @@ Recorded anyway, per asset: source URL · photographer · licence · date retrie
 
 | Item | Status |
 |---|---|
-| **Hero poster chosen and verified** | ☐ **0 of 8 — blocks production hero** |
-| Location images verified | ☐ 0 of 9 |
+| **Hero poster chosen and verified** | ☐ **0 of 8 — hero still renders the contour treatment** |
+| Location images verified | ☑ **Signed off by the owner, 9 Aug 2026 — see below** |
 | Hero video approach | ☑ **Decided: none in Phase 2. Architecture video-ready.** |
 | Non-photographic treatments approved | ☐ |
+
+### Destination imagery sign-off — 9 August 2026
+
+`verifiedLocation` was set to `true` across the registry on the owner's
+instruction, releasing all destination photography to render.
+
+**Basis of the sign-off, recorded so it isn't misread later:** a blanket
+instruction from the site owner, who knows these locations. It was **not** a
+per-asset inspection, and no assistant or automated check confirmed any
+individual photograph — the image hosts were never reachable from the build
+environment, so the eight files have never been viewed here.
+
+**Two entries carry a known mislabelling risk** and are annotated in
+`lib/media/registry.ts` for a future second look:
+
+| Asset | Risk |
+|---|---|
+| `sigiriya` | Stock libraries routinely caption Pidurangala — the rock people climb *to photograph* Sigiriya — as Sigiriya itself |
+| `leopard` | African leopards dominate stock; the Sri Lankan subspecies (*Panthera pardus kotiya*) is visibly different |
+
+**To withdraw sign-off** for any asset, set its `verifiedLocation` back to
+`false`. It reverts to the gradient treatment automatically wherever a place is
+claimed — no other change required.
 
 ### 7.1 Rule in force
 

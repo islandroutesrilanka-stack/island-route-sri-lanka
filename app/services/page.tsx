@@ -36,7 +36,7 @@ export default async function ServicesPage() {
               eyebrow="What we do"
               title="Service details are being updated"
               body="Nothing is listed here just now. Whatever you need moving or arranging on the island, ask us directly."
-              action={{ label: "Talk to us", href: "/contact" }}
+              action={{ label: "Talk to us", href: "/book#contact" }}
             />
           </div>
         </section>

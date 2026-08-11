@@ -1,4 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+/*
+ * `noindex` is belt-and-braces, not the fix.
+ *
+ * The fix is the HTTP status: these responses now return a real 404 (see the
+ * note in app/tours/[slug]/layout.tsx for the route-group arrangement that
+ * makes that possible). This tag is the second line of defence — if a Suspense
+ * boundary is ever reintroduced above a dynamic segment and the status silently
+ * reverts to 200, `noindex` still keeps the error page out of the index.
+ *
+ * `follow: true` is deliberate: the page links back into the site, and there is
+ * no reason to strand a crawler that lands here.
+ */
+export const metadata: Metadata = {
+  title: "Page not found",
+  robots: { index: false, follow: true },
+};
 
 export default function NotFound() {
   return (

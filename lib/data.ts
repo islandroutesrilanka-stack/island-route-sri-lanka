@@ -85,21 +85,47 @@ type TourRow = {
   theme_slugs?: string[] | null;
 };
 
-const mapTour = (r: TourRow): Tour => ({
-  slug: r.slug,
-  title: r.title,
-  category: r.category,
-  duration: r.duration ?? "",
-  priceFrom: Number(r.price_from ?? 0),
-  image: r.image ?? "",
-  excerpt: r.excerpt ?? "",
-  highlights: r.highlights ?? [],
-  includes: r.includes ?? [],
-  itinerary: r.itinerary ?? undefined,
-  featured: r.featured,
-  destinationSlugs: r.destination_slugs ?? [],
-  themeSlugs: r.theme_slugs ?? [],
-});
+/** Seed tours by slug — the relationship fallback below needs random access. */
+const seedTourBySlug = new Map(seedTours.map((t) => [t.slug, t]));
+
+const mapTour = (r: TourRow): Tour => {
+  /*
+    Relationship fallback.
+
+    `destination_slugs` and `theme_slugs` are columns that do not exist yet, so
+    `select("*")` omits them and every tour read from Supabase arrived with an
+    empty link list. That is not a cosmetic gap: those two fields are the only
+    thing connecting a journey to a place or an experience, so with a live
+    database the destination pages showed no journeys, the ?theme= and
+    ?destination= filters matched nothing, and the /experiences axis published
+    no categories at all. The seed data was carrying the whole relationship
+    graph and the moment Supabase was configured it stopped being read.
+
+    So a row that says nothing about its relationships inherits them from the
+    seed tour of the same slug — authored content in this repo, taken from each
+    tour's own itinerary and highlights, not guessed at. `??` is deliberate: an
+    explicit `[]` from a column that DOES exist means "no links" and wins over
+    the seed. Adding the columns later therefore takes over cleanly, row by row,
+    with no code change here.
+  */
+  const seed = seedTourBySlug.get(r.slug);
+
+  return {
+    slug: r.slug,
+    title: r.title,
+    category: r.category,
+    duration: r.duration ?? "",
+    priceFrom: Number(r.price_from ?? 0),
+    image: r.image ?? "",
+    excerpt: r.excerpt ?? "",
+    highlights: r.highlights ?? [],
+    includes: r.includes ?? [],
+    itinerary: r.itinerary ?? undefined,
+    featured: r.featured,
+    destinationSlugs: r.destination_slugs ?? seed?.destinationSlugs ?? [],
+    themeSlugs: r.theme_slugs ?? seed?.themeSlugs ?? [],
+  };
+};
 
 export const getTours = cache(() =>
   fromTable<TourRow, Tour>("tours", seedTours, mapTour)
@@ -265,6 +291,25 @@ export type SiteSettings = {
   /** Empty by decision — mobile uses the poster only. */
   heroVideoMobileUrl: string;
 
+  /* ---- Hero slideshow (Admin → Settings → Homepage hero) ----
+     Stored as settings rows rather than a `hero_slides` table on purpose. The
+     data is a short, ordered, single-tenant list with no relations and no
+     independent lifecycle — a table would add a migration, RLS policies and a
+     join for something a textarea expresses perfectly.
+
+     `heroSlides` is one slide per line:
+
+         /photography/sigiriya-rock.jpg | Sigiriya rock fortress… | 50% 45%
+
+     path is required; alt and focal point are optional and fall back to the
+     registry entry for that path, so verified provenance is never bypassed by
+     typing a URL into the admin. Order in the textarea IS the running order;
+     deleting a line removes the slide. */
+  heroSlideshowEnabled: string;
+  /** Seconds per slide. Clamped when parsed — see lib/media/hero.ts. */
+  heroSlideDuration: string;
+  heroSlides: string;
+
   /* ---- Featured journey (homepage §07) — one curated journey, no carousel ---- */
   featuredJourneySlug: string;
   featuredJourneyNote: string;
@@ -303,13 +348,36 @@ const defaultSettings: SiteSettings = {
   heroCtaPrimaryHref: "/book",
   heroCtaSecondaryLabel: "Explore Sri Lanka",
   heroCtaSecondaryHref: "#explore",
-  // Intentionally empty: no hero poster has been verified yet, and no
-  // unverified image ships as production content.
-  heroPosterUrl: "",
-  heroPosterAlt: "",
+  /*
+    Sigiriya, self-hosted and individually verified — see `media.sigiriyaRock`.
+    The rock's profile and the water-garden approach path identify it from the
+    frame alone, so the hero can finally open on Sri Lanka rather than on the
+    contour treatment that stood in while nothing was verified.
+
+    Still overridable from Admin → Settings; this is only the default.
+  */
+  heroPosterUrl: "/photography/sigiriya-rock.jpg",
+  heroPosterAlt:
+    "Sigiriya rock fortress rising above the surrounding forest, Cultural Triangle, Sri Lanka",
   // Intentionally empty: no stock hero video, by decision.
   heroVideoUrl: "",
   heroVideoMobileUrl: "",
+
+  /*
+    Slideshow defaults ship ON, using only landscape photographs whose location
+    is verified in the media registry. Sigiriya is first and therefore the LCP
+    image. Kandy and Colombo are verified but portrait (2:3) and are left out —
+    a tall frame cropped to a 21:9 hero loses its subject.
+  */
+  heroSlideshowEnabled: "true",
+  heroSlideDuration: "7",
+  heroSlides: [
+    "/photography/sigiriya-rock.jpg",
+    "/photography/nine-arch-bridge-demodara.jpg",
+    "/photography/arugam-bay.jpg",
+    "/photography/mirissa-coconut-tree-hill.jpg",
+    "/photography/yala-leopard.jpg",
+  ].join("\n"),
 
   // Empty → §07 falls back to the first featured tour.
   featuredJourneySlug: "",
@@ -347,6 +415,9 @@ const settingsKeyMap: Record<string, keyof SiteSettings> = {
   hero_poster_alt: "heroPosterAlt",
   hero_video_url: "heroVideoUrl",
   hero_video_mobile_url: "heroVideoMobileUrl",
+  hero_slideshow_enabled: "heroSlideshowEnabled",
+  hero_slide_duration: "heroSlideDuration",
+  hero_slides: "heroSlides",
 
   featured_journey_slug: "featuredJourneySlug",
   featured_journey_note: "featuredJourneyNote",

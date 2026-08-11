@@ -53,6 +53,26 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
         label: "Hero video URL — mobile",
         help: "Recommended: leave blank. Phones use the image, which saves visitors a large download.",
       },
+      {
+        key: "hero_slideshow_enabled",
+        label: "Hero slideshow",
+        help: "true or false. When false the hero shows only the first slide (or the hero image above). A single slide behaves the same way — nothing animates.",
+      },
+      {
+        key: "hero_slide_duration",
+        label: "Seconds per slide",
+        help: "6–8 is comfortable. Values outside 3–20 are clamped.",
+      },
+      {
+        key: "hero_slides",
+        label: "Hero slides — one per line",
+        long: true,
+        help:
+          "Format: /photography/file.jpg | optional alt text | optional focal point such as 50% 40%. " +
+          "Order here is the order on the page; delete a line to remove that slide. " +
+          "Leave alt blank to inherit the verified description already recorded for that image. " +
+          "Only use photographs whose location you have confirmed — a path typed here does not make an image verified.",
+      },
     ],
   },
   {
@@ -113,9 +133,24 @@ export default function SettingsPage() {
 
   const save = async () => {
     setSaving(true);
-    await sb
+    const { error } = await sb
       .from("site_settings")
       .upsert(allKeys.map((key) => ({ key, value: values[key] ?? "" })));
+
+    /*
+      Public pages revalidate every 60s, which is too slow to feel like the
+      change took. Ask the server to purge now.
+
+      Deliberately fire-and-forget, and deliberately after the write: the save
+      is what the editor cares about, and a failed cache purge only means the
+      change appears within the normal minute. Reporting a successful save as
+      failed because a purge 404'd would be a worse lie than a slightly stale
+      page. Authorisation happens server-side in /api/revalidate.
+    */
+    if (!error) {
+      void fetch("/api/revalidate", { method: "POST" }).catch(() => {});
+    }
+
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);

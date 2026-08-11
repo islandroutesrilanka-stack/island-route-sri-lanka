@@ -31,7 +31,7 @@ export default function FleetStrip({ fleet }: { fleet: Vehicle[] }) {
           </p>
         </div>
         <Link
-          href="/fleet"
+          href="/about#fleet"
           className="link-line text-[13px] uppercase tracking-[0.16em] text-copper-light"
         >
           See the fleet <ArrowRight size={14} className="inline" />

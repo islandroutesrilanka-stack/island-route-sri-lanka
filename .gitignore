@@ -13,3 +13,11 @@ Thumbs.db
 # Bundle analyzer output
 .next/analyze
 analyze
+
+# Generated QA output (scripts/qa-site.mjs)
+qa-results.json
+qa-results.md
+
+# Source photographs (working originals, 2-15MB each).
+# Optimised, web-ready derivatives live in public/photography/ and ARE committed.
+photo-candidates/

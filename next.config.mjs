@@ -22,6 +22,28 @@ const nextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
+  /*
+   * Consolidation redirects (permanent = 308, the modern method-preserving
+   * equivalent of a 301 — Google treats both as a permanent move and passes
+   * ranking signals through either way).
+   *
+   * These run before the filesystem router, so they fire regardless of whether
+   * the old route files still exist. Every internal link has been repointed at
+   * the new targets, so no visitor should ever take one of these hops — they
+   * exist for external backlinks, bookmarks and the crawl backlog.
+   *
+   * Note on the fragments: a redirect can carry `#fleet` to the browser, but
+   * fragments never reach the server, so Googlebot indexes /about and finds
+   * the merged content there. That is the intended outcome — the fragment is
+   * a courtesy to humans, not the SEO mechanism.
+   */
+  async redirects() {
+    return [
+      { source: "/contact", destination: "/book", permanent: true },
+      { source: "/fleet", destination: "/about#fleet", permanent: true },
+      { source: "/reviews", destination: "/about#reviews", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

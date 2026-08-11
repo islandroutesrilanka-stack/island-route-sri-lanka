@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { PageHeader } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import BookingForm from "@/components/BookingForm";
@@ -6,14 +7,58 @@ import { img } from "@/lib/images";
 import { describeFilters, parseTourFilters } from "@/lib/tour-filters";
 import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
-import { site } from "@/lib/site";
+import { site, waLink, defaultWaMessage } from "@/lib/site";
 
+/*
+  /contact was merged into this page and now 301s here (see next.config.mjs).
+  The metadata absorbs the contact intent so the redirect lands on a page that
+  actually answers "how do I reach these people" — otherwise the redirect
+  target reads as a mismatch to both visitors and crawlers.
+*/
 export const metadata: Metadata = {
-  title: "Plan My Trip",
+  title: "Plan Your Journey & Contact Us",
   description:
-    "Request a personal quote for tours, transfers, safaris and tailor-made Sri Lanka itineraries. We reply within hours on WhatsApp or email.",
+    "Request a personal quote for tours, transfers, safaris and tailor-made Sri Lanka itineraries — or reach us direct on WhatsApp, phone or email, 24/7.",
   alternates: { canonical: "/book" },
 };
+
+/* Kept from the old /contact page — the merge changed the location, not the
+   facts. The map iframe was deliberately left behind: a third-party embed on
+   the primary conversion page is a real cost, and the address plus a link to
+   Google Maps carries the same information for free. */
+const contactChannels: {
+  icon: typeof Phone;
+  label: string;
+  value: string;
+  href?: string;
+  external?: boolean;
+}[] = [
+  {
+    icon: Phone,
+    label: "Phone & WhatsApp",
+    value: site.phoneDisplay,
+    href: waLink(defaultWaMessage),
+    external: true,
+  },
+  {
+    icon: Mail,
+    label: "Email",
+    value: site.email,
+    href: `mailto:${site.email}`,
+  },
+  {
+    icon: MapPin,
+    label: "Base",
+    value: `${site.address} — serving the entire island`,
+    href: "https://www.google.com/maps/search/?api=1&query=Colombo%2C+Sri+Lanka",
+    external: true,
+  },
+  {
+    icon: Clock,
+    label: "Hours",
+    value: "24/7 — flights land at all hours, so do we",
+  },
+];
 
 const normalize: Record<string, string> = {
   "Day Tour": "Day Tour",
@@ -116,17 +161,42 @@ export default function BookPage({
                   </li>
                 ))}
               </ol>
-              <div className="mt-8 border-t border-ink/10 pt-6 text-sm text-ink/70">
-                <p>
-                  Prefer to talk now? WhatsApp{" "}
-                  <a
-                    href={`https://wa.me/${site.whatsappNumber}`}
-                    className="text-copper-deep underline"
-                  >
-                    {site.phoneDisplay}
-                  </a>{" "}
-                  — we&apos;re online around the clock.
-                </p>
+            </Reveal>
+
+            <Reveal
+              index={1}
+              id="contact"
+              className="mt-6 scroll-mt-24 border border-ink/10 bg-white/60 p-7 md:p-9"
+            >
+              <p className="eyebrow text-copper-deep">Or reach us directly</p>
+              <p className="mt-4 text-sm leading-relaxed text-ink/70">
+                No form required. Message us and a real person replies — usually
+                within the hour.
+              </p>
+              <div className="mt-7 space-y-5">
+                {contactChannels.map((c) => (
+                  <div key={c.label} className="flex gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper-deep">
+                      <c.icon size={18} strokeWidth={1.8} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="eyebrow text-ink/65">{c.label}</p>
+                      {c.href ? (
+                        <a
+                          href={c.href}
+                          {...(c.external
+                            ? { target: "_blank", rel: "noopener noreferrer" }
+                            : {})}
+                          className="mt-1 block break-words text-[15px] text-ink transition-colors hover:text-copper-deep"
+                        >
+                          {c.value}
+                        </a>
+                      ) : (
+                        <p className="mt-1 text-[15px] text-ink/80">{c.value}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </Reveal>
           </aside>

@@ -13,7 +13,7 @@
  */
 import type { SiteSettings } from "@/lib/data";
 import type { MediaAsset, VideoAsset, VideoSource } from "./types";
-import { fromCmsUrl } from "./registry";
+import { fromCmsUrl, assetBySrc } from "./registry";
 
 export type HeroContent = {
   headline: string;
@@ -21,7 +21,71 @@ export type HeroContent = {
   ctaPrimary: { label: string; href: string };
   ctaSecondary: { label: string; href: string };
   video: VideoAsset;
+  /**
+   * Ordered hero photographs. Always at least one entry when a poster or any
+   * valid slide exists; empty only when nothing is configured, in which case
+   * the hero falls back to its non-photographic treatment.
+   */
+  slides: MediaAsset[];
+  slideshow: { enabled: boolean; durationMs: number };
 };
+
+/** Seconds per slide. Anything outside this is a typo, not an intention. */
+const MIN_SECONDS = 3;
+const MAX_SECONDS = 20;
+const DEFAULT_SECONDS = 7;
+
+/**
+ * Parse the `hero_slides` setting: one slide per line,
+ *
+ *     /photography/file.jpg | optional alt | optional focal point
+ *
+ * Resolution order for each path matters. The registry is consulted FIRST, so a
+ * slide inherits the alt text, focal point and — critically — the provenance
+ * already recorded for that image. Only an unregistered path falls through to
+ * `fromCmsUrl`, which marks it `kind: "cms"` and unverified.
+ *
+ * That ordering is the whole safety property: typing a path into the admin can
+ * never promote an image to verified, and can never attach a `depicts` claim
+ * that nobody made. An admin-supplied alt overrides the registry's wording
+ * (useful, harmless); an admin-supplied path does not override its provenance.
+ *
+ * Malformed lines are skipped rather than thrown, because a stray character in
+ * a settings textarea must never take the homepage down.
+ */
+function parseSlides(raw: string): MediaAsset[] {
+  const out: MediaAsset[] = [];
+  const seen = new Set<string>();
+
+  for (const line of (raw ?? "").split(/\r?\n/)) {
+    const [rawPath, rawAlt, rawFocal] = line.split("|").map((p) => p.trim());
+    const path = rawPath ?? "";
+
+    // Must look like a path or absolute URL; skip comments and stray text.
+    if (!path || !(path.startsWith("/") || path.startsWith("http"))) continue;
+    if (seen.has(path)) continue; // a slide repeating itself is always a mistake
+    seen.add(path);
+
+    const known = assetBySrc(path);
+    const focal = /^\d{1,3}% \d{1,3}%$/.test(rawFocal ?? "")
+      ? (rawFocal as MediaAsset["focal"])
+      : undefined;
+
+    if (known) {
+      out.push({
+        ...known,
+        alt: rawAlt || known.alt,
+        focal: focal ?? known.focal,
+      });
+    } else {
+      const asset = fromCmsUrl(path, rawAlt || "Sri Lanka — Island Route", {
+        focal: focal ?? "50% 45%",
+      });
+      if (asset) out.push(asset);
+    }
+  }
+  return out;
+}
 
 /** Approved copy. These are the values that ship if the CMS says nothing. */
 export const HERO_DEFAULTS = {
@@ -64,6 +128,19 @@ export function resolveHero(s: SiteSettings): HeroContent {
       )
     : null;
 
+  /*
+    Slides fall back to the single poster, so every earlier behaviour still
+    holds: no slides + no poster → no photography → gradient treatment.
+  */
+  const parsed = parseSlides(s.heroSlides ?? "");
+  const slides = parsed.length > 0 ? parsed : poster ? [poster] : [];
+
+  const enabled = (s.heroSlideshowEnabled ?? "").trim().toLowerCase() !== "false";
+  const rawSeconds = Number.parseFloat((s.heroSlideDuration ?? "").trim());
+  const seconds = Number.isFinite(rawSeconds)
+    ? Math.min(MAX_SECONDS, Math.max(MIN_SECONDS, rawSeconds))
+    : DEFAULT_SECONDS;
+
   return {
     headline: (s.heroHeadline ?? "").trim() || HERO_DEFAULTS.headline,
     subcopy: (s.heroSubcopy ?? "").trim() || HERO_DEFAULTS.subcopy,
@@ -83,6 +160,13 @@ export function resolveHero(s: SiteSettings): HeroContent {
       sources: sourcesFrom(s.heroVideoUrl),
       // Empty by decision — mobile uses the poster only.
       mobileSources: sourcesFrom(s.heroVideoMobileUrl),
+    },
+    slides,
+    slideshow: {
+      // A slideshow of one is a still image; disable it rather than run a
+      // timer that cross-fades an image with itself.
+      enabled: enabled && slides.length > 1,
+      durationMs: seconds * 1000,
     },
   };
 }

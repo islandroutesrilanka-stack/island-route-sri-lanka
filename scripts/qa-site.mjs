@@ -30,7 +30,17 @@ const ROUTES = [
   "/destinations/mirissa", "/destinations/arugam-bay", "/destinations/colombo",
   "/tours", "/tours/essential-sri-lanka-7-days",
   "/blog", "/blog/when-to-visit-sri-lanka",
-  "/gallery", "/fleet", "/services", "/reviews", "/contact", "/book",
+  "/gallery", "/services", "/book",
+  "/experiences", "/experiences/wildlife", "/experiences/tea-country",
+];
+
+/* Merged away in Phase 2 — these must answer with a permanent redirect, not a
+   200 and not a 404. Checked separately because the crawler above follows
+   redirects and would report them as healthy pages. */
+const REDIRECTS = [
+  ["/contact", "/book"],
+  ["/fleet", "/about#fleet"],
+  ["/reviews", "/about#reviews"],
 ];
 
 const FILTER_ROUTES = [
@@ -179,6 +189,65 @@ async function suiteRoutes(ctx) {
   for (const r of ROUTES) {
     const { page } = await visit(ctx, r);
     await page.close();
+  }
+}
+
+/**
+ * Retired routes must answer with a permanent redirect. Uses fetch with
+ * redirect:"manual" rather than the browser, because the browser follows the
+ * hop and the resulting 200 tells us nothing about whether the redirect fired
+ * or the old page is simply still being served.
+ */
+async function suiteRedirects() {
+  for (const [from, to] of REDIRECTS) {
+    let res;
+    try {
+      res = await fetch(base + from, { redirect: "manual" });
+    } catch (e) {
+      add({ route: from, test: "permanent redirect", status: "FAIL", actual: String(e).slice(0, 160) });
+      continue;
+    }
+    const location = res.headers.get("location") ?? "";
+    const permanent = res.status === 301 || res.status === 308;
+    const lands = location === to || location.endsWith(to);
+    add({
+      route: from,
+      test: `permanent redirect → ${to}`,
+      status: permanent && lands ? "PASS" : "FAIL",
+      expected: `301/308 → ${to}`,
+      actual: `HTTP ${res.status}${location ? ` → ${location}` : " (no Location header)"}`,
+    });
+  }
+}
+
+/**
+ * A URL with no content behind it must return a real 404, not a 200 carrying
+ * the not-found page. Google treats the latter as a soft 404 and can index it.
+ */
+async function suiteNotFound() {
+  const probes = [
+    "/tours/definitely-not-a-tour",
+    "/destinations/definitely-not-a-place",
+    "/blog/definitely-not-a-post",
+    "/experiences/food",
+    "/experiences/luxury",
+    "/definitely-not-a-page",
+  ];
+  for (const p of probes) {
+    let res;
+    try {
+      res = await fetch(base + p, { redirect: "manual" });
+    } catch (e) {
+      add({ route: p, test: "true 404", status: "FAIL", actual: String(e).slice(0, 160) });
+      continue;
+    }
+    add({
+      route: p,
+      test: "true 404 (not a soft 404)",
+      status: res.status === 404 ? "PASS" : "FAIL",
+      expected: "HTTP 404",
+      actual: `HTTP ${res.status}`,
+    });
   }
 }
 
@@ -506,9 +575,28 @@ async function suiteNav(ctx) {
           expected: "link present in header", actual: "not found", severity: "P1", evidence: "" });
         continue;
       }
-      await link.click();
-      await page.waitForLoadState("domcontentloaded");
-      await page.waitForTimeout(600);
+      /*
+        Wait for the URL to change, don't sleep and hope.
+
+        The previous form was `click()` → `waitForLoadState("domcontentloaded")`
+        → `waitForTimeout(600)`. On a client-side App Router transition
+        `domcontentloaded` has already fired for the current document, so that
+        load-state wait resolves instantly and the whole assertion rests on the
+        600ms sleep. Any main-thread work that pushes the transition past 600ms
+        reads as "still on /" — a false FAIL that points at routing when nothing
+        is wrong with routing. The homepage hero now mounts additional images as
+        the slideshow advances, which is exactly the kind of work that can eat
+        that budget.
+
+        waitForURL resolves the moment the navigation actually completes and
+        throws on genuine failure, so a FAIL here now means a real one.
+      */
+      await Promise.all([
+        page.waitForURL((u) => new URL(u).pathname === t.expect, {
+          timeout: 15000,
+        }),
+        link.click(),
+      ]);
       const got = new URL(page.url()).pathname;
       add({
         route: "/", test: `nav "${t.label}" navigates`,
@@ -545,6 +633,10 @@ async function suiteNav(ctx) {
 
 async function suiteResponsive(browser) {
   const viewports = [
+    // 320 is the narrowest viewport worth supporting and the one the layout is
+    // most likely to break at: the homepage map box is max-w-[17.5rem] (280px)
+    // inside px-5 padding, which consumes the full 320 with nothing to spare.
+    { name: "mobile 320", width: 320, height: 640 },
     { name: "mobile 375", width: 375, height: 812 },
     { name: "tablet 768", width: 768, height: 1024 },
     { name: "desktop 1440", width: 1440, height: 900 },
@@ -674,6 +766,8 @@ function report() {
 
   try {
     await suiteRoutes(ctx);
+    await suiteRedirects();
+    await suiteNotFound();
     await suiteTourFilters(ctx);
     await suiteRegions(ctx);
     await suiteBook(ctx);

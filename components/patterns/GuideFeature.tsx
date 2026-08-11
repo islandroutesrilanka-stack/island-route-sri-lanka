@@ -32,7 +32,7 @@ export type FeaturedGuide = {
 const POINTS = [
   {
     title: "A guide, not a driver",
-    body: "Our chauffeur-guides are licensed guides who drive — so the commentary at a temple, the reason a road is closed and the best time to arrive all come from the same person.",
+    body: "The person at the wheel is the same person showing you around — so the story at a temple, the reason a road is closed and the best time to arrive all come from one place.",
   },
   {
     title: "The same person throughout",

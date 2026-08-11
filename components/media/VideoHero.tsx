@@ -18,7 +18,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
-import type { VideoAsset } from "@/lib/media/types";
+import type { VideoAsset, MediaAsset } from "@/lib/media/types";
 import Img from "./Img";
 import GradientPanel from "./GradientPanel";
 
@@ -62,7 +62,55 @@ function onIdle(cb: () => void): () => void {
   return () => window.clearTimeout(t);
 }
 
-export default function VideoHero({ video }: { video: VideoAsset }) {
+export default function VideoHero({
+  video,
+  slides = [],
+  slideshow = { enabled: false, durationMs: 7000 },
+}: {
+  video: VideoAsset;
+  slides?: MediaAsset[];
+  slideshow?: { enabled: boolean; durationMs: number };
+}) {
+  /* ------------------------------- Slideshow -------------------------------- */
+  /*
+    Slide 0 is rendered on the server with `priority`, so it is the LCP element
+    and it appears with JavaScript disabled. Everything below only enhances it.
+
+    `mounted` is how many slides exist in the DOM. It starts at 1 — the initial
+    HTML carries exactly one image, never five — and grows by one just ahead of
+    the active slide, so the browser fetches slide n+1 while slide n is on
+    screen instead of pulling megabytes at first paint.
+  */
+  const [active, setActive] = useState(0);
+  const [mounted, setMounted] = useState(1);
+  const [slidesPaused, setSlidesPaused] = useState(false);
+  const [still, setStill] = useState(false); // reduced motion / Save-Data
+
+  const runnable = slideshow.enabled && slides.length > 1;
+
+  useEffect(() => {
+    if (!runnable) return;
+    // A visitor who asked for less motion gets a single static photograph, not
+    // a slower slideshow: the request is about motion, not pace.
+    if (prefersReducedMotion() || !connectionAllows()) setStill(true);
+  }, [runnable]);
+
+  useEffect(() => {
+    if (!runnable || slidesPaused || still) return;
+    const id = window.setInterval(() => {
+      setActive((i) => (i + 1) % slides.length);
+    }, slideshow.durationMs);
+    return () => window.clearInterval(id);
+  }, [runnable, slidesPaused, still, slides.length, slideshow.durationMs]);
+
+  // Keep one slide ahead in the DOM so the next fade has something to fade to.
+  useEffect(() => {
+    if (!runnable || still) return;
+    setMounted((m) => Math.max(m, Math.min(slides.length, active + 2)));
+  }, [active, runnable, still, slides.length]);
+
+  const showControl = runnable && !still;
+
   const [sources, setSources] = useState<VideoAsset["sources"]>([]);
   const [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -124,19 +172,75 @@ export default function VideoHero({ video }: { video: VideoAsset }) {
           With no verified poster this is the contour treatment, which is a
           designed surface rather than a flat dark box — the failure mode the
           previous gradient had. */}
-      <div className="absolute inset-0">
-        {video.poster ? (
-          <Img
-            asset={video.poster}
-            sizes="100vw"
-            priority
-            quality={82}
-            fallbackTone="deep"
-          />
-        ) : (
+      <div className="absolute inset-0" aria-hidden="true">
+        {slides.length === 0 ? (
           <GradientPanel tone="deep" pattern="contour" className="h-full w-full" />
+        ) : (
+          slides.slice(0, mounted).map((asset, i) => {
+            const isActive = i === active;
+            return (
+              <div
+                key={asset.src}
+                className="absolute inset-0 transition-opacity ease-linear motion-reduce:transition-none"
+                style={{
+                  opacity: isActive ? 1 : 0,
+                  // Long enough to read as a dissolve rather than a cut. Kept
+                  // well inside the slide duration so no two images are ever
+                  // both half-visible for long.
+                  transitionDuration: "1600ms",
+                }}
+              >
+                <div
+                  className="h-full w-full will-change-transform"
+                  style={
+                    still
+                      ? undefined
+                      : {
+                          // Ken Burns: 1.00 → 1.04 across the slide's life,
+                          // easing out so it never looks like a zoom effect.
+                          transform: isActive ? "scale(1.04)" : "scale(1)",
+                          transition: `transform ${
+                            slideshow.durationMs + 1600
+                          }ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                        }
+                  }
+                >
+                  <Img
+                    asset={asset}
+                    sizes="100vw"
+                    priority={i === 0}
+                    quality={82}
+                    fallbackTone="deep"
+                  />
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
+
+      {/*
+        Motion runs longer than five seconds, so an accessible stop is required
+        rather than optional. It is a real <button>, so it is keyboard-reachable
+        and announced correctly; 44px, bottom-right, clear of the CTAs at
+        bottom-left. Pausing is sticky — the timer does not quietly resume.
+      */}
+      {showControl && (
+        <div className="absolute bottom-5 right-5 z-30 md:bottom-8 md:right-8">
+          <button
+            type="button"
+            onClick={() => setSlidesPaused((p) => !p)}
+            aria-label={
+              slidesPaused
+                ? "Play the hero slideshow"
+                : "Pause the hero slideshow"
+            }
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-sand/30 bg-deep/30 text-sand backdrop-blur-sm transition-colors hover:border-sand/60 hover:bg-deep/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
+          >
+            {slidesPaused ? <Play size={15} /> : <Pause size={15} />}
+          </button>
+        </div>
+      )}
 
       {/* Layer 1 — decorative video. aria-hidden: it carries no information
           that isn't already in the text layer. */}

@@ -82,7 +82,11 @@ export default async function HomePage() {
           On large screens it settles to roughly 21:9 — a film aspect — while
           never collapsing below 42rem or exceeding the viewport. */}
       <section className="relative flex min-h-[100svh] items-end overflow-hidden bg-deep lg:min-h-0 lg:h-[max(42rem,min(94svh,calc(100vw*9/21)))]">
-        <VideoHero video={hero.video} />
+        <VideoHero
+          video={hero.video}
+          slides={hero.slides}
+          slideshow={hero.slideshow}
+        />
 
         <div className="relative z-20 mx-auto w-full max-w-wrap px-5 pb-14 pt-32 sm:pb-16 sm:pt-40 md:px-8 md:pb-20">
           <HeroLine delay={0.1}>
@@ -345,7 +349,7 @@ export default async function HomePage() {
       {/* ══════════════════ 09 — PLAN YOUR JOURNEY (+ FAQ) ══════════════════ */}
       <section className="grain relative overflow-hidden bg-deep py-24 md:py-36">
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
-          <PlannerEntry />
+          <PlannerEntry tours={tours} />
           <FaqPreview />
         </div>
       </section>

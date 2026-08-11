@@ -1,15 +1,43 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import type { GalleryItem } from "@/lib/content";
 
-const cats = ["All", "Beaches", "Wildlife", "Hills", "Culture", "Surf", "Journeys"] as const;
+/**
+ * Display order for the filter bar. Not the list of buttons — the buttons are
+ * derived from the photographs actually published (see `cats` below).
+ *
+ * The category is a fixed six-option select in the admin, so the site can very
+ * plausibly be published with, say, no Surf photographs at all. A hard-coded
+ * button list then offers a filter that returns nothing, with no grid and no
+ * message: a control that does nothing, which is worse than an absent one.
+ */
+const CATEGORY_ORDER: GalleryItem["category"][] = [
+  "Beaches",
+  "Wildlife",
+  "Hills",
+  "Culture",
+  "Surf",
+  "Journeys",
+];
 
 export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
-  const [cat, setCat] = useState<(typeof cats)[number]>("All");
+  const [cat, setCat] = useState<string>("All");
+
+  /**
+   * Only categories that have at least one published photograph. Anything the
+   * data contains but the order list doesn't is appended rather than dropped,
+   * so a category added directly in the database still reaches the visitor.
+   */
+  const cats = useMemo(() => {
+    const found = new Set(gallery.map((g) => g.category));
+    const known = CATEGORY_ORDER.filter((c) => found.has(c));
+    const extra = Array.from(found).filter((c) => !CATEGORY_ORDER.includes(c));
+    return ["All", ...known, ...extra];
+  }, [gallery]);
   const [active, setActive] = useState<GalleryItem | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -33,6 +61,9 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
 
   return (
     <div>
+      {/* A single category is not a choice — the bar is omitted rather than
+          rendered with one inert alternative to "All". */}
+      {cats.length > 2 && (
       <div
         className="flex flex-wrap gap-2.5"
         role="group"
@@ -54,6 +85,7 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
           </button>
         ))}
       </div>
+      )}
 
       <motion.div layout className="mt-10 columns-2 md:columns-3 gap-4 [column-fill:_balance]">
         <AnimatePresence mode="popLayout">

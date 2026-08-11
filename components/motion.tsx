@@ -27,13 +27,17 @@ export function Reveal({
   children,
   index = 0,
   className,
+  id,
 }: {
   children: ReactNode;
   index?: number;
   className?: string;
+  /** Anchor target, for deep links such as /about#fleet. */
+  id?: string;
 }) {
   return (
     <motion.div
+      id={id}
       className={className}
       variants={fadeUp}
       custom={index}

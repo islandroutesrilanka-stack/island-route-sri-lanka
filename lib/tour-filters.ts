@@ -11,6 +11,7 @@
  * keeps working and its URL is unchanged.
  */
 import type { Tour } from "./tours";
+import { getRegion } from "./regions";
 
 export type TourFilters = {
   /** Experience category slug, e.g. "wildlife" — from ExperienceRail + planner. */
@@ -21,6 +22,18 @@ export type TourFilters = {
   destination?: string;
   /** couple | family | friends | solo — carried, not filtered. See below. */
   party?: string;
+  /**
+   * Region slug from lib/regions.ts, e.g. "hill-country".
+   *
+   * Additive: every existing parameter keeps its name and meaning, so links
+   * already in the wild (/tours?theme=wildlife&duration=8-10) are unaffected.
+   *
+   * A tour carries no region of its own, and deliberately gains none — region
+   * membership is derived by intersecting the tour's own destinationSlugs with
+   * the region's. That keeps one source of truth: move a destination between
+   * regions and every journey follows automatically.
+   */
+  region?: string;
 };
 
 /** The duration buckets the UI offers, as inclusive day ranges. */
@@ -84,6 +97,12 @@ export function filterTours(tours: Tour[], f: TourFilters): Tour[] {
   return tours.filter((t) => {
     if (f.theme && !t.themeSlugs?.includes(f.theme)) return false;
     if (f.destination && !t.destinationSlugs?.includes(f.destination)) return false;
+    if (f.region) {
+      // Unknown slug → no filter, matching how /destinations already degrades.
+      const r = getRegion(f.region);
+      if (r && !t.destinationSlugs?.some((d) => r.destinationSlugs.includes(d)))
+        return false;
+    }
     if (f.duration && !matchesDuration(t, f.duration)) return false;
     return true;
   });
@@ -91,7 +110,7 @@ export function filterTours(tours: Tour[], f: TourFilters): Tour[] {
 
 /** True when at least one filter that actually narrows the list is present. */
 export function hasActiveFilters(f: TourFilters): boolean {
-  return Boolean(f.theme || f.duration || f.destination);
+  return Boolean(f.theme || f.duration || f.destination || f.region);
 }
 
 /** Read filters off Next's searchParams, ignoring repeated/array values. */
@@ -105,6 +124,7 @@ export function parseTourFilters(
     duration: one(sp.duration),
     destination: one(sp.destination),
     party: one(sp.party),
+    region: one(sp.region),
   };
 }
 
@@ -115,6 +135,7 @@ export function filtersToQuery(f: TourFilters): string {
   if (f.duration) p.set("duration", f.duration);
   if (f.destination) p.set("destination", f.destination);
   if (f.party) p.set("party", f.party);
+  if (f.region) p.set("region", f.region);
   const s = p.toString();
   return s ? `?${s}` : "";
 }
@@ -151,6 +172,7 @@ export function describeFilters(
   lookups: {
     themeName?: (slug: string) => string | undefined;
     destinationName?: (slug: string) => string | undefined;
+    regionName?: (slug: string) => string | undefined;
   } = {}
 ): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
@@ -164,6 +186,12 @@ export function describeFilters(
     out.push({
       label: "Destination",
       value: lookups.destinationName?.(f.destination) ?? f.destination,
+    });
+  }
+  if (f.region) {
+    out.push({
+      label: "Region",
+      value: lookups.regionName?.(f.region) ?? getRegion(f.region)?.name ?? f.region,
     });
   }
   if (f.party) {

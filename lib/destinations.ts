@@ -23,7 +23,7 @@ export const destinations: Destination[] = [
     bestFor: ["History", "Sunrise climbs", "Wildlife nearby"],
     bestTime: "Year-round · driest Jan–Sep",
     highlights: ["Sigiriya Rock Fortress", "Pidurangala sunrise viewpoint", "Dambulla cave temples", "Minneriya elephant gathering"],
-    image: img.sigiriya,
+    image: "/photography/sigiriya-rock.jpg",
   },
   {
     slug: "kandy",
@@ -35,7 +35,7 @@ export const destinations: Destination[] = [
     bestFor: ["Culture", "Temples", "Gardens"],
     bestTime: "Dec–Apr · Esala Perahera in Jul/Aug",
     highlights: ["Temple of the Sacred Tooth", "Peradeniya Botanical Gardens", "Kandy Lake loop", "Highland railway departure point"],
-    image: img.templeKandy,
+    image: "/photography/kandy-tooth-relic-temple.jpg",
   },
   {
     slug: "ella",
@@ -47,7 +47,7 @@ export const destinations: Destination[] = [
     bestFor: ["Hiking", "Train rides", "Café culture"],
     bestTime: "Jan–Sep",
     highlights: ["Nine Arch Bridge", "Little Adam's Peak", "Ella Rock hike", "Rawana Falls"],
-    image: img.heroTrain,
+    image: "/photography/nine-arch-bridge-demodara.jpg",
   },
   {
     slug: "nuwara-eliya",
@@ -67,11 +67,11 @@ export const destinations: Destination[] = [
     region: "The Wild South",
     headline: "Leopard country — the island at its wildest",
     description:
-      "Yala National Park holds the densest leopard population on Earth, sharing its lagoons and rock outcrops with elephants, sloth bears, crocodiles and painted storks. Dawn drives give the best light and sightings; we arrange private jeeps only.",
+      "Yala National Park has one of the highest recorded leopard densities anywhere, sharing its lagoons and rock outcrops with elephants, sloth bears, crocodiles and painted storks. Dawn drives give the best light and sightings; we arrange private jeeps only.",
     bestFor: ["Leopards", "Photography", "Big wildlife"],
     bestTime: "Feb–Jul · park may close Sep–Oct",
     highlights: ["Private dawn game drives", "Leopard & sloth bear tracking", "Coastal dunes & lagoons", "Bundala birdlife nearby"],
-    image: img.leopard,
+    image: "/photography/yala-leopard.jpg",
   },
   {
     slug: "galle",
@@ -83,7 +83,7 @@ export const destinations: Destination[] = [
     bestFor: ["Boutique stays", "History", "Beaches nearby"],
     bestTime: "Nov–Apr",
     highlights: ["Rampart sunset walk", "Dutch-era architecture", "Unawatuna & Jungle Beach", "Koggala stilt fishermen"],
-    image: img.beachChairs,
+    image: "/photography/galle-fort-pedlar-street.jpg",
   },
   {
     slug: "mirissa",
@@ -95,7 +95,7 @@ export const destinations: Destination[] = [
     bestFor: ["Whale watching", "Beach life", "Seafood"],
     bestTime: "Nov–Apr",
     highlights: ["Blue whale excursions", "Coconut Tree Hill", "Turtle snorkelling", "Secret Beach coves"],
-    image: img.beachPalms,
+    image: "/photography/mirissa-coconut-tree-hill.jpg",
   },
   {
     slug: "arugam-bay",
@@ -107,7 +107,7 @@ export const destinations: Destination[] = [
     bestFor: ["Surfing", "Beach village vibes", "East-coast season"],
     bestTime: "May–Sep",
     highlights: ["Main Point & Whiskey Point", "Peanut Farm & Elephant Rock", "Kumana National Park", "Pottuvil lagoon safari"],
-    image: img.surfWave,
+    image: "/photography/arugam-bay.jpg",
   },
   {
     slug: "colombo",
@@ -120,13 +120,12 @@ export const destinations: Destination[] = [
     bestTime: "Year-round",
     highlights: ["Gangaramaya Temple", "Pettah markets", "Galle Face sunset", "Independence Square"],
     /*
-      Intentionally empty. This previously used `cityLights` — a generic night
-      cityscape identified in the media audit as not Sri Lanka. It has not been
-      swapped for another unverified image: an empty slot renders the contour
-      treatment, which is honest, whereas a plausible-looking wrong photograph
-      captioned "Colombo" is not.
+      Was empty after `cityLights` — a generic night cityscape — was withdrawn
+      as not Sri Lanka. Now a verified photograph: the Lotus Tower is Colombo's
+      one unmistakable landmark, so this slot no longer needs the honest-but-
+      empty contour treatment. See `media.colomboLotusTower`.
     */
-    image: "",
+    image: "/photography/colombo-lotus-tower.jpg",
   },
 ];
 

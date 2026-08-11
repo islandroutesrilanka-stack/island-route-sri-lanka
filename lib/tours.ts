@@ -43,7 +43,7 @@ export const tours: Tour[] = [
     category: "Multi-Day",
     duration: "7 days · 6 nights",
     priceFrom: 690,
-    image: img.heroTrain,
+    image: "/photography/nine-arch-bridge-demodara.jpg",
     featured: true,
     excerpt:
       "The island's greatest hits in one graceful week — ancient rock fortresses, sacred Kandy, the famous highland train, a Yala safari and a golden south-coast finale.",
@@ -279,10 +279,10 @@ export const tours: Tour[] = [
     image: img.leopard,
     featured: true,
     excerpt:
-      "The world's densest leopard population, plus elephants, sloth bears and crocodile-lined lagoons — tracked from a private 4×4 with an expert driver.",
+      "One of the highest leopard densities anywhere, plus elephants, sloth bears and crocodile-lined lagoons — tracked from a private 4×4 with an experienced driver.",
     highlights: [
       "Private jeep — never shared",
-      "Expert tracker-driver",
+      "Experienced tracker-driver",
       "Park permits arranged",
       "Best-light dawn or dusk timing",
     ],

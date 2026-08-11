@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site";
+import { publishedExperiences } from "@/lib/experiences";
 import {
   getTours,
   getDestinations,
@@ -55,17 +56,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const destStamps = timestampLookup(destRows);
   const postStamps = timestampLookup(postRows);
 
+  // Only categories with journeys behind them are routable, so the sitemap is
+  // derived from the same function the routes are — it can't advertise a URL
+  // that 404s, and it picks up a newly populated category automatically.
+  const experiences = publishedExperiences(tours);
+
+  /*
+   * /contact, /fleet and /reviews were merged away and now redirect
+   * permanently (next.config.mjs). A sitemap must only list canonical, 200-
+   * returning URLs — listing a redirect is a crawl-budget leak and a
+   * "Page with redirect" warning in Search Console — so they are gone from
+   * here. Their content lives at /book and /about.
+   */
   const staticPages: MetadataRoute.Sitemap = [
     "",
     "/tours",
     "/destinations",
+    "/experiences",
     "/services",
-    "/fleet",
     "/gallery",
-    "/reviews",
     "/blog",
     "/about",
-    "/contact",
     "/book",
   ].map((p) => entry(p, "weekly", p === "" ? 1 : 0.8));
 
@@ -76,6 +87,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...destinations.map((d) =>
       entry(`/destinations/${d.slug}`, "monthly", 0.6, destStamps.get(d.slug))
+    ),
+    // No timestamp: experience pages are assembled from the tour catalogue and
+    // have no modification date of their own. An absent signal beats a false
+    // one — the same reasoning as the note at the top of this file.
+    ...experiences.map((e) =>
+      entry(`/experiences/${e.category.slug}`, "weekly", 0.7)
     ),
     ...posts.map((p) =>
       entry(

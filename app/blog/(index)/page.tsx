@@ -34,7 +34,7 @@ export default async function BlogPage() {
               eyebrow="The journal"
               title="No stories published yet"
               body="We write these between trips. Nothing is live just now — ask us anything in the meantime and we'll answer properly."
-              action={{ label: "Ask us a question", href: "/contact" }}
+              action={{ label: "Ask us a question", href: "/book#contact" }}
             />
           </div>
         </section>
