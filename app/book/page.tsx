@@ -132,7 +132,10 @@ export default function BookPage({
 
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-wrap px-5 md:px-8 grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-7">
+          {/* min-w-0 on both columns: grid items default to min-width:auto, so
+              the long email and address in the contact card set the width of the
+              single mobile track and pushed the whole page sideways at 320px. */}
+          <div className="min-w-0 lg:col-span-7">
             <Reveal>
               <BookingForm
                 defaultService={defaultService}
@@ -141,7 +144,7 @@ export default function BookPage({
               />
             </Reveal>
           </div>
-          <aside className="lg:col-span-5">
+          <aside className="min-w-0 lg:col-span-5">
             <Reveal className="border border-ink/10 bg-white/60 p-7 md:p-9">
               <p className="eyebrow text-copper-deep">How booking works</p>
               <ol className="mt-6 space-y-6">

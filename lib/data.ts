@@ -171,15 +171,34 @@ type ServiceRow = {
   image: string | null; icon: Service["icon"] | null;
 };
 
-export const getServices = cache(() =>
-  fromTable<ServiceRow, Service>("services", seedServices, (r) => ({
-    slug: r.slug,
-    name: r.name,
-    tagline: r.tagline ?? "",
-    description: r.description ?? "",
-    image: r.image ?? "",
-    icon: r.icon ?? "car",
-  }))
+/**
+ * Services that duplicated the journey catalogue. Removed from the seed in
+ * lib/content.ts, but the live Supabase `services` table was populated from
+ * supabase/seed.sql and still holds these rows — so the seed edit alone would
+ * change nothing in production. Filtering here closes that gap from both
+ * directions and is the single place the decision lives.
+ *
+ * This is a denylist rather than a derivation because "duplicates a tour" is a
+ * judgement about the content, not a fact present in it. If the services table
+ * ever gains a published/active column, delete this and use that instead.
+ */
+const retiredServiceSlugs = new Set([
+  "day-tours",
+  "multi-day-tours",
+  "safari-tours",
+]);
+
+export const getServices = cache(async () =>
+  (
+    await fromTable<ServiceRow, Service>("services", seedServices, (r) => ({
+      slug: r.slug,
+      name: r.name,
+      tagline: r.tagline ?? "",
+      description: r.description ?? "",
+      image: r.image ?? "",
+      icon: r.icon ?? "car",
+    }))
+  ).filter((s) => !retiredServiceSlugs.has(s.slug))
 );
 
 /* ---------------------------------- Fleet ----------------------------------- */

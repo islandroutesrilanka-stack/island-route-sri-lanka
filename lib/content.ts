@@ -51,33 +51,23 @@ export const services: Service[] = [
     image: img.coastalDrive,
     icon: "car",
   },
-  {
-    slug: "day-tours",
-    name: "Day Tours",
-    tagline: "One perfect day, expertly arranged.",
-    description:
-      "Sigiriya at sunrise, Galle Fort at golden hour, Kandy's temples, Ella's bridges. Private day tours from wherever you're staying, paced entirely around you.",
-    image: img.sigiriya,
-    icon: "sun",
-  },
-  {
-    slug: "multi-day-tours",
-    name: "Multi-Day Tours",
-    tagline: "The whole island, woven into one journey.",
-    description:
-      "From five-day highlights to grand three-week circuits — beaches, tea country, ancient cities and safaris connected by one trusted driver and a route built around your interests.",
-    image: img.heroTrain,
-    icon: "map",
-  },
-  {
-    slug: "safari-tours",
-    name: "Safari Tours",
-    tagline: "Leopards, elephants and wild dawns.",
-    description:
-      "Private jeep safaris in Yala, Udawalawe, Wilpattu and Minneriya with experienced trackers. We arrange park permits, the right jeep, and the timing that gives you the best sightings.",
-    image: img.safariJeep,
-    icon: "binoculars",
-  },
+  /*
+    Day Tours, Multi-Day Tours and Safari Tours were removed here.
+
+    They were not services — they were the journey catalogue described a second
+    time, in different words, with their own CTAs. A visitor comparing
+    "Safari Tours" on /services against the actual safari journeys on /tours had
+    no way to tell which was the real product, and the duplicate copy competed
+    with /tours for the same search terms.
+
+    /services is now one thing only: how you move around the island. The
+    journeys themselves live at /tours and /experiences, and this page links
+    there. Booking a safari or a multi-day trip is still fully supported — those
+    remain enquiry types in BookingForm and are reachable from /tours.
+
+    Retired slugs are also filtered in getServices (lib/data.ts) so rows left
+    behind in the Supabase services table cannot bring them back.
+  */
   {
     slug: "surf-transfers",
     name: "Surf Transfers",
