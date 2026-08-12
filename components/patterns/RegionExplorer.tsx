@@ -241,9 +241,14 @@ export default function RegionExplorer({
               <p className="max-w-xl font-display text-xl italic leading-snug text-ink/75 md:text-2xl">
                 {region.character}
               </p>
+              {/* The Wild South and the Cultural Triangle each have exactly one
+                  published guide, so "1 guides" was on screen for two of the
+                  seven regions. Cheap to get right, and this line is now the
+                  page's primary answer to "what's in this region?". */}
               <p className="shrink-0 text-[12px] uppercase tracking-[0.16em] text-ink/45">
-                {places.length} places
-                {published.length > 0 && ` · ${published.length} guides`}
+                {places.length} {places.length === 1 ? "place" : "places"}
+                {published.length > 0 &&
+                  ` · ${published.length} ${published.length === 1 ? "guide" : "guides"}`}
               </p>
             </div>
 

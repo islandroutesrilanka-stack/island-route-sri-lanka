@@ -164,7 +164,10 @@ export default async function HomePage() {
             intro="Two opposing monsoons and a central mountain range mean the island is never doing only one thing at once. Choose a region and see what it does best."
           />
           <div className="mt-14">
-            <IslandMap />
+            {/* #regions is the region explorer on /destinations — that page now
+                leads with it, so a click here lands on the matching tab instead
+                of on the hero above it. */}
+            <IslandMap hash="#regions" />
           </div>
         </div>
       </section>
@@ -200,7 +203,7 @@ export default async function HomePage() {
               {regions.map((r) => (
                 <li key={r.slug}>
                   <Link
-                    href={`/destinations?region=${r.slug}`}
+                    href={`/destinations?region=${r.slug}#regions`}
                     className="group block"
                   >
                     <p className="font-display text-lg text-ink transition-colors group-hover:text-copper-deep">

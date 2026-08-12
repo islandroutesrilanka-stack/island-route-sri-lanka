@@ -124,6 +124,7 @@ const HOTSPOTS: Record<string, { x: number; y: number }> = {
 
 export default function IslandMap({
   basePath = "/destinations",
+  hash = "",
 }: {
   /**
    * Where a region click goes. Defaults to /destinations so the homepage and
@@ -132,9 +133,20 @@ export default function IslandMap({
    * the component.
    */
   basePath?: string;
+  /**
+   * Fragment appended after the query — e.g. "#regions". /destinations leads
+   * with the region explorer, and a region click should land *on* it rather
+   * than at the top of a hero the visitor has already scrolled past to reach
+   * this map. Empty by default: a fragment that matches no id is ignored by
+   * the browser, but writing one that doesn't exist is a lie in the markup, so
+   * only callers whose target page has the anchor pass it.
+   */
+  hash?: string;
 } = {}) {
   const [active, setActive] = useState<string>(regions[0].slug);
   const region = regions.find((r) => r.slug === active) ?? regions[0];
+
+  const regionHref = (slug: string) => `${basePath}?region=${slug}${hash}`;
 
   return (
     /*
@@ -205,7 +217,7 @@ export default function IslandMap({
             return (
               <Link
                 key={r.slug}
-                href={`${basePath}?region=${r.slug}`}
+                href={regionHref(r.slug)}
                 onMouseEnter={() => setActive(r.slug)}
                 onFocus={() => setActive(r.slug)}
                 aria-current={isActive ? "true" : undefined}
@@ -251,7 +263,7 @@ export default function IslandMap({
           ))}
         </ul>
         <Link
-          href={`${basePath}?region=${region.slug}`}
+          href={regionHref(region.slug)}
           className="link-line mt-5 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] text-copper-light sm:mt-8 sm:text-[13px]"
         >
           Explore {region.name} <ArrowRight size={15} />
@@ -275,7 +287,7 @@ export default function IslandMap({
           {regions.map((r) => (
             <li key={r.slug} className="border-t border-sand/10">
               <Link
-                href={`${basePath}?region=${r.slug}`}
+                href={regionHref(r.slug)}
                 onMouseEnter={() => setActive(r.slug)}
                 onFocus={() => setActive(r.slug)}
                 className={`flex items-center justify-between py-2.5 text-[11px] uppercase leading-tight tracking-[0.1em] transition-colors sm:text-[12px] lg:py-3.5 lg:text-[13px] lg:tracking-[0.14em] ${

@@ -320,26 +320,39 @@ async function suiteTourFilters(ctx) {
 
 /*
   Destination cards are counted inside [data-qa="destination-grid"], not
-  page-wide. /destinations now also carries the region explorer, whose cards
-  link to published guides too — a page-wide `a[href^="/destinations/"]` count
-  would fold those in and make a filtered page look unfiltered. The attribute
-  marks the one grid the region filter actually governs.
+  page-wide. /destinations also carries the region explorer, whose cards link to
+  published guides too — a page-wide `a[href^="/destinations/"]` count would
+  fold those in and could not tell the two surfaces apart. The attribute marks
+  the guide grid specifically.
 */
 const CARD_SEL = '[data-qa="destination-grid"] a[href^="/destinations/"]';
 
+/*
+  What ?region= means on /destinations, and what changed.
+
+  It used to filter the guide grid AND open the explorer tab, so this suite
+  asserted that the grid narrowed. It no longer filters anything: the explorer
+  is the region surface, the grid is the complete set of published guides, and
+  the query string decides only which tab opens. The filter was removed because
+  a region-filtered grid was strictly a worse copy of the explorer panel sitting
+  right above it.
+
+  So the assertions inverted deliberately. "The grid did not narrow" is now the
+  passing state, and it is worth asserting rather than dropping: silently
+  reintroducing the filter would restore exactly the duplication this refactor
+  removed, and nothing else in the harness would notice.
+*/
 async function suiteRegions(ctx) {
-  // Unfiltered baseline, for comparison against each filtered result.
   const { page: basePage } = await visit(ctx, "/destinations");
   const baseCount = await basePage.evaluate(
     (sel) => document.querySelectorAll(sel).length,
     CARD_SEL
   );
-  const baseSlugs = await basePage.evaluate(
-    (sel) =>
-      Array.from(document.querySelectorAll(sel))
-        .map((a) => a.getAttribute("href").split("?")[0].replace("/destinations/", ""))
-        .filter((v, i, arr) => v && arr.indexOf(v) === i),
-    CARD_SEL
+  const baseTab = await basePage.evaluate(
+    () =>
+      document
+        .querySelector('[role="tab"][aria-selected="true"]')
+        ?.textContent?.trim() ?? null
   );
   await basePage.close();
 
@@ -350,81 +363,139 @@ async function suiteRegions(ctx) {
     correct about that page and wrong about the site: the discovery loop below
     silently iterated an empty list, so none of the per-region assertions ever
     ran. Discovering from `/` is what makes them execute.
+
+    Parsed through `new URL`, not `new URLSearchParams(href.slice(indexOf("?")))`
+    — these hrefs now carry a #regions fragment, and URLSearchParams does not
+    strip it, so the naive version returned "hill-country#regions" as the slug
+    and every downstream visit 'degraded safely' to the unfiltered page.
+
+    The region *name* is taken as the shortest link text for a given slug. The
+    map's hotspots and its region list both label the link with exactly the
+    region name; the editorial index appends the character line and the panel CTA
+    prefixes "Explore". Shortest wins, and that is the name — which is what lets
+    the loop below check the right tab opened without importing lib/regions.ts
+    into a .mjs harness.
   */
   const { page: home } = await visit(ctx, "/");
-  const regionSlugs = await home.evaluate(() =>
+  const regionLinks = await home.evaluate(() =>
     Array.from(document.querySelectorAll('a[href*="region="]'))
       .map((a) => {
-        const href = a.getAttribute("href") ?? "";
-        const q = href.includes("?") ? href.slice(href.indexOf("?")) : "";
-        return new URLSearchParams(q).get("region");
+        const u = new URL(a.getAttribute("href") ?? "", "https://qa.invalid");
+        return {
+          slug: u.searchParams.get("region"),
+          hash: u.hash,
+          text: (a.textContent ?? "").replace(/\s+/g, " ").trim(),
+        };
       })
-      .filter((v, i, arr) => v && arr.indexOf(v) === i)
+      .filter((l) => l.slug)
   );
   await home.close();
 
+  const byRegion = new Map();
+  for (const l of regionLinks) {
+    const e = byRegion.get(l.slug) ?? { slug: l.slug, name: "", links: 0, hashed: 0 };
+    if (l.text && (!e.name || l.text.length < e.name.length)) e.name = l.text;
+    e.links += 1;
+    if (l.hash === "#regions") e.hashed += 1;
+    byRegion.set(l.slug, e);
+  }
+  const discovered = [...byRegion.values()];
+
   add({
     route: "/", test: "region links exposed in UI (homepage map + region index)",
-    status: regionSlugs.length ? "PASS" : "FAIL",
+    status: discovered.length ? "PASS" : "FAIL",
     expected: "one or more ?region= links on the homepage",
-    actual: `${regionSlugs.length} unique region slugs found`,
-    severity: regionSlugs.length ? "-" : "P1",
-    evidence: regionSlugs.join(", "),
+    actual: `${discovered.length} unique region slugs found`,
+    severity: discovered.length ? "-" : "P1",
+    evidence: discovered.map((r) => r.slug).join(", "),
   });
 
-  for (const slug of regionSlugs) {
+  /*
+    The fragment is the whole "lands on the explorer" behaviour. Without it a
+    region click arrives at the top of the /destinations hero and the visitor
+    has to scroll to find the panel they asked for — which looks like nothing is
+    broken, so only an explicit check catches it.
+  */
+  const unhashed = discovered.filter((r) => r.hashed < r.links);
+  add({
+    route: "/", test: "region links target the explorer anchor",
+    status: discovered.length && !unhashed.length ? "PASS" : "FAIL",
+    expected: "every homepage ?region= link ends in #regions",
+    actual: unhashed.length
+      ? `${unhashed.length} slug(s) with bare links: ${unhashed.map((r) => r.slug).join(", ")}`
+      : `all ${regionLinks.length} links carry #regions`,
+    severity: !unhashed.length ? "-" : "P2", evidence: "",
+  });
+
+  for (const { slug, name } of discovered) {
     const route = `/destinations?region=${slug}`;
-    const { page: p, text } = await visit(ctx, route);
-    const slugs = await p.evaluate(
-      (sel) =>
-        Array.from(document.querySelectorAll(sel))
-          .map((a) => a.getAttribute("href").split("?")[0].replace("/destinations/", ""))
-          .filter((v, i, arr) => v && arr.indexOf(v) === i),
+    const { page: p } = await visit(ctx, route);
+    const state = await p.evaluate(
+      (sel) => ({
+        cards: document.querySelectorAll(sel).length,
+        selected:
+          document
+            .querySelector('[role="tab"][aria-selected="true"]')
+            ?.textContent?.trim() ?? null,
+        // The mobile control is in the DOM at every width; its value is the
+        // same state read a second way, and it is the one a phone actually uses.
+        select: document.querySelector("select")?.value ?? null,
+        anchor: !!document.getElementById("regions"),
+      }),
       CARD_SEL
     );
-    const count = slugs.length;
-    const summary = /region:/i.test(text);
-    const empty = /no published guides for this region/i.test(text);
-
-    // The filter must be acknowledged in the UI at all.
-    add({
-      route, test: "region filter state is reflected",
-      status: summary || empty ? "PASS" : "FAIL",
-      expected: "region summary chip, or the region empty state",
-      actual: `${count} cards; summary=${summary}; empty=${empty}`,
-      severity: summary || empty ? "-" : "P1", evidence: "",
-    });
 
     /*
-      And it must actually change the result: either a strict subset of the
-      unfiltered list, or legitimately zero. Returning the full catalogue while
-      claiming to be filtered is the failure mode worth catching — a chip that
-      says "Region: Hill Country" over all nine destinations would otherwise
-      pass the check above.
+      The acknowledgement is now the open tab, not a summary chip. Compared
+      case-insensitively against the link's own label so a wording change to a
+      region name moves both sides together.
     */
-    const isSubset = count < baseCount && slugs.every((s) => baseSlugs.includes(s));
+    const opened =
+      !!state.selected && state.selected.toLowerCase() === name.toLowerCase();
     add({
-      route, test: "region filter narrows the destination list",
-      status: (isSubset && count > 0) || (empty && count === 0) ? "PASS" : "FAIL",
-      expected: `fewer than ${baseCount} destinations (subset), or 0 with the empty state`,
-      actual: `${count} of ${baseCount} — [${slugs.join(", ")}]`,
-      severity: (isSubset && count > 0) || (empty && count === 0) ? "-" : "P1",
-      evidence: "",
+      route, test: "explorer opens on the linked region",
+      status: opened ? "PASS" : "FAIL",
+      expected: `"${name}" tab selected on load`,
+      actual: `selected=${state.selected}; select=${state.select}`,
+      severity: opened ? "-" : "P1", evidence: "",
+    });
+
+    add({
+      route, test: "guide grid stays complete (no region filter)",
+      status: state.cards === baseCount ? "PASS" : "FAIL",
+      expected: `${baseCount} cards — the same set as the unfiltered page`,
+      actual: `${state.cards} of ${baseCount}`,
+      severity: state.cards === baseCount ? "-" : "P2", evidence: "",
+    });
+
+    add({
+      route, test: "#regions anchor exists for the map handoff",
+      status: state.anchor ? "PASS" : "FAIL",
+      expected: "an element with id=regions to scroll to",
+      actual: `anchor=${state.anchor}`,
+      severity: state.anchor ? "-" : "P2", evidence: "",
     });
     await p.close();
   }
 
-  const { page: u, text: ut } = await visit(ctx, "/destinations?region=not-a-region");
-  const uCount = await u.evaluate(
-    (sel) => document.querySelectorAll(sel).length,
+  const { page: u } = await visit(ctx, "/destinations?region=not-a-region");
+  const unknown = await u.evaluate(
+    (sel) => ({
+      cards: document.querySelectorAll(sel).length,
+      selected:
+        document
+          .querySelector('[role="tab"][aria-selected="true"]')
+          ?.textContent?.trim() ?? null,
+    }),
     CARD_SEL
   );
+  const degrades = unknown.cards === baseCount && unknown.selected === baseTab;
   add({
     route: "/destinations?region=not-a-region", test: "unknown region degrades safely",
-    status: uCount > 0 && !/region:/i.test(ut) ? "PASS" : "WARN",
-    expected: "full unfiltered list, no crash",
-    actual: `${uCount} cards; summary=${/region:/i.test(ut)}`,
-    severity: uCount > 0 ? "-" : "P1", evidence: "",
+    status: degrades ? "PASS" : "WARN",
+    expected: `full grid (${baseCount}) and the default "${baseTab}" tab`,
+    actual: `${unknown.cards} cards; selected=${unknown.selected}`,
+    severity: unknown.cards > 0 ? "-" : "P1", evidence: "",
   });
   await u.close();
 }
@@ -538,15 +609,26 @@ async function suiteRegionExplorer(ctx, browser) {
   await m.close();
   await mobileCtx.close();
 
-  // ?region= should open the matching tab, so the homepage map lands correctly.
+  /*
+    A deep link has to move the panel, not just the tab. suiteRegions asserts
+    the right tab opens for all seven regions; this asserts the content came
+    with it. East Coast selected above a panel still rendering Cultural Triangle
+    cards would pass an aria-selected check and be visibly wrong — and since
+    /destinations now leads with this component, that panel is the first thing a
+    visitor arriving from the map sees.
+  */
   const { page: deep } = await visit(ctx, "/destinations?region=east-coast");
   const deepPanel = await readPanel(deep);
+  const moved =
+    /east coast/i.test(deepPanel.selected ?? "") &&
+    deepPanel.cards.length > 0 &&
+    deepPanel.cards.join() !== first.cards.join();
   add({
-    route: "/destinations?region=east-coast", test: "explorer opens on the linked region",
-    status: /east coast/i.test(deepPanel.selected ?? "") ? "PASS" : "WARN",
-    expected: "East Coast tab selected on load",
-    actual: `selected=${deepPanel.selected}`,
-    severity: "-", evidence: "",
+    route: "/destinations?region=east-coast", test: "deep link renders the region's own panel",
+    status: moved ? "PASS" : "FAIL",
+    expected: "East Coast selected, with East Coast places in the panel",
+    actual: `selected=${deepPanel.selected}; [${deepPanel.cards.join(", ")}]`,
+    severity: moved ? "-" : "P2", evidence: "",
   });
   await deep.close();
 }
