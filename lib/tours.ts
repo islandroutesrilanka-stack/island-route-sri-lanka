@@ -1,4 +1,5 @@
-import { img } from "./images";
+import { media } from "./media/registry";
+import { commonsPlaces, commonsSubjects } from "./media/commons";
 import { journeys } from "./journeys";
 
 export type ItineraryDay = { day: string; title: string; detail: string };
@@ -32,6 +33,21 @@ export type Tour = {
    * reason destinationSlugs is explicit.
    */
   themeSlugs?: string[];
+  /**
+   * Extra photography for editorial surfaces that want more than one frame —
+   * today that is the homepage's featured-journey triptych.
+   *
+   * Local `src` paths, resolved back to full assets (alt text, licence,
+   * verified location) through `assetBySrc`. Curated by hand from the journey's
+   * own itinerary, and confined to stops that `destinationSlugs` cannot carry
+   * because they have no guide page yet — Anuradhapura, Mannar, Delft and the
+   * rest. That constraint is the point: these are places the journey actually
+   * goes, so the triptych can never illustrate a route with somewhere it skips.
+   *
+   * Optional everywhere. A journey without it simply has fewer frames to draw
+   * on, and the gradient fallback stands where nothing resolves.
+   */
+  storyImages?: string[];
 };
 
 /**
@@ -49,7 +65,10 @@ const catalogue: Tour[] = [
     category: "Multi-Day",
     duration: "7 days · 6 nights",
     priceFrom: 690,
-    image: "/photography/nine-arch-bridge-demodara.jpg",
+    // The south-coast finale, not the train bridge. The bridge belongs to the
+    // Ella day tour, and two cards in the same grid wearing the same photograph
+    // read as a duplicate listing rather than as two different weeks.
+    image: commonsPlaces.Unawatuna.src,
     featured: true,
     excerpt:
       "The island's greatest hits in one graceful week — ancient rock fortresses, sacred Kandy, the famous highland train, a Yala safari and a golden south-coast finale.",
@@ -85,7 +104,7 @@ const catalogue: Tour[] = [
     category: "Multi-Day",
     duration: "14 days · 13 nights",
     priceFrom: 1390,
-    image: img.beachAerial,
+    image: commonsPlaces.Anuradhapura.src,
     featured: true,
     excerpt:
       "The complete Sri Lanka — ancient kingdoms, misty tea estates, two contrasting safaris, whale-rich seas and slow days on the island's finest beaches.",
@@ -122,7 +141,8 @@ const catalogue: Tour[] = [
     category: "Multi-Day",
     duration: "5 days · 4 nights",
     priceFrom: 490,
-    image: img.mistyHills,
+    /* Lipton's Seat, which the itinerary itself climbs. */
+    image: commonsPlaces.Haputale.src,
     excerpt:
       "A slow, cool-climate escape through Sri Lanka's tea heartland — waterfalls, colonial hill stations, cloud-forest hikes and the island's most famous train ride.",
     highlights: [
@@ -153,7 +173,9 @@ const catalogue: Tour[] = [
     category: "Multi-Day",
     duration: "10 days · 9 nights",
     priceFrom: 980,
-    image: img.leopard,
+    /* Bundala rather than the leopard, so this doesn't
+       duplicate the dedicated Yala safari card two entries down. */
+    image: commonsPlaces.Bundala.src,
     excerpt:
       "For wildlife lovers and beach dreamers: three national parks, river safaris, and a slow drift down the south coast's most beautiful bays.",
     highlights: [
@@ -177,7 +199,7 @@ const catalogue: Tour[] = [
     category: "Multi-Day",
     duration: "8 days · 7 nights",
     priceFrom: 720,
-    image: img.surfWave,
+    image: media.arugamBay.src,
     excerpt:
       "Arugam Bay season done properly — dawn patrol transfers to Main Point, Whiskey Point and Peanut Farm, with a lagoon safari and Kumana wildlife on rest days.",
     highlights: [
@@ -203,7 +225,10 @@ const catalogue: Tour[] = [
     category: "Day Tour",
     duration: "Full day · from Colombo/Kandy/Negombo",
     priceFrom: 95,
-    image: img.sigiriya,
+    // Dambulla rather than Sigiriya: the rock itself leads The Cultural Odyssey
+    // higher up the same grid, and the cave Buddhas are the half of this day
+    // trip that nobody has already seen on a postcard.
+    image: commonsPlaces.Dambulla.src,
     featured: true,
     excerpt:
       "Climb the 1,600-year-old Lion Rock and wander the golden cave temples of Dambulla on a perfectly-paced private day trip.",
@@ -223,7 +248,7 @@ const catalogue: Tour[] = [
     category: "Day Tour",
     duration: "Full day · from Colombo/Negombo",
     priceFrom: 85,
-    image: img.templeKandy,
+    image: media.kandyTempleMoat.src,
     excerpt:
       "Temples, royal gardens and highland air: the Temple of the Sacred Tooth, Peradeniya Botanical Gardens and a scenic hill-road return.",
     highlights: [
@@ -242,7 +267,7 @@ const catalogue: Tour[] = [
     category: "Day Tour",
     duration: "Full day · from south coast/hill country",
     priceFrom: 80,
-    image: img.heroTrain,
+    image: media.nineArchBridge.src,
     excerpt:
       "Watch the blue train cross the jungle-wrapped Nine Arch Bridge, hike Little Adam's Peak, and cool off at Rawana Falls.",
     highlights: [
@@ -261,7 +286,7 @@ const catalogue: Tour[] = [
     category: "Day Tour",
     duration: "Full day · from Colombo/south coast",
     priceFrom: 75,
-    image: img.beachChairs,
+    image: media.galleFortStreet.src,
     excerpt:
       "Cinnamon-scented lanes inside a 17th-century Dutch fort, stilt-fishermen coastline, a turtle hatchery and the day's best beach.",
     highlights: [
@@ -282,7 +307,10 @@ const catalogue: Tour[] = [
     category: "Safari",
     duration: "Half or full day · dawn & dusk drives",
     priceFrom: 110,
-    image: img.leopard,
+    // The jeeps, not the leopard. The leopard portrait leads Leopard Light in
+    // the same grid; this card is the day itself — and a photograph of the
+    // vehicle you actually ride in promises less than a cat we cannot.
+    image: commonsSubjects.yalaSafariJeeps.src,
     featured: true,
     excerpt:
       "One of the highest leopard densities anywhere, plus elephants, sloth bears and crocodile-lined lagoons — tracked from a private 4×4 with an experienced driver.",
@@ -302,7 +330,10 @@ const catalogue: Tour[] = [
     category: "Safari",
     duration: "Half day · afternoon drive",
     priceFrom: 90,
-    image: img.elephants,
+    /* Hurulu Eco Park, the elephant reserve at Habarana that
+       shares the Minneriya herds and is the wet-season alternative this tour
+       already switches to. */
+    image: commonsPlaces.Habarana.src,
     excerpt:
       "In season, hundreds of wild elephants converge on Minneriya's ancient reservoir — one of Asia's greatest wildlife spectacles, minutes from Sigiriya.",
     highlights: [
@@ -321,7 +352,7 @@ const catalogue: Tour[] = [
     category: "Safari",
     duration: "Half day · dawn or dusk",
     priceFrom: 85,
-    image: img.elephantHerd,
+    image: commonsPlaces.Udawalawe.src,
     excerpt:
       "Almost guaranteed elephant encounters on open grassland beneath the highland escarpment, with a visit to the famous orphan Elephant Transit Home.",
     highlights: [

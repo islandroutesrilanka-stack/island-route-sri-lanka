@@ -28,6 +28,8 @@ import {
   type GalleryItem,
 } from "./content";
 import { posts as seedPosts, type Post } from "./blog";
+import { assetBySrc } from "./media/registry";
+import { isLocationVerified } from "./media/types";
 import { site as seedSite } from "./site";
 
 /**
@@ -124,6 +126,12 @@ const mapTour = (r: TourRow): Tour => {
     featured: r.featured,
     destinationSlugs: r.destination_slugs ?? seed?.destinationSlugs ?? [],
     themeSlugs: r.theme_slugs ?? seed?.themeSlugs ?? [],
+    /* Seed-only, with no `r.` counterpart and no column planned: these are
+       paths into the media registry, where the alt text and the CC attribution
+       live. A CMS field holding a bare path would be a foot-gun — a typo would
+       silently produce an unattributed image — so editorial extras stay in the
+       repo and the CMS keeps the fields it can validate. */
+    storyImages: seed?.storyImages,
   };
 };
 
@@ -245,6 +253,45 @@ type PostRow = {
   read_time: string | null; image: string | null; sections: Post["sections"] | null;
 };
 
+/**
+ * The seed image for a slug — the fallback of last resort for a stale row.
+ *
+ * Built once rather than per row; `seedPosts` is a module constant.
+ */
+const seedPostImages = new Map(seedPosts.map((p) => [p.slug, p.image]));
+
+/**
+ * Reject a stored image that we already know shows the wrong place.
+ *
+ * `public.posts.image` was seeded from the old flat image map, so live rows
+ * still point at assets this project has since disowned — a limestone karst
+ * captioned as the Sri Lankan highland railway, a leopard with no location
+ * behind it, two generic tropical panoramas. Editing `lib/blog.ts` alone does
+ * not fix that: when Supabase is configured the seed is only a fallback, so the
+ * database keeps winning.
+ *
+ * The test is deliberately narrow. `assetBySrc` only recognises URLs that are
+ * in *our* registry, so:
+ *
+ *   • a registry asset whose location has been verified → kept;
+ *   • a registry asset that has not → replaced by the seed's choice, which has;
+ *   • anything else, including every image uploaded through the admin →
+ *     untouched, because we know nothing about it and guessing would silently
+ *     discard the editor's work.
+ *
+ * That makes this self-clearing: run `supabase/update-post-images.sql` and every
+ * row resolves to a verified asset, at which point this stops substituting
+ * anything and can be deleted.
+ */
+function postImage(slug: string, stored: string | null): string {
+  const src = stored ?? "";
+  const known = src ? assetBySrc(src) : null;
+  if (known && !isLocationVerified(known)) {
+    return seedPostImages.get(slug) ?? src;
+  }
+  return src || (seedPostImages.get(slug) ?? "");
+}
+
 export const getPosts = cache(() =>
   fromTable<PostRow, Post>(
     "posts",
@@ -255,7 +302,7 @@ export const getPosts = cache(() =>
       excerpt: r.excerpt ?? "",
       date: r.date,
       readTime: r.read_time ?? "",
-      image: r.image ?? "",
+      image: postImage(r.slug, r.image),
       sections: r.sections ?? [],
     }),
     { published: true, order: "date" }

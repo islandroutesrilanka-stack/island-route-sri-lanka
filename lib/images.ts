@@ -1,43 +1,19 @@
 /**
- * @deprecated Compatibility shim.
+ * Social-image helpers.
  *
- * This module used to hold every image URL as a flat map. It is now a thin
- * re-export over lib/media/registry.ts, which carries source, licence, alt text
- * and location-verification status per asset.
+ * This module used to be a compatibility shim: a flat `img` map of image URLs
+ * kept alive so that nineteen importers — every public page plus the four seed
+ * content modules — would keep compiling while the site migrated to the typed
+ * registry one phase at a time. That migration is finished. `img` and its
+ * `ImageKey` union are gone, along with the eighteen hotlinked Unsplash assets
+ * behind them; see the notes in lib/media/registry.ts for why.
  *
- * It is kept because 19 files import from here — every public page plus all four
- * seed-content modules. Removing it mid-redesign would touch the entire codebase
- * for no benefit. Each page drops its import as its own phase migrates it to the
- * typed registry, and this file is deleted when the last importer is gone.
+ * What is left are the two social-metadata helpers, which have nothing to do
+ * with rendering and are imported by `app/layout.tsx`, `app/blog/[slug]` and
+ * `app/tours/[slug]` from here.
  *
- * New code: import { media } from "@/lib/media/registry" and pass MediaAsset
- * objects to <Img>. Do not add URLs here.
+ * For anything a visitor will actually see: import { media } from
+ * "@/lib/media/registry" (or `commonsPlaces` from "@/lib/media/commons") and
+ * pass whole MediaAsset objects to <Img>. Do not add URLs to this file.
  */
-export { legacyImg as img, toOgImage, ogDefault } from "./media/registry";
-
-/** @deprecated Use MediaKey from lib/media/registry. */
-export type ImageKey =
-  | "heroTrain"
-  | "sigiriya"
-  | "templeKandy"
-  | "beachPanorama"
-  | "beachPalms"
-  | "beachAerial"
-  | "beachChairs"
-  | "beachSunset"
-  | "surfWave"
-  | "seaTurtle"
-  | "mistyHills"
-  | "greenMountains"
-  | "forest"
-  | "sunraysValley"
-  | "lakeCanoe"
-  | "mountainLake"
-  | "elephants"
-  | "elephantHerd"
-  | "leopard"
-  | "safariJeep"
-  | "coastalDrive"
-  | "drivingWheel"
-  | "sedanNight"
-  | "cityLights";
+export { toOgImage, ogDefault } from "./media/registry";

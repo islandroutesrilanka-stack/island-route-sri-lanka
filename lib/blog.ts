@@ -1,5 +1,27 @@
-import { img } from "./images";
+import { media } from "./media/registry";
 
+/**
+ * Journal seed content.
+ *
+ * ── On the images ──────────────────────────────────────────────────────────
+ *
+ * All four posts previously illustrated themselves from the legacy `img` map,
+ * and all four were wrong in the way `lib/media/registry.ts` warns about: the
+ * ten-day itinerary opened on `heroTrain`, which is a limestone karst with
+ * long-tail boats and is not Sri Lanka; the season guide and the beach guide
+ * used generic tropical panoramas; the safari comparison used a leopard that
+ * has never been placed in Yala or anywhere else.
+ *
+ * They now point at registry assets whose location has actually been verified,
+ * addressed as `media.x.src` rather than through the deprecated shim — the
+ * journal stores a URL string, not a MediaAsset, so `.src` is the honest way to
+ * spell that until the schema carries assets.
+ *
+ * These are the *seed*. When Supabase is configured, `getPosts` reads
+ * `public.posts` and this file is only the fallback — see the note there about
+ * how a stale row's image is caught, and `supabase/update-post-images.sql` for
+ * the migration that fixes the rows themselves.
+ */
 export type Post = {
   slug: string;
   title: string;
@@ -18,7 +40,7 @@ export const posts: Post[] = [
       "Ancient rocks, the famous blue train, leopards and a beach finale — how to see the best of the island in ten unhurried days.",
     date: "2026-06-12",
     readTime: "8 min read",
-    image: img.heroTrain,
+    image: media.nineArchBridge.src,
     sections: [
       { body: "Ten days is the sweet spot for a first visit to Sri Lanka: enough time to link the Cultural Triangle, the tea highlands and the southern coast without ever feeling rushed. Here's the route we recommend to most first-time guests, refined over hundreds of journeys." },
       { heading: "Days 1–3: The Cultural Triangle", body: "Land, recover, and head straight for Sigiriya. Climb the Lion Rock at dawn before the heat and the crowds, explore Dambulla's painted caves, and if you're travelling between August and October, don't miss the elephant gathering at Minneriya — hundreds of wild elephants around a single ancient reservoir." },
@@ -35,7 +57,7 @@ export const posts: Post[] = [
       "Two monsoons mean there's always a sunny coast somewhere. Here's how to time beaches, safaris, surf and the highlands perfectly.",
     date: "2026-05-02",
     readTime: "6 min read",
-    image: img.beachPanorama,
+    image: media.arugamBayEvening.src,
     sections: [
       { body: "The most common question we get is 'when is the best time to visit Sri Lanka?' The honest answer: almost any month — if you pick the right coast. The island sits between two monsoon systems, so while one shore takes rain, the opposite one is at its best." },
       { heading: "December to April: the classic season", body: "The west and south coasts — Bentota, Galle, Mirissa, Tangalle — enjoy blue skies and calm seas. This is peak whale-watching season in Mirissa and the ideal window for the classic Cultural Triangle plus southern beaches route. Book early for Christmas and New Year." },
@@ -51,7 +73,7 @@ export const posts: Post[] = [
       "Sri Lanka's two great national parks offer very different wild experiences. Our drivers' honest guide to choosing between them.",
     date: "2026-03-18",
     readTime: "5 min read",
-    image: img.leopard,
+    image: media.yalaLeopard.src,
     sections: [
       { body: "Both parks hold healthy leopard populations and both can deliver the safari of a lifetime — but they feel completely different. After a thousand game drives between them, here's how we advise our guests." },
       { heading: "Choose Yala for density", body: "Yala Block 1 has the highest leopard density on the planet, plus elephants, sloth bears and spectacular coastal scenery where dunes meet jungle. The trade-off is popularity: in high season, a big sighting can draw a queue of jeeps. Going at dawn with an experienced tracker-driver — and avoiding weekends — makes all the difference." },
@@ -66,7 +88,7 @@ export const posts: Post[] = [
       "From boutique bays to barefoot surf coves — where to swim, stay and watch the sunset between Galle and Tangalle.",
     date: "2026-01-25",
     readTime: "7 min read",
-    image: img.beachPalms,
+    image: media.mirissaCoconutHill.src,
     sections: [
       { body: "The 80 kilometres of coastline east of Galle hold an absurd concentration of beautiful beaches, each with its own personality. Here's how our drivers describe them to guests on the coastal road." },
       { heading: "Unawatuna & Dalawella", body: "Closest to Galle Fort and great for families: calm, reef-protected swimming, the famous Dalawella palm swing and jungle-backed 'Jungle Beach' a short scramble away. Sunset from the pagoda viewpoint is superb." },

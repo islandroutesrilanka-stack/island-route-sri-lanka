@@ -69,7 +69,7 @@ export default function TrustBand() {
               rel="noopener noreferrer"
               className="link-line text-ink/75 hover:text-copper-deep"
             >
-              {site.phoneDisplay}
+              {site.whatsappDisplay}
             </a>
           </p>
         </Reveal>

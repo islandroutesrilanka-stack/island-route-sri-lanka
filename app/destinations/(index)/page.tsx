@@ -5,7 +5,7 @@ import RegionExplorer from "@/components/patterns/RegionExplorer";
 import ScrollToAnchor from "@/components/patterns/ScrollToAnchor";
 import { getDestinations } from "@/lib/data";
 import { clampDesc } from "@/lib/seo";
-import { img } from "@/lib/images";
+import { media } from "@/lib/media/registry";
 
 export const revalidate = 60;
 
@@ -90,7 +90,7 @@ export default async function DestinationsPage({
         eyebrow="Destinations"
         title="Nine islands in one"
         intro="Few places on Earth pack this much variety into a drivable week — golden coasts, cloud forests, ancient citadels and big-cat country."
-        image={img.mistyHills}
+        image={media.elephantRockSandbar.src}
       />
 
       {/*

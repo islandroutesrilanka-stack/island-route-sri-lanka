@@ -1,4 +1,25 @@
-import { img } from "./images";
+import { media } from "./media/registry";
+import { commonsPlaces, commonsSubjects } from "./media/commons";
+
+/*
+  Every image below is a file this repository serves itself, from either the
+  owner's own photography (/photography) or a licensed Wikimedia Commons
+  original (/commons). None of them is a remote URL any more.
+
+  That is not a tidiness preference. The previous set hotlinked
+  images.unsplash.com, and a page that asks for a dozen of them at once earns
+  429s from the CDN: Next's image optimizer then logs `upstream image response
+  failed`, returns 400, and <Image> renders nothing at all — a blank tile with
+  no error anywhere the visitor can see. Measured on /tours it was ten broken
+  images on one load and five on the next, varying run to run. The identical
+  failure had already been diagnosed and fixed for Wikimedia hotlinks by
+  self-hosting them; this applies the same fix to the rest of the site.
+
+  The second reason is that the old set was generic world stock. `verifiedLocation`
+  exists in lib/media/registry.ts because this project once shipped a tropical
+  beach captioned "Sigiriya". Sourcing from the same verified pool as the region
+  and experience photography means every caption below is true of its picture.
+*/
 
 /* ---------------------------------- Services ---------------------------------- */
 
@@ -27,10 +48,11 @@ export const services: Service[] = [
     tagline: "Land softly. We're already waiting.",
     description:
       "Meet-and-greet at Bandaranaike International with a name board, cold water and air-conditioned comfort. Fixed prices, flight tracking, and a driver who knows exactly where your hotel is — day or night.",
-    /* Retired: previously `cityLights`, a generic night cityscape identified
-       in the media audit as not Sri Lanka. Left empty rather than swapped for
-       another unverified image — the slot renders the gradient treatment. */
-    image: "",
+    /* The lagoon at Negombo, which is the town the airport actually sits in —
+       Katunayake is on its northern edge, and this is the first Sri Lanka most
+       arrivals see on the drive out. Replaces an empty slot left behind when a
+       generic night cityscape was retired from the media audit. */
+    image: commonsPlaces.Negombo.src,
     icon: "plane",
   },
   {
@@ -39,7 +61,7 @@ export const services: Service[] = [
     tagline: "Your own chauffeur-guide, for as long as you need.",
     description:
       "Hire a professional English-speaking chauffeur for a day, a week or your entire holiday. Your driver handles routes, tickets, restaurants and local knowledge while you simply enjoy the island.",
-    image: img.drivingWheel,
+    image: commonsPlaces["Horton Plains"].src,
     icon: "steering",
   },
   {
@@ -48,7 +70,7 @@ export const services: Service[] = [
     tagline: "Point to point, without the haggling.",
     description:
       "Reliable, fairly-priced private taxis between any two points in Sri Lanka. Transparent quotes upfront, clean modern vehicles, and drivers who arrive on time, every time.",
-    image: img.coastalDrive,
+    image: media.colomboLotusTower.src,
     icon: "car",
   },
   /*
@@ -74,7 +96,7 @@ export const services: Service[] = [
     tagline: "Boards on the roof, swell on the horizon.",
     description:
       "Board-friendly vehicles and drivers who understand dawn patrol. Airport to Arugam Bay, Weligama to Hiriketiya — we move surfers and their quivers safely, all season long.",
-    image: img.surfWave,
+    image: media.surfRightHander.src,
     icon: "waves",
   },
   {
@@ -83,7 +105,7 @@ export const services: Service[] = [
     tagline: "Seamless links between every stay.",
     description:
       "Comfortable private transfers between hotels, villas and boutique stays anywhere on the island — with scenic stops, luggage handled, and zero stress between check-outs and check-ins.",
-    image: img.beachChairs,
+    image: commonsPlaces.Bentota.src,
     icon: "hotel",
   },
   {
@@ -92,7 +114,7 @@ export const services: Service[] = [
     tagline: "Designed around you, down to the last sunset.",
     description:
       "Tell us your dates, pace and dreams — honeymoon, family adventure, photography trip — and we'll design a bespoke route with hand-picked stays, experiences and a dedicated driver.",
-    image: img.beachAerial,
+    image: commonsPlaces.Delft.src,
     icon: "route",
   },
 ];
@@ -124,7 +146,7 @@ export const fleet: Vehicle[] = [
       "Complimentary bottled water",
     ],
     idealFor: "Couples, business travellers and airport transfers.",
-    image: img.sedanNight,
+    image: media.colomboLotusTower.src,
   },
   {
     slug: "premium-suv",
@@ -139,7 +161,7 @@ export const fleet: Vehicle[] = [
       "Child seats on request",
     ],
     idealFor: "Families and hill-country roads in complete comfort.",
-    image: img.coastalDrive,
+    image: commonsPlaces["Nuwara Eliya"].src,
   },
   {
     slug: "high-roof-van",
@@ -154,7 +176,7 @@ export const fleet: Vehicle[] = [
       "Cooler box on request",
     ],
     idealFor: "Small groups, surf trips and multi-day circuits.",
-    image: img.drivingWheel,
+    image: media.whiskyPoint.src,
   },
   {
     slug: "mini-coach",
@@ -169,10 +191,7 @@ export const fleet: Vehicle[] = [
       "Experienced long-route drivers",
     ],
     idealFor: "Wedding parties, retreats and larger tour groups.",
-    /* Retired: previously `cityLights`, a generic night cityscape identified
-       in the media audit as not Sri Lanka. Left empty rather than swapped for
-       another unverified image — the slot renders the gradient treatment. */
-    image: "",
+    image: commonsPlaces.Pasikuda.src,
   },
   {
     slug: "safari-jeep",
@@ -187,7 +206,7 @@ export const fleet: Vehicle[] = [
       "Binoculars provided",
     ],
     idealFor: "Yala, Udawalawe, Wilpattu and Minneriya safaris.",
-    image: img.safariJeep,
+    image: commonsSubjects.yalaSafariJeeps.src,
   },
 ];
 
@@ -232,16 +251,16 @@ export type GalleryItem = {
 };
 
 export const gallery: GalleryItem[] = [
-  { src: img.heroTrain, caption: "The iconic highland railway, Ella", category: "Journeys" },
-  { src: img.beachPanorama, caption: "South coast, early morning", category: "Beaches" },
-  { src: img.leopard, caption: "Leopard, Yala National Park", category: "Wildlife" },
-  { src: img.mistyHills, caption: "Dawn mist over tea country", category: "Hills" },
-  { src: img.sigiriya, caption: "Sigiriya — the Lion Rock", category: "Culture" },
-  { src: img.surfWave, caption: "Reef break, east coast season", category: "Surf" },
-  { src: img.elephants, caption: "The Gathering, Minneriya", category: "Wildlife" },
-  { src: img.beachPalms, caption: "Palm-fringed shoreline, Mirissa", category: "Beaches" },
-  { src: img.templeKandy, caption: "Sacred city of Kandy", category: "Culture" },
-  { src: img.greenMountains, caption: "The road to Nuwara Eliya", category: "Hills" },
-  { src: img.seaTurtle, caption: "Sea turtle, Hikkaduwa reef", category: "Wildlife" },
-  { src: img.beachSunset, caption: "Last light, west coast", category: "Beaches" },
+  { src: media.nineArchBridge.src, caption: "The Nine Arch Bridge, Demodara", category: "Journeys" },
+  { src: commonsPlaces.Tangalle.src, caption: "Goyambokka Beach, Tangalle", category: "Beaches" },
+  { src: media.yalaLeopard.src, caption: "Leopard, Yala National Park", category: "Wildlife" },
+  { src: commonsPlaces.Haputale.src, caption: "Tea country from Lipton's Seat, Haputale", category: "Hills" },
+  { src: media.sigiriyaRock.src, caption: "Sigiriya — the Lion Rock", category: "Culture" },
+  { src: media.surfRightHander.src, caption: "A clean right-hander, east coast", category: "Surf" },
+  { src: commonsPlaces.Habarana.src, caption: "Wild elephant, Hurulu Eco Park", category: "Wildlife" },
+  { src: media.mirissaCoconutHill.src, caption: "Coconut Tree Hill, Mirissa", category: "Beaches" },
+  { src: media.kandyTempleMoat.src, caption: "The Temple of the Tooth, Kandy", category: "Culture" },
+  { src: commonsPlaces["Nuwara Eliya"].src, caption: "Nuwara Eliya from the ridge", category: "Hills" },
+  { src: commonsSubjects.hikkaduwaReef.src, caption: "The coral sanctuary at Hikkaduwa", category: "Wildlife" },
+  { src: commonsPlaces.Negombo.src, caption: "Fishing boats at rest, Negombo", category: "Beaches" },
 ];

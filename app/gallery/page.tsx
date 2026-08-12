@@ -3,7 +3,7 @@ import { PageHeader, CTABand } from "@/components/ui";
 import EmptyState from "@/components/patterns/EmptyState";
 import GalleryGrid from "@/components/GalleryGrid";
 import { getGallery } from "@/lib/data";
-import { img } from "@/lib/images";
+import { media } from "@/lib/media/registry";
 
 export const revalidate = 60;
 
@@ -22,7 +22,7 @@ export default async function GalleryPage() {
         eyebrow="Gallery"
         title="The island, frame by frame"
         intro="A few of the moments waiting on the road ahead."
-        image={img.beachSunset}
+        image={media.lagoonHeronSunset.src}
       />
       {gallery.length === 0 && (
         <section className="py-16 md:py-24">

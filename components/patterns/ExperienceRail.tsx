@@ -15,10 +15,15 @@
  * than /tours?theme=<slug>, which skipped straight past the editorial content
  * to a filtered catalogue.
  *
- * Deliberately no photography. Category images would mean unverified stock
- * photographs, which is the one thing this project has ruled out. Type, scale
- * and the contour treatment carry it until real photography exists; each tile
- * then takes an image with no change to this component.
+ * This shipped with no photography, on the grounds that a category image would
+ * mean unverified stock — and it said the tiles would take images "with no
+ * change to this component" once real photography existed. It now does:
+ * `lib/media/experiences.ts` carries a location-checked asset for all twelve
+ * categories, and /experiences has been using them. These two features were the
+ * last place on the site where a gradient stood in for a photograph on purpose,
+ * which on the homepage meant the largest block above the fold after the hero
+ * was two coloured rectangles. `requireVerifiedLocation` stays on, so the
+ * contour treatment is still what an unchecked asset falls back to.
  *
  * Self-fetching so the homepage stays untouched: `getTours` is React.cache-
  * wrapped, so this shares the homepage's existing query rather than adding one.
@@ -26,7 +31,8 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion";
-import GradientPanel from "@/components/media/GradientPanel";
+import Img from "@/components/media/Img";
+import { experienceAsset } from "@/lib/media/experiences";
 import { getTours } from "@/lib/data";
 import { publishedExperiences, type PublishedExperience } from "@/lib/experiences";
 
@@ -47,11 +53,31 @@ function Feature({
             tall ? "aspect-[4/5] md:aspect-[3/4]" : "aspect-[4/5] md:aspect-[4/3]"
           }`}
         >
-          <GradientPanel
-            tone={index % 2 === 0 ? "moss" : "deep"}
-            pattern="contour"
-            className="h-full w-full"
+          <Img
+            asset={experienceAsset(category.slug)}
+            /* Off, and staying off — same rule as ExperienceCard: an unchecked
+               asset here would put a photograph of somewhere else behind a
+               category name on the homepage. */
+            requireVerifiedLocation
+            sizes={
+              tall
+                ? "(min-width: 768px) 42vw, 100vw"
+                : "(min-width: 768px) 58vw, 100vw"
+            }
+            fallbackTone={index % 2 === 0 ? "moss" : "deep"}
+            fallbackPattern="contour"
+            className="transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
           />
+          {/*
+            The scrim stops are ExperienceCard's grid-tile set, not its gentler
+            feature ramp, and deliberately so: these tiles carry the full
+            activity list, so the copy fills roughly the bottom three-quarters
+            of a 4/3 or 3/4 frame — the same geometry those stops were measured
+            against, where the gentle ramp had faded to ~24% behind the title
+            and left the bright crops at 2.2–2.9:1. See the note in
+            ExperienceCard.tsx before changing either; they are positional.
+          */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(11,31,25,0.95)_0%,rgba(11,31,25,0.85)_40%,rgba(11,31,25,0.62)_70%,rgba(11,31,25,0.45)_85%,rgba(11,31,25,0.15)_100%)]" />
           <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
             <p className="text-[11px] uppercase tracking-[0.16em] text-sand/60">
               {tours.length} {tours.length === 1 ? "journey" : "journeys"}

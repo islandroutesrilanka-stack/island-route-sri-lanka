@@ -129,7 +129,7 @@ export default function PlannerEntry({ tours }: { tours: Tour[] }) {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2.5 border border-sand/30 px-8 py-4 text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-sand hover:text-deep"
           >
-            <MessageCircle size={16} /> {site.phoneDisplay}
+            <MessageCircle size={16} /> {site.whatsappDisplay}
           </a>
         </div>
       </Reveal>

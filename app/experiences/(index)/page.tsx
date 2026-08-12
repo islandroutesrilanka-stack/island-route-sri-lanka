@@ -6,6 +6,8 @@ import ExperienceCard from "@/components/patterns/ExperienceCard";
 import { Reveal } from "@/components/motion";
 import { getTours } from "@/lib/data";
 import { publishedExperiences } from "@/lib/experiences";
+import { experienceCredits } from "@/lib/media/experiences";
+import { media } from "@/lib/media/registry";
 import { clampDesc } from "@/lib/seo";
 import { siteUrl } from "@/lib/site";
 
@@ -63,6 +65,15 @@ export default async function ExperiencesPage() {
   const journeyCount = new Set(published.flatMap((e) => e.tours.map((t) => t.slug)))
     .size;
 
+  /*
+    Attribution for the Commons photography on the tiles. Required by CC BY and
+    CC BY-SA, so this is an obligation rather than a nicety — but it is derived
+    from what actually rendered, so a category that falls back to the gradient
+    contributes no credit line, and the owner's own photographs contribute none
+    either.
+  */
+  const credits = experienceCredits(published.map((e) => e.category.slug));
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -91,6 +102,10 @@ export default async function ExperiencesPage() {
         eyebrow="Experiences"
         title="Travel by what moves you"
         intro="Most people don't start with a map — they start with a feeling. Leopards at first light, a train through tea country, a coast that's working in December. Choose the thread and we'll build the route around it."
+        /* Decorative (alt="", 40% opacity, behind a gradient) — but still a
+           verified Sri Lankan location rather than generic tropical stock,
+           because every other image on this page now is. */
+        image={media.mirissaCoconutHill.src}
       />
 
       {published.length === 0 ? (
@@ -153,6 +168,38 @@ export default async function ExperiencesPage() {
                     />
                   ))}
                 </div>
+              )}
+
+              {/* Closed, this is one quiet line under the grid; open, it names
+                  every photographer and links each licence. Same pattern as the
+                  region explorer, for the same legal reason. */}
+              {credits.length > 0 && (
+                <details className="group mt-10 border-t border-ink/10 pt-5">
+                  <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.16em] text-ink/40 transition-colors marker:content-none hover:text-ink/70">
+                    Photography credits
+                    <span
+                      aria-hidden
+                      className="ml-2 inline-block transition-transform group-open:rotate-90"
+                    >
+                      ›
+                    </span>
+                  </summary>
+                  <ul className="mt-4 grid gap-2 text-[12px] leading-relaxed text-ink/45 sm:grid-cols-2 lg:grid-cols-3">
+                    {credits.map((c) => (
+                      <li key={c.src}>
+                        <span className="text-ink/60">{c.label}</span> · {c.author} ·{" "}
+                        <a
+                          href={c.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline decoration-ink/20 underline-offset-2 transition-colors hover:text-copper-deep"
+                        >
+                          {c.license}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               )}
             </div>
           </section>

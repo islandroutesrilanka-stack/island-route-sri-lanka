@@ -65,7 +65,7 @@ export default function Error({
             rel="noopener noreferrer"
             className="link-line text-sand/85"
           >
-            WhatsApp {site.phoneDisplay}
+            WhatsApp {site.whatsappDisplay}
           </a>
         </p>
 

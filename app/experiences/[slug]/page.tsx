@@ -3,13 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Check, Compass } from "lucide-react";
 import { Reveal } from "@/components/motion";
-import GradientPanel from "@/components/media/GradientPanel";
+import Img from "@/components/media/Img";
 import { CTABand, TourCard, DestinationCard } from "@/components/ui";
 import { getTours, getDestinations } from "@/lib/data";
 import {
   getPublishedExperience,
   publishedExperiences,
 } from "@/lib/experiences";
+import { experienceAsset, experienceCredits } from "@/lib/media/experiences";
 import { clampDesc } from "@/lib/seo";
 import { siteUrl, waLink } from "@/lib/site";
 
@@ -115,6 +116,10 @@ export default async function ExperiencePage({
     },
   };
 
+  /* Undefined when the hero fell back to the gradient, or when the photograph
+     is the owner's own — in both cases there is nothing to attribute. */
+  const heroCredit = experienceCredits([category.slug])[0];
+
   return (
     <>
       <script
@@ -122,12 +127,20 @@ export default async function ExperiencePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Hero — contour treatment rather than a stand-in photograph */}
+      {/* Hero — the category's photograph where one has been verified, and the
+          contour treatment where none has. `requireVerifiedLocation` is what
+          keeps the second case from becoming "a photograph of somewhere else
+          captioned Tea Country"; the className lands on both branches, so the
+          fallback is positioned and dimmed exactly as the photograph is. */}
       <section className="relative overflow-hidden bg-deep pt-32 pb-16 md:pt-44 md:pb-24">
-        <GradientPanel
-          tone="moss"
-          pattern="contour"
-          className="absolute inset-0 h-full w-full opacity-70"
+        <Img
+          asset={experienceAsset(category.slug)}
+          requireVerifiedLocation
+          sizes="100vw"
+          priority
+          fallbackTone="moss"
+          fallbackPattern="contour"
+          className="absolute inset-0 opacity-70"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-deep/70 via-deep/45 to-deep" />
 
@@ -163,6 +176,24 @@ export default async function ExperiencePage({
               )}
             </div>
           </Reveal>
+
+          {/* CC BY / BY-SA require the photographer named and the licence
+              stated wherever the image is used — including here, where the
+              photograph is a dimmed backdrop rather than the subject. */}
+          {heroCredit && (
+            <p className="mt-10 text-[11px] text-sand/35">
+              Photograph: {heroCredit.author} ·{" "}
+              <a
+                href={heroCredit.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-sand/20 underline-offset-2 transition-colors hover:text-copper-light"
+              >
+                {heroCredit.license}
+              </a>{" "}
+              · Wikimedia Commons
+            </p>
+          )}
         </div>
       </section>
 

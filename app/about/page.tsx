@@ -7,8 +7,8 @@ import Img from "@/components/media/Img";
 import EmptyState from "@/components/patterns/EmptyState";
 import { Reveal } from "@/components/motion";
 import { getFleet, getReviews } from "@/lib/data";
-import { fromCmsUrl } from "@/lib/media/registry";
-import { img } from "@/lib/images";
+import { fromCmsUrl, media } from "@/lib/media/registry";
+import { commonsPlaces } from "@/lib/media/commons";
 import { waLink, defaultWaMessage, site } from "@/lib/site";
 
 /*
@@ -45,7 +45,7 @@ export default async function AboutPage() {
         eyebrow="Our story"
         title="Built on the island, for the island"
         intro="Island Route began with one driver, one well-loved car, and a belief that Sri Lanka deserved better than rushed bus tours."
-        image={img.sunraysValley}
+        image={commonsPlaces.Polonnaruwa.src}
       />
 
       <nav
@@ -93,11 +93,16 @@ export default async function AboutPage() {
             */}
           </div>
           <div className="md:col-span-6 grid grid-cols-2 gap-4 md:gap-6">
+            {/* Both were hotlinked Unsplash stock with no verified location —
+                "A Buddhist temple" and "A road following a coastline", neither
+                of them necessarily Sri Lanka. Replaced with self-hosted,
+                location-verified photographs, and the alt text now describes
+                what is actually in the frame. */}
             <Reveal index={1} className="img-frame aspect-[3/4]">
-              <Image src={img.templeKandy} alt="Temple in Kandy" fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
+              <Image src={media.kandyTempleMoat.src} alt={media.kandyTempleMoat.alt} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
             </Reveal>
             <Reveal index={2} className="img-frame aspect-[3/4] mt-10">
-              <Image src={img.coastalDrive} alt="Coastal road journey" fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
+              <Image src={media.elephantRock.src} alt={media.elephantRock.alt} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
             </Reveal>
           </div>
         </div>
@@ -283,7 +288,7 @@ export default async function AboutPage() {
                     rel="noopener noreferrer"
                     className="border border-ink/20 text-ink px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-ink hover:text-sand transition-colors"
                   >
-                    WhatsApp {site.phoneDisplay}
+                    WhatsApp {site.whatsappDisplay}
                   </a>
                 </div>
               </Reveal>

@@ -35,7 +35,7 @@ const wrap = (title: string, rows: [string, string | undefined | null][]) => `
       </table>
     </div>
     <div style="padding:18px 32px;border-top:1px solid #e5ded0;font-size:12px;color:#8a8272">
-      WhatsApp ${site.phoneDisplay} · ${site.email}
+      WhatsApp ${site.whatsappDisplay} · ${site.email}
     </div>
   </div>`;
 
@@ -89,7 +89,7 @@ export async function notifyNewBooking(b: BookingEmailData) {
       wrap("Thank you — we're on it", [
         [
           "",
-          `Hi ${b.name}, thanks for your booking request. Our team will reply within a few hours with a personal quote. For anything urgent, WhatsApp us at ${site.phoneDisplay}.`,
+          `Hi ${b.name}, thanks for your booking request. Our team will reply within a few hours with a personal quote. For anything urgent, WhatsApp us at ${site.whatsappDisplay}.`,
         ],
         ["Service", b.service],
         ["Travel date", b.travelDate],
@@ -126,7 +126,7 @@ export async function notifyNewInquiry(i: {
       wrap("Thanks for reaching out", [
         [
           "",
-          `Hi ${i.name}, we've received your message and will get back to you shortly. For anything urgent, WhatsApp us at ${site.phoneDisplay}.`,
+          `Hi ${i.name}, we've received your message and will get back to you shortly. For anything urgent, WhatsApp us at ${site.whatsappDisplay}.`,
         ],
       ])
     ),

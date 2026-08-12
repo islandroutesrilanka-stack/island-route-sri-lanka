@@ -10,9 +10,13 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
     note: "Used across the site header, footer and contact page.",
     keys: [
       { key: "site_name", label: "Business name" },
-      { key: "phone_display", label: "Phone (display)", help: "e.g. +94 77 801 0391" },
-      { key: "phone_e164", label: "Phone (dialing format)", help: "e.g. +94778010391" },
-      { key: "whatsapp_number", label: "WhatsApp number (digits only)", help: "e.g. 94778010391" },
+      { key: "phone_display", label: "Phone (display)", help: "e.g. +94 77 106 6677" },
+      { key: "phone_e164", label: "Phone (dialing format)", help: "e.g. +94771066677" },
+      {
+        key: "whatsapp_number",
+        label: "WhatsApp number (digits only)",
+        help: "No + and no spaces — this is pasted straight into a wa.me link. e.g. 94771066677",
+      },
       { key: "email", label: "Email" },
       { key: "address", label: "Address / base" },
     ],

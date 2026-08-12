@@ -17,9 +17,10 @@ import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import Img from "@/components/media/Img";
 import GradientPanel from "@/components/media/GradientPanel";
-import { fromCmsUrl } from "@/lib/media/registry";
+import { assetBySrc, fromCmsUrl } from "@/lib/media/registry";
 import type { MediaAsset } from "@/lib/media/types";
 import type { Tour } from "@/lib/tours";
+import type { Destination } from "@/lib/destinations";
 import type { Review } from "@/lib/content";
 import { formatPrice } from "@/utils/format";
 
@@ -41,7 +42,12 @@ export function buildFeaturedJourney(
     featuredJourneyImage2: string;
     featuredJourneyImage3: string;
   },
-  reviews: Review[]
+  reviews: Review[],
+  /**
+   * Used only to fill the two smaller frames when the CMS hasn't. See the
+   * fallback note below — this is why the parameter exists.
+   */
+  destinations: Destination[] = []
 ): FeaturedJourney | null {
   const chosen =
     tours.find((t) => t.slug === settings.featuredJourneySlug.trim()) ??
@@ -58,13 +64,57 @@ export function buildFeaturedJourney(
     settings.featuredJourneyImage3,
   ];
 
-  const images = urls.map((url, i) =>
-    url.trim()
-      ? fromCmsUrl(url.trim(), `${chosen.title} — image ${i + 1}`)
-      : i === 0 && chosen.image
-        ? fromCmsUrl(chosen.image, chosen.title)
-        : null
-  );
+  /*
+   * ── Why the two smaller frames have a fallback at all ──────────────────────
+   *
+   * Only the first frame used to fall back to the journey's own image; frames
+   * two and three showed a GradientPanel unless someone had filled
+   * featuredJourneyImage2/3 in Settings. Nobody had, so the largest editorial
+   * block on the homepage was one photograph and two coloured rectangles — and
+   * because the empty state was silent, nothing ever said so.
+   *
+   * The fallback is the journey's own route, in two passes, and both are
+   * curated rather than inferred — which is the only reason this is safe:
+   *
+   *   1. `destinationSlugs` — the stops that have a guide page. Hand-listed
+   *      precisely because name-matching produced false positives (Tangalle
+   *      matched Galle), so nothing incidental can slip in.
+   *   2. `storyImages` — the stops that don't. Anuradhapura, Mannar, Delft and
+   *      the rest are real days on these itineraries with no page to link to,
+   *      and without this pass the northern passage, which has no
+   *      `destinationSlugs` at all, would still have nothing to draw on.
+   *
+   * Both are photographs of places the journey actually goes, already
+   * location-checked and already self-hosted. Anything the CMS supplies still
+   * wins, per slot: this is the floor, not a ceiling.
+   */
+  const seen = new Set([chosen.image]);
+  const spare: MediaAsset[] = [];
+  const offer = (asset: MediaAsset | null) => {
+    // De-duplicate on src: several destinations share a photograph with the
+    // tour that features them, and a triptych repeating itself looks worse
+    // than one frame short.
+    if (!asset?.src || seen.has(asset.src)) return;
+    seen.add(asset.src);
+    spare.push(asset);
+  };
+
+  for (const slug of chosen.destinationSlugs ?? []) {
+    const d = destinations.find((x) => x.slug === slug);
+    if (!d?.image) continue;
+    offer(
+      assetBySrc(d.image) ??
+        fromCmsUrl(d.image, `${d.name} — on the ${chosen.title} route`)
+    );
+  }
+  for (const src of chosen.storyImages ?? []) offer(assetBySrc(src));
+
+  let taken = 0;
+  const images = urls.map((url, i) => {
+    if (url.trim()) return fromCmsUrl(url.trim(), `${chosen.title} — image ${i + 1}`);
+    if (i === 0 && chosen.image) return fromCmsUrl(chosen.image, chosen.title);
+    return spare[taken++] ?? null;
+  });
 
   // A quote is used only if it names this journey explicitly.
   const quote =

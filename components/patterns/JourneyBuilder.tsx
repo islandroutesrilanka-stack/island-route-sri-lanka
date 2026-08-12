@@ -116,7 +116,15 @@ const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * about to be unmounted and focus lands on <body>. Mounting with the new panel
  * is the only moment the new heading exists.
  */
-function StepHeading({ text, autoFocus }: { text: string; autoFocus: boolean }) {
+function StepHeading({
+  id,
+  text,
+  autoFocus,
+}: {
+  id: string;
+  text: string;
+  autoFocus: boolean;
+}) {
   const ref = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -130,6 +138,7 @@ function StepHeading({ text, autoFocus }: { text: string; autoFocus: boolean }) 
 
   return (
     <h3
+      id={id}
       ref={ref}
       tabIndex={-1}
       className="h-display text-2xl text-sand outline-none md:text-3xl"
@@ -138,6 +147,10 @@ function StepHeading({ text, autoFocus }: { text: string; autoFocus: boolean }) 
     </h3>
   );
 }
+
+/** The id the option grids point their `aria-labelledby` at, so a screen reader
+ *  announces the question when focus enters the choices. */
+const QUESTION_ID = "jb-question";
 
 function OptionCard({
   label,
@@ -282,6 +295,37 @@ export default function JourneyBuilder() {
   const chosenCount =
     (theme ? 1 : 0) + (duration ? 1 : 0) + (party ? 1 : 0) + stops.length;
 
+  /*
+    Which steps actually hold an answer — not which ones you have walked past.
+
+    The stepper used to tick every step behind the current one, so skipping
+    "Party" and continuing marked it complete. That is the one thing a progress
+    indicator must not do: it told the visitor they had answered a question
+    they hadn't, and the only way to discover otherwise was to reach the review
+    panel and find it missing. Position still drives the connecting rule (where
+    you are); answers drive the ticks (what you've said).
+  */
+  const answers: Record<StepId, boolean> = {
+    theme: Boolean(theme),
+    duration: Boolean(duration),
+    party: Boolean(party),
+    places: stops.length > 0,
+    review: false,
+  };
+  const questionCount = STEPS.length - 1; // review asks nothing
+  const answeredCount = STEPS.filter(
+    (s) => s.id !== "review" && answers[s.id]
+  ).length;
+
+  /** Clears just this step, for the visitor who picked the wrong thing and
+   *  can't be expected to guess that tapping a chosen card again un-picks it. */
+  const clearStep = () => {
+    if (current.id === "theme") setTheme(undefined);
+    if (current.id === "duration") setDuration(undefined);
+    if (current.id === "party") setParty(undefined);
+    if (current.id === "places") setStops([]);
+  };
+
   const themeName = experienceCategories.find((c) => c.slug === theme)?.name;
 
   /* `mode="wait"` means exit runs to completion before the next panel enters,
@@ -313,32 +357,43 @@ export default function JourneyBuilder() {
             count carries it instead. */}
         <ol className="hidden md:flex md:items-center md:gap-1">
           {STEPS.map((s, i) => {
-            const done = i < step;
+            const passed = i < step;
             const here = i === step;
+            const answered = answers[s.id];
             return (
               <li key={s.id} className="flex flex-1 items-center gap-2">
                 <button
                   type="button"
                   onClick={() => goTo(i)}
                   aria-current={here ? "step" : undefined}
+                  /* Spelled out rather than left to the tick alone: "Party,
+                     answered" is unambiguous where a checkmark glyph is not. */
+                  aria-label={`${s.label}${
+                    s.id === "review"
+                      ? ""
+                      : answered
+                        ? " — answered"
+                        : " — not answered yet"
+                  }`}
                   className={`group flex items-center gap-2.5 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors ${
                     here
                       ? "text-copper-light"
-                      : done
+                      : passed || answered
                         ? "text-sand/70 hover:text-sand"
                         : "text-sand/35 hover:text-sand/70"
                   }`}
                 >
                   <span
+                    aria-hidden
                     className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] transition-colors ${
-                      here
-                        ? "border-copper-light text-copper-light"
-                        : done
-                          ? "border-copper-light/40 bg-copper-light/15 text-copper-light"
+                      answered
+                        ? "border-copper-light/40 bg-copper-light/15 text-copper-light"
+                        : here
+                          ? "border-copper-light text-copper-light"
                           : "border-sand/25 text-sand/40 group-hover:border-sand/50"
                     }`}
                   >
-                    {done ? <Check size={11} strokeWidth={3} /> : i + 1}
+                    {answered ? <Check size={11} strokeWidth={3} /> : i + 1}
                   </span>
                   {s.label}
                 </button>
@@ -346,7 +401,7 @@ export default function JourneyBuilder() {
                   <span
                     aria-hidden
                     className={`h-px flex-1 transition-colors ${
-                      done ? "bg-copper-light/40" : "bg-sand/15"
+                      passed ? "bg-copper-light/40" : "bg-sand/15"
                     }`}
                   />
                 )}
@@ -355,21 +410,67 @@ export default function JourneyBuilder() {
           })}
         </ol>
 
-        <div className="md:hidden">
-          <p className="flex items-baseline justify-between text-[11px] uppercase tracking-[0.16em] text-sand/50">
-            <span>
-              Step {step + 1} of {STEPS.length}
-            </span>
-            <span className="text-copper-light">{current.label}</span>
+        {/* Phone: same stepper, stripped to its numbers. Five labels cannot sit
+            on one line at 375px without truncating into nonsense — five 24px
+            markers can, and keeping them *tappable* matters more than naming
+            them. Without this the only route from step one to the review panel
+            on a phone was four taps on Continue, while a desktop visitor could
+            jump straight there. The ticks carry the same meaning as on desktop:
+            answered, not merely walked past.
+
+            The count sits opposite because the phone layout has nowhere else to
+            show it — the bottom bar has no room for it at 375px. */}
+        <div className="flex items-center justify-between gap-3 md:hidden">
+          <ol className="flex items-center">
+            {STEPS.map((s, i) => {
+              const here = i === step;
+              const answered = answers[s.id];
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-current={here ? "step" : undefined}
+                    aria-label={`${s.label}${
+                      s.id === "review"
+                        ? ""
+                        : answered
+                          ? " — answered"
+                          : " — not answered yet"
+                    }`}
+                    /* Padding rather than a bigger circle: 44px of thumb with
+                       24px of ink, so the row still fits beside the count. */
+                    className="flex min-h-[44px] items-center px-1.5"
+                  >
+                    <span
+                      aria-hidden
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] transition-colors ${
+                        here
+                          ? /* Filled: with no labels here, "where I am" has to
+                               beat "what I've answered" for the eye. */
+                            "border-copper-light bg-copper-light text-deep"
+                          : answered
+                            ? "border-copper-light/40 bg-copper-light/15 text-copper-light"
+                            : "border-sand/25 text-sand/40"
+                      }`}
+                    >
+                      {answered ? <Check size={11} strokeWidth={3} /> : i + 1}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          {/* The live region below md — the bottom bar's copy takes over from md
+              up, and the two never overlap, so a change is announced once. */}
+          <p
+            aria-live="polite"
+            className={`shrink-0 text-[11px] uppercase tracking-[0.14em] ${
+              answeredCount ? "text-copper-light" : "text-sand/35"
+            }`}
+          >
+            {answeredCount} of {questionCount} answered
           </p>
-          <div aria-hidden className="mt-2.5 h-px w-full bg-sand/15">
-            <motion.div
-              className="h-px bg-copper-light"
-              initial={false}
-              animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-              transition={reduce ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </div>
         </div>
       </nav>
 
@@ -381,7 +482,26 @@ export default function JourneyBuilder() {
             {...slide}
             transition={{ duration: reduce ? 0.15 : 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
-            <StepHeading text={current.question} autoFocus={navigated.current} />
+            <div className="flex items-start justify-between gap-5">
+              <StepHeading
+                id={QUESTION_ID}
+                text={current.question}
+                autoFocus={navigated.current}
+              />
+              {/* Un-picking by tapping the chosen card again works, but nothing
+                  advertises it. This does — and it is the only way to empty a
+                  four-stop route in one action. Present only when there is
+                  something to clear, so it never sits there greyed out. */}
+              {answers[current.id] && (
+                <button
+                  type="button"
+                  onClick={clearStep}
+                  className="mt-1.5 shrink-0 text-[11px] uppercase tracking-[0.14em] text-sand/45 transition-colors hover:text-copper-light"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             <p className="mt-2.5 max-w-xl text-[15px] leading-relaxed text-sand/55">
               {current.hint}
             </p>
@@ -392,7 +512,11 @@ export default function JourneyBuilder() {
                    stacked made this step 1,400px tall, which is the scroll the
                    wizard exists to remove. The blurb returns from sm, where
                    there is room for it to be read rather than skimmed past. */
-                <ul className="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
+                <ul
+                  role="group"
+                  aria-labelledby={QUESTION_ID}
+                  className="grid grid-cols-2 gap-2.5 lg:grid-cols-3"
+                >
                   {experienceCategories.map((c) => (
                     <li key={c.slug}>
                       <OptionCard
@@ -408,7 +532,11 @@ export default function JourneyBuilder() {
               )}
 
               {current.id === "duration" && (
-                <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+                <ul
+                  role="group"
+                  aria-labelledby={QUESTION_ID}
+                  className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4"
+                >
                   {Object.entries(DURATION_LABELS).map(([value, label]) => (
                     <li key={value}>
                       <OptionCard
@@ -423,7 +551,11 @@ export default function JourneyBuilder() {
               )}
 
               {current.id === "party" && (
-                <ul className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+                <ul
+                  role="group"
+                  aria-labelledby={QUESTION_ID}
+                  className="grid grid-cols-2 gap-2.5 lg:grid-cols-4"
+                >
                   {Object.entries(PARTY_LABELS).map(([value, label]) => (
                     <li key={value}>
                       <OptionCard
@@ -438,7 +570,11 @@ export default function JourneyBuilder() {
               )}
 
               {current.id === "places" && (
-                <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                <ul
+                  role="group"
+                  aria-labelledby={QUESTION_ID}
+                  className="grid grid-cols-2 gap-2.5 lg:grid-cols-3"
+                >
                   {destinations.map((d) => {
                     const at = stops.indexOf(d.slug);
                     return (
@@ -524,10 +660,10 @@ export default function JourneyBuilder() {
                     </div>
                   )}
 
-                  <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+                  <div className="mt-8 flex flex-col items-stretch gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-center">
                     <Link
                       href={href}
-                      className="inline-flex items-center gap-2.5 bg-copper-deep px-8 py-4 text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-light hover:text-deep"
+                      className="inline-flex items-center justify-center gap-2.5 bg-copper-deep px-8 py-4 text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-light hover:text-deep"
                     >
                       Plan my journey <ArrowRight size={15} aria-hidden />
                     </Link>
@@ -572,22 +708,35 @@ export default function JourneyBuilder() {
         </button>
 
         {/* The count is the quiet reassurance that the earlier steps kept what
-            you gave them — the panel can only ever show one of them at a time. */}
-        <p aria-live="polite" className="text-[11px] uppercase tracking-[0.14em] text-sand/35">
-          {chosenCount === 0
+            you gave them — the panel can only ever show one of them at a time.
+            Hidden below md: at 375px, Back + this + Continue do not fit on one
+            line, and the phone stepper carries the same count already. The
+            breakpoint matches the stepper's exactly so the two counts are never
+            on screen together — one live region at a time, announced once. */}
+        <p
+          aria-live="polite"
+          className="hidden text-[11px] uppercase tracking-[0.14em] text-sand/35 md:block"
+        >
+          {answeredCount === 0
             ? "Every step is optional"
-            : `${chosenCount} chosen`}
+            : `${answeredCount} of ${questionCount} answered`}
         </p>
 
         {isLast ? (
           <span className="min-h-[44px] w-[4.5rem]" aria-hidden />
         ) : (
+          /* Filled, not outlined. This is the primary action on four of the
+             five steps, and it previously sat at the same weight as "Back" —
+             two low-contrast outlines at opposite ends of a rule, with nothing
+             saying which way the form goes. The last hop is labelled "Review"
+             rather than "Continue" so the end of the wizard is visible from
+             the step before it. */
           <button
             type="button"
             onClick={() => goTo(step + 1)}
-            className="inline-flex min-h-[44px] items-center gap-2 border border-sand/25 px-6 text-[12px] uppercase tracking-[0.14em] text-sand transition-colors hover:border-copper-light hover:text-copper-light"
+            className="inline-flex min-h-[44px] items-center gap-2 bg-sand px-6 text-[12px] uppercase tracking-[0.14em] text-deep transition-colors hover:bg-copper-light"
           >
-            Continue
+            {step === STEPS.length - 2 ? "Review" : "Continue"}
             <ArrowRight size={15} aria-hidden />
           </button>
         )}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Star, ArrowRight } from "lucide-react";
 import { Reveal } from "./motion";
 import Img from "./media/Img";
+import GradientPanel from "./media/GradientPanel";
 import { destinationAsset } from "@/lib/media/registry";
 import type { Tour } from "@/lib/tours";
 import type { Destination } from "@/lib/destinations";
@@ -83,17 +84,35 @@ export function TourCard({
             feature ? "aspect-[4/5] md:aspect-[16/11]" : "aspect-[4/5]"
           }`}
         >
-          <Image
-            src={tour.image}
-            alt={tour.title}
-            fill
-            sizes={
-              feature
-                ? "(max-width: 768px) 100vw, 58vw"
-                : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            }
-            className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-105"
-          />
+          {/*
+            A journey can legitimately have no photograph. "Palmyra & Pearl"
+            ships that way — nobody had a verified image of the north when it
+            was written, and the project's rule is a gradient over a guess.
+            Passing that empty string to next/image is not a no-op: React logs
+            `Image is missing required "src" property` and the browser renders
+            an <img> with no source, so the card loses its ground and the
+            caption sits on bare paper. The treatment is the designed state for
+            an empty slot, so use it.
+          */}
+          {tour.image ? (
+            <Image
+              src={tour.image}
+              alt={tour.title}
+              fill
+              sizes={
+                feature
+                  ? "(max-width: 768px) 100vw, 58vw"
+                  : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              }
+              className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-105"
+            />
+          ) : (
+            <GradientPanel
+              tone={index % 2 === 0 ? "deep" : "moss"}
+              pattern="contour"
+              className="h-full w-full"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/45 to-transparent" />
           <span className="absolute left-4 top-4 bg-sand/90 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-ink">
             {tour.category}

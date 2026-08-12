@@ -1,4 +1,5 @@
 import type { Tour } from "./tours";
+import { commonsPlaces } from "./media/commons";
 
 /**
  * The premium journey collection.
@@ -43,6 +44,13 @@ export const journeys: Tour[] = [
     image: "/photography/sigiriya-rock.jpg",
     featured: true,
     destinationSlugs: ["sigiriya", "kandy"],
+    /* Days 2, 4 and 5. The three ancient capitals the excerpt names but that
+       `destinationSlugs` cannot carry, because none of them has a guide page. */
+    storyImages: [
+      commonsPlaces.Anuradhapura.src,
+      commonsPlaces.Polonnaruwa.src,
+      commonsPlaces.Dambulla.src,
+    ],
     themeSlugs: ["culture-heritage", "local-life", "slow-travel"],
     excerpt:
       "Two thousand years of kingship in a single arc — from the tended bo tree at Anuradhapura to a sky palace on bare granite, ending with the drums of the evening puja in Kandy. Three ancient capitals, unhurried, in the right order.",
@@ -125,6 +133,14 @@ export const journeys: Tour[] = [
     image: "/photography/mirissa-coconut-tree-hill.jpg",
     featured: true,
     destinationSlugs: ["galle", "mirissa"],
+    /* Days 1, 5, 6 and 8 — the coast either side of the two towns that have
+       guides. */
+    storyImages: [
+      commonsPlaces.Bentota.src,
+      commonsPlaces.Unawatuna.src,
+      commonsPlaces.Weligama.src,
+      commonsPlaces.Tangalle.src,
+    ],
     themeSlugs: ["beaches", "food", "wellness"],
     excerpt:
       "The south taken slowly: Bawa's gardens above the Bentota river, a Dutch fort with the sea on three sides, blue whales beyond the shelf, and a last stretch of coast at Tangalle where the crowds simply stop.",
@@ -214,6 +230,11 @@ export const journeys: Tour[] = [
     image: "/photography/hill-country-train.jpg",
     featured: true,
     destinationSlugs: ["kandy", "nuwara-eliya", "ella"],
+    /* Days 3 and 4 — the plateau walk and the estate above Haputale. */
+    storyImages: [
+      commonsPlaces["Horton Plains"].src,
+      commonsPlaces.Haputale.src,
+    ],
     themeSlugs: ["tea-country", "nature", "luxury"],
     excerpt:
       "Six nights above fifteen hundred metres, in planters' bungalows with fires lit at dusk. Horton Plains before the mist, Lipton's Seat at sunrise, and the slow blue train down the escarpment to Ella.",
@@ -290,6 +311,15 @@ export const journeys: Tour[] = [
     image: "/photography/yala-leopard.jpg",
     featured: true,
     destinationSlugs: ["yala"],
+    /* Days 1–6. Yala is the only park on this route with a guide page, so
+       without these the one journey that visits four parks would be
+       illustrated entirely by the fourth. */
+    storyImages: [
+      commonsPlaces.Wilpattu.src,
+      commonsPlaces.Udawalawe.src,
+      commonsPlaces.Bundala.src,
+      commonsPlaces.Tissamaharama.src,
+    ],
     themeSlugs: ["wildlife", "nature", "adventure"],
     excerpt:
       "Four parks, four different animals, and a private jeep at every gate. Wilpattu's villus for leopards found rather than delivered, Minneriya for the gathering, Udawalawe for elephants at any time of year, and Yala's Block One at dawn.",
@@ -371,6 +401,13 @@ export const journeys: Tour[] = [
     priceFrom: 1590,
     image: "/photography/whisky-point-lineup.jpg",
     destinationSlugs: ["arugam-bay"],
+    /* Days 2–5. The whole east coast north of Arugam Bay, none of it with a
+       guide page yet. */
+    storyImages: [
+      commonsPlaces.Trincomalee.src,
+      commonsPlaces.Pasikuda.src,
+      commonsPlaces.Batticaloa.src,
+    ],
     themeSlugs: ["surf-ocean", "beaches", "local-life"],
     excerpt:
       "The island in reverse. From May to September, while the south sits under monsoon, the east is glass — Pigeon Island's reef, a lagoon city of bridges, and a right-hand point break that runs for two hundred metres.",
@@ -450,7 +487,22 @@ export const journeys: Tour[] = [
     category: "Multi-Day",
     duration: "9 days · 8 nights",
     priceFrom: 1950,
-    image: "",
+    /* This shipped empty, so the card rendered a gradient — the one journey in
+       the collection with no photograph was the one selling the half of the
+       island nobody has pictured. Nallur's gopuram is the image the copy already
+       promises. Referenced through the Commons collection rather than as a bare
+       path because that is where the CC BY-SA attribution lives. */
+    image: commonsPlaces.Jaffna.src,
+    /* Days 2–9. This journey has no `destinationSlugs` at all — not an
+       oversight: every stop on it is somewhere the site has yet to publish a
+       guide for, which is precisely what makes it the northern passage. So
+       these four are the only photography it has beyond its own card. */
+    storyImages: [
+      commonsPlaces.Mannar.src,
+      commonsPlaces.Delft.src,
+      commonsPlaces.Anuradhapura.src,
+      commonsPlaces.Wilpattu.src,
+    ],
     themeSlugs: ["culture-heritage", "local-life", "slow-travel"],
     excerpt:
       "The half of the island most itineraries still skip: baobabs on Mannar brought by Arab traders, wild ponies on Delft, Nallur's gopuram at festival pitch, and a Jaffna table that tastes like nowhere else in the country.",

@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { MotionProvider } from "@/components/motion";
-import { site, siteUrl } from "@/lib/site";
+import { siteUrl, socialProfiles } from "@/lib/site";
 import { ogDefault } from "@/lib/images";
 import { getSettings } from "@/lib/data";
 
@@ -113,7 +113,7 @@ export default async function RootLayout({
     },
     areaServed: "Sri Lanka",
     priceRange: "$$",
-    sameAs: [site.instagram, site.facebook],
+    sameAs: socialProfiles.map((p) => p.href),
   };
 
   return (

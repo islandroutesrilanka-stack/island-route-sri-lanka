@@ -5,7 +5,7 @@ import EmptyState from "@/components/patterns/EmptyState";
 import IslandMap from "@/components/patterns/IslandMap";
 import JourneyBuilder from "@/components/patterns/JourneyBuilder";
 import { getTours } from "@/lib/data";
-import { img } from "@/lib/images";
+import { commonsPlaces } from "@/lib/media/commons";
 import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
 import { regions } from "@/lib/regions";
@@ -83,7 +83,7 @@ export default async function ToursPage({
         eyebrow="Tours & packages"
         title="Journeys crafted, never copied"
         intro="Every tour below is a starting point — we adapt routes, hotels and pacing to you. Prices are indicative per person and confirmed in your personal quote."
-        image={img.beachAerial}
+        image={commonsPlaces.Trincomalee.src}
       />
 
       {/* ═══════════ Season selector + curated journeys ═══════════

@@ -17,11 +17,22 @@ const nextConfig = {
      * images the day it happens.
      */
     remotePatterns: [
+      /*
+        No code references Unsplash any more — the eighteen hotlinked assets
+        were removed from the registry and every image the site ships is served
+        from /public. This entry stays only because live CMS rows seeded before
+        that change still hold images.unsplash.com URLs. Once
+        supabase/update-image-urls.sql has been run against production, this
+        line and the pexels one below can go, and dropping them is the cheapest
+        way to guarantee no remote hotlink ever returns.
+      */
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "images.pexels.com" },
       { protocol: "https", hostname: "*.supabase.co" },
-      // Freely-licensed place photography — see lib/media/commons.ts. Removing
-      // this line does not throw; it blanks every region-explorer card.
+      // Kept for CMS-entered URLs only. Our own Commons photography is served
+      // from public/commons/ instead: hotlinking a page's worth of files at
+      // once earns a 429 from Wikimedia, which this optimizer turns into a
+      // blank tile. See the note in lib/media/commons.ts before adding one.
       { protocol: "https", hostname: "upload.wikimedia.org" },
     ],
   },

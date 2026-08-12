@@ -46,168 +46,54 @@
  */
 import type { MediaAsset, MediaProvenance } from "./types";
 import { isPlaceholder, isLocationVerified } from "./types";
+import { commonsPlaces, commonsSubjects } from "./commons";
 
-/** Consistent Unsplash transform params. */
-const u = (id: string, w = 1600) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
+/*
+  The `u()` URL builder and the `unsplash()` provenance helper stood here.
 
-/**
- * Unsplash stock, location signed off by the site owner (see header).
- *
- * Kept as a single helper on purpose: verification status is set in exactly one
- * place, so withdrawing it later is a one-line change rather than an edit to
- * eighteen entries. Any asset needing a different status should declare its
- * provenance inline instead of using this helper.
- */
-const unsplash = (id: string): MediaProvenance => ({
-  kind: "stock",
-  source: "Unsplash",
-  url: `https://unsplash.com/ (asset id ${id})`,
-  license: "Unsplash License",
-  /*
-    WITHDRAWN — was `true` on a blanket owner sign-off covering all eighteen
-    assets at once, which this file's own header recorded as NOT a per-asset
-    inspection.
-    That blanket value inverted the gate it was supposed to feed. Destination
-    images arrive as bare URLs and `destinationAsset()` recovers provenance via
-    `bySrc`, so any generic stock photograph whose URL happened to sit in this
-    registry was certified as location-verified and rendered captioned with a
-    place name. That is how a tropical beach shipped as "Sigiriya", a lagoon as
-    "Kandy" and a cliff as "Ella" — visible on the rendered page.
-    False on a real photograph costs a GradientPanel. True on a wrong one costs
-    the claim's credibility. Individually verified assets declare their
-    provenance inline instead of using this helper — see the self-hosted block
-    at the end of the registry.
-  */
-  verifiedLocation: false,
-});
+  Both are gone with the assets that used them. `unsplash()` existed to set
+  `verifiedLocation` for eighteen entries in one place — which was exactly the
+  problem: a single blanket sign-off certified photographs nobody had opened,
+  and the gate that was supposed to catch a wrong image instead waved it
+  through under a place name. Verification is a per-asset judgement now, and it
+  is declared inline beside the asset it describes.
+
+  Do not reintroduce either helper. A new photograph belongs in /public with
+  its own inline provenance; nothing on this site should resolve an image over
+  the network.
+*/
 
 /* ------------------------------- The registry ------------------------------- */
 
+/*
+  The eighteen hotlinked Unsplash assets that used to open this object —
+  heroTrain, sigiriya, templeKandy, beachPanorama, beachPalms, beachAerial,
+  beachChairs, beachSunset, surfWave, seaTurtle, mistyHills, sunraysValley,
+  elephants, elephantHerd, leopard, safariJeep, coastalDrive, drivingWheel —
+  have been removed, along with the `legacyImg` shim that exposed them.
+
+  They were the last remote images on the site and they failed in both of the
+  ways this file was built to prevent.
+
+    1. Availability. Every one was hotlinked to images.unsplash.com. A page
+       requesting several at once from a single server IP earns 429s; Next's
+       optimiser then answers 400 and <Image> renders nothing at all — a blank
+       tile with no error anywhere the visitor can see. Measured repeatedly on
+       this site: ten blank tiles on /tours in one run, five in the next.
+
+    2. Truth. All eighteen carried `verifiedLocation: false` (see the withdrawn
+       helper's note in this file's history), so none could pass the gate, and
+       the alt text told the story on its own: "A shoreline at sunset", "A road
+       following a coastline", "Sunlight falling across a valley". `heroTrain`
+       was worse than generic — it showed limestone karst and long-tail boats,
+       photographed nowhere near Sri Lanka, while being named for a train.
+
+  Their seven remaining call sites — five page headers, two images in the /about
+  story block — now take self-hosted, individually verified photographs from the
+  block below or from lib/media/commons.ts. Nothing in the codebase resolves an
+  image over the network any more.
+*/
 export const media = {
-  /* — Signature ————————————————————————————————————————————————— */
-  heroTrain: {
-    src: u("photo-1552465011-b4e21bf6e79a", 2200),
-    /*
-      `depicts: "Highland railway, Sri Lanka"` REMOVED. The owner inspected the
-      rendered page and reported this asset showing limestone karst with
-      long-tail boats — Thailand or thereabouts, not a Sri Lankan train. The alt
-      text and the key were both describing an image this URL does not contain.
-      Left in the registry because other call sites still import it, but it now
-      claims no place and, with the helper above withdrawn, cannot pass the gate.
-    */
-    alt: "Stock landscape — subject not verified",
-    focal: "50% 50%",
-    provenance: unsplash("photo-1552465011-b4e21bf6e79a"),
-  },
-  sigiriya: {
-    src: u("photo-1546708973-b339540b5162"),
-    alt: "A rock fortress rising above forest",
-    depicts: "Sigiriya, Cultural Triangle",
-    // Worth a second look at some point: stock libraries very commonly caption
-    // Pidurangala — the neighbouring rock people climb *to photograph*
-    // Sigiriya — as Sigiriya itself. A view *of* the rock vs *from* it.
-    provenance: unsplash("photo-1546708973-b339540b5162"),
-  },
-  templeKandy: {
-    src: u("photo-1602216056096-3b40cc0c9944"),
-    alt: "A Buddhist temple",
-    depicts: "Temple of the Sacred Tooth Relic, Kandy",
-    provenance: unsplash("photo-1602216056096-3b40cc0c9944"),
-  },
-
-  /* — Coast & surf ————————————————————————————————————————————— */
-  beachPanorama: {
-    src: u("photo-1507525428034-b723cf961d3e", 2000),
-    alt: "A wide tropical shoreline",
-    provenance: unsplash("photo-1507525428034-b723cf961d3e"),
-  },
-  beachPalms: {
-    src: u("photo-1506929562872-bb421503ef21"),
-    alt: "Palm trees along a shoreline",
-    provenance: unsplash("photo-1506929562872-bb421503ef21"),
-  },
-  beachAerial: {
-    src: u("photo-1505142468610-359e7d316be0"),
-    alt: "A coastline seen from above",
-    provenance: unsplash("photo-1505142468610-359e7d316be0"),
-  },
-  beachChairs: {
-    src: u("photo-1519046904884-53103b34b206"),
-    alt: "Chairs on a quiet beach",
-    provenance: unsplash("photo-1519046904884-53103b34b206"),
-  },
-  beachSunset: {
-    src: u("photo-1468413253725-0d5181091126"),
-    alt: "A shoreline at sunset",
-    provenance: unsplash("photo-1468413253725-0d5181091126"),
-  },
-  surfWave: {
-    src: u("photo-1502680390469-be75c86b636f"),
-    alt: "A breaking wave",
-    depicts: "Arugam Bay surf break, East Coast",
-    provenance: unsplash("photo-1502680390469-be75c86b636f"),
-  },
-  seaTurtle: {
-    src: u("photo-1544551763-46a013bb70d5"),
-    alt: "A sea turtle underwater",
-    provenance: unsplash("photo-1544551763-46a013bb70d5"),
-  },
-
-  /* — Hills ————————————————————————————————————————————————————— */
-  mistyHills: {
-    src: u("photo-1470071459604-3b5ec3a7fe05"),
-    alt: "Mist over forested hills",
-    depicts: "Hill country, Sri Lanka",
-    provenance: unsplash("photo-1470071459604-3b5ec3a7fe05"),
-  },
-  sunraysValley: {
-    src: u("photo-1469474968028-56623f02e42e"),
-    alt: "Sunlight falling across a valley",
-    provenance: unsplash("photo-1469474968028-56623f02e42e"),
-  },
-
-  /* — Wildlife ————————————————————————————————————————————————— */
-  elephants: {
-    src: u("photo-1547471080-7cc2caa01a7e"),
-    alt: "Elephants in the wild",
-    depicts: "Sri Lankan elephants",
-    provenance: unsplash("photo-1547471080-7cc2caa01a7e"),
-  },
-  elephantHerd: {
-    src: u("photo-1557050543-4d5f4e07ef46"),
-    alt: "A herd of elephants",
-    depicts: "Sri Lankan elephant herd",
-    provenance: unsplash("photo-1557050543-4d5f4e07ef46"),
-  },
-  leopard: {
-    src: u("photo-1456926631375-92c8ce872def"),
-    alt: "A leopard",
-    depicts: "Sri Lankan leopard, Yala",
-    // Worth a second look at some point: African leopards dominate stock
-    // libraries, and the Sri Lankan subspecies (Panthera pardus kotiya) is
-    // visibly larger and more heavily built — a difference safari customers
-    // tend to notice.
-    provenance: unsplash("photo-1456926631375-92c8ce872def"),
-  },
-  safariJeep: {
-    src: u("photo-1516426122078-c23e76319801"),
-    alt: "A safari vehicle on a track",
-    provenance: unsplash("photo-1516426122078-c23e76319801"),
-  },
-
-  /* — Journeys & fleet ————————————————————————————————————————— */
-  coastalDrive: {
-    src: u("photo-1533473359331-0135ef1b58bf"),
-    alt: "A road following a coastline",
-    provenance: unsplash("photo-1533473359331-0135ef1b58bf"),
-  },
-  drivingWheel: {
-    src: u("photo-1449965408869-eaa3f722e40d"),
-    alt: "A driver at the wheel",
-    provenance: unsplash("photo-1449965408869-eaa3f722e40d"),
-  },
-
   /* — Self-hosted, individually verified —————————————————————————
    *
    * These differ from everything above in two ways that matter.
@@ -544,18 +430,6 @@ export const media = {
 
 export type MediaKey = keyof typeof media;
 
-/* ---------------------------- Retired assets ------------------------------- */
-/**
- * Deliberately absent from the registry above, per the approved plan:
- *
- *   cityLights · sedanNight · forest · greenMountains · mountainLake · lakeCanoe
- *
- * All were generic, non-Sri-Lankan stock. Slots that used them now take a
- * non-photographic treatment (GradientPanel) rather than filler photography.
- * They remain in the legacy map below only so the 19 existing importers of
- * lib/images.ts keep compiling until each page is migrated.
- */
-
 /* ------------------------- Production placeholder guard --------------------- */
 /**
  * A development placeholder must never reach a visitor. Rather than trusting
@@ -574,41 +448,19 @@ if (process.env.NODE_ENV === "production" && placeholders.length > 0) {
 }
 
 /* ------------------------------ Legacy bridge ------------------------------- */
-/**
- * Flat URL map preserving the exact shape of the old `img` export, including
- * the six retired keys, so all 19 existing importers keep working untouched
- * while pages migrate to the typed registry one phase at a time.
- *
- * @deprecated Import `media` and pass MediaAsset objects instead.
- */
-export const legacyImg = {
-  heroTrain: media.heroTrain.src,
-  sigiriya: media.sigiriya.src,
-  templeKandy: media.templeKandy.src,
-  beachPanorama: media.beachPanorama.src,
-  beachPalms: media.beachPalms.src,
-  beachAerial: media.beachAerial.src,
-  beachChairs: media.beachChairs.src,
-  beachSunset: media.beachSunset.src,
-  surfWave: media.surfWave.src,
-  seaTurtle: media.seaTurtle.src,
-  mistyHills: media.mistyHills.src,
-  sunraysValley: media.sunraysValley.src,
-  elephants: media.elephants.src,
-  elephantHerd: media.elephantHerd.src,
-  leopard: media.leopard.src,
-  safariJeep: media.safariJeep.src,
-  coastalDrive: media.coastalDrive.src,
-  drivingWheel: media.drivingWheel.src,
+/*
+  `legacyImg` — the flat URL map that preserved the shape of the original `img`
+  export — has been removed. It existed to keep nineteen importers compiling
+  while pages migrated to the typed registry one phase at a time, and its own
+  note said it would go when the last importer did. That has now happened: the
+  final seven call sites (five page headers and the two /about story images)
+  read from `media` and `commonsPlaces` directly.
 
-  // Retired — kept only for legacy call sites. Not in the typed registry.
-  greenMountains: u("photo-1464822759023-fed622ff2c3b"),
-  forest: u("photo-1441974231531-c6227db76b6e"),
-  lakeCanoe: u("photo-1476514525535-07fb3b4ae5f1"),
-  mountainLake: u("photo-1501785888041-af3ef285b470"),
-  sedanNight: u("photo-1549317661-bd32c8ce0db2"),
-  cityLights: u("photo-1449824913935-59a10b8d2000"),
-};
+  Because the map flattened assets to bare URL strings, it also stripped the
+  provenance the verification gate depends on — which is what `bySrc` below was
+  built to undo. Every remaining consumer passes whole `MediaAsset` objects, so
+  that round trip is one fewer place for an image to lose its papers.
+*/
 
 /**
  * Neutral branded social card — 1200×630, wordmark over an abstract contour
@@ -641,19 +493,52 @@ export function toVerifiedOgImage(asset: MediaAsset | null | undefined): string 
   return isLocationVerified(asset) && asset ? toOgImage(asset.src) : OG_FALLBACK;
 }
 
-/** Default social sharing image for the whole site. */
-export const ogDefault = toOgImage(legacyImg.heroTrain);
+/**
+ * Default social sharing image for the whole site.
+ *
+ * Was `toOgImage(legacyImg.heroTrain)` — so every page without its own social
+ * image was shared as a hotlinked Unsplash photograph of limestone karst and
+ * long-tail boats, which is not Sri Lanka and never was. It was also declared
+ * to Open Graph as 1200×630 in app/layout.tsx while actually being a 2200px
+ * landscape crop.
+ *
+ * The neutral brand card is genuinely 1200×630 and claims no place, so it is
+ * honest at any size and for any page. Pages that *can* name their subject
+ * already override this with `toVerifiedOgImage`.
+ */
+export const ogDefault = OG_FALLBACK;
 
 /**
  * Reverse index: image URL → the registry entry it belongs to.
  *
- * Built once at module load. Exists because several data sources still carry
- * images as bare URL strings (see `legacyImg`), which drops the provenance that
- * the verification gate depends on. This is how a flattened URL finds its way
- * home. It disappears when those sources reference registry keys directly.
+ * Built once at module load. Exists because the CMS stores images as bare URL
+ * strings, which drops the provenance the verification gate depends on. This is
+ * how a flattened URL finds its way home. It disappears if Supabase ever stores
+ * a registry key instead of a URL.
  */
+/*
+  The Commons collections are folded in alongside `media`.
+
+  They were the missing half of this index. Once seed content started pointing
+  at /commons/*.jpg — the Nuwara Eliya destination card, the gallery, the
+  legacy tour catalogue — those URLs arrived here as strangers: `bySrc` knew
+  nothing about them, so `destinationAsset` fell through to `fromCmsUrl`, which
+  correctly reports an unknown URL as unverified, and the gate hid a photograph
+  whose provenance was fully recorded two files away.
+
+  Registering them is what makes "self-host it and record its licence" the
+  single act that clears the gate. `media` is listed last so the owner's own
+  photography wins any src collision, which is the right precedence — though in
+  practice the two use different directories and cannot collide.
+
+  Safe from cycles: lib/media/commons.ts imports only from ./types.
+*/
 const bySrc: ReadonlyMap<string, MediaAsset> = new Map(
-  Object.values(media).map((a) => [a.src, a as MediaAsset])
+  [
+    ...Object.values(commonsPlaces),
+    ...Object.values(commonsSubjects),
+    ...Object.values(media),
+  ].map((a) => [a.src, a as MediaAsset])
 );
 
 /**

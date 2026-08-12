@@ -1,4 +1,4 @@
-import { img } from "./images";
+import { commonsPlaces } from "./media/commons";
 
 export type Destination = {
   slug: string;
@@ -59,7 +59,10 @@ export const destinations: Destination[] = [
     bestFor: ["Tea estates", "Cool climate", "Colonial charm"],
     bestTime: "Feb–May · Apr 'season' festivities",
     highlights: ["Tea factory tours & tastings", "Horton Plains & World's End", "Gregory Lake", "Ramboda & Devon Falls"],
-    image: img.mistyHills,
+    /* Was a remote Unsplash URL of anonymous "misty hills" — hotlinked, so it
+       failed intermittently, and unverified, so DestinationCard's gate hid it
+       when it didn't. This is Nuwara Eliya itself, self-hosted. */
+    image: commonsPlaces["Nuwara Eliya"].src,
   },
   {
     slug: "yala",

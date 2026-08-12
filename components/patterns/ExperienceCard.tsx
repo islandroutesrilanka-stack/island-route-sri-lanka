@@ -2,11 +2,14 @@
  * Experience card — the shared tile for /experiences and the "other ways to
  * travel" rail on each detail page.
  *
- * Deliberately no photography, for the same reason ExperienceRail has none: a
- * category image would be a claim ("this is what a Wildlife journey looks
- * like") backed by an unverified photograph, and this project has ruled that
- * out. Type, scale and the contour treatment carry it. Each tile takes an image
- * later with no change to its callers.
+ * This used to carry no photography at all, on the grounds that a category
+ * image would be a claim ("this is what a Wildlife journey looks like") backed
+ * by an unverified photograph. The objection was to the *unverified* half, not
+ * to photography, and `lib/media/experiences.ts` now answers it: every asset it
+ * returns has had its location checked, and `requireVerifiedLocation` below
+ * stays on, so anything unchecked falls back to the contour treatment this tile
+ * shipped with rather than showing the wrong country. The card's contract with
+ * its callers is unchanged.
  *
  * The journey count is the one number on the card and it is real — the tile
  * only exists because that count is non-zero. It does the work a price or a
@@ -16,7 +19,8 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion";
-import GradientPanel from "@/components/media/GradientPanel";
+import Img from "@/components/media/Img";
+import { experienceAsset } from "@/lib/media/experiences";
 import type { PublishedExperience } from "@/lib/experiences";
 
 export default function ExperienceCard({
@@ -39,12 +43,48 @@ export default function ExperienceCard({
             feature ? "aspect-[4/5] md:aspect-[16/10]" : "aspect-[4/5] sm:aspect-[4/3]"
           }`}
         >
-          <GradientPanel
-            tone={index % 2 === 0 ? "moss" : "deep"}
-            pattern="contour"
-            className="h-full w-full transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
+          <Img
+            asset={experienceAsset(category.slug)}
+            /* Off, and staying off: an unchecked asset here would put a
+               photograph of somewhere else behind a category name. */
+            requireVerifiedLocation
+            sizes={
+              feature
+                ? "(min-width: 1216px) 1216px, 100vw"
+                : "(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+            }
+            fallbackTone={index % 2 === 0 ? "moss" : "deep"}
+            fallbackPattern="contour"
+            className="transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-deep/90 via-deep/25 to-transparent" />
+          {/*
+            ── Two scrims, because the two variants are different problems ────
+
+            The feature tile is 16/10 and its copy occupies the bottom ~29% of
+            it, so a gentle ramp is both enough and desirable: measured against
+            the photograph actually behind them, its title, blurb and activity
+            list come out at 12.5:1, 8.2:1 and 6.1:1.
+
+            The grid tile is 4/3 and the same copy fills the bottom ~76%, which
+            puts the title where the gentle ramp has faded to about 24% — and on
+            the bright photographs (the Ella ridge, the Ayurveda garden, the
+            temple sky) that measured 2.2–2.9:1 against sand. Large text needs
+            3:1 and the 14px blurb needs 4.5:1, so most of the grid failed both.
+
+            Hence the explicit stops below: ~0.55 opacity where the title sits,
+            ~0.70 behind the blurb, ~0.85 behind the activity list, fading to
+            0.15 at the top so the upper quarter of the crop still reads as a
+            photograph. Re-measured, the worst tile is 4.6:1 on its title. If
+            the copy or the aspect ratio changes, the stops need re-checking —
+            they are positional, not decorative.
+          */}
+          <div
+            className={`absolute inset-0 ${
+              feature
+                ? "bg-gradient-to-t from-deep/95 via-deep/45 to-deep/5"
+                : "bg-[linear-gradient(to_top,rgba(11,31,25,0.95)_0%,rgba(11,31,25,0.85)_40%,rgba(11,31,25,0.62)_70%,rgba(11,31,25,0.45)_85%,rgba(11,31,25,0.15)_100%)]"
+            }`}
+          />
 
           <span className="absolute left-4 top-4 bg-sand/90 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-ink">
             {tours.length} {tours.length === 1 ? "journey" : "journeys"}
@@ -62,14 +102,44 @@ export default function ExperienceCard({
             >
               {category.name}
             </h3>
+            {/*
+              ── Why the two blocks below reserve height from sm up ────────────
+
+              This content block is bottom-anchored, so the title's position is
+              whatever is left after the blurb and the activity list have taken
+              theirs. That makes a card's title rise or fall with the length of
+              its own copy: "Slow Travel" has a one-line blurb and three short
+              activity names, so its title sat 37px lower than "Luxury
+              Experiences" beside it, and a row of tiles read as misaligned
+              rather than varied.
+
+              So both variable blocks reserve their two-line height whether or
+              not the second line is used, which puts every title in a row on
+              the same baseline without truncating anyone's copy. The numbers
+              are the measured two-line heights, not guesses — 14px text at
+              leading-relaxed is 2 × 22.75px ≈ 46px, and the list is 16px of
+              pt-4 plus two 11px lines and their gap-y-1.5 = 56px. If either
+              type size changes, re-measure.
+
+              Only from sm up, because that is where the grid becomes
+              multi-column (sm:grid-cols-2 on /experiences). On a phone the
+              cards are stacked, nothing sits beside anything, and reserved
+              blank space would be waste rather than alignment.
+            */}
             <p
               className={`mt-3 leading-relaxed text-sand/75 ${
-                feature ? "max-w-lg text-[15px] md:text-base" : "max-w-sm text-[14px]"
+                feature
+                  ? "max-w-lg text-[15px] md:text-base"
+                  : "max-w-sm text-[14px] sm:min-h-[2.875rem]"
               }`}
             >
               {category.blurb}
             </p>
-            <ul className="mt-5 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-sand/15 pt-4">
+            <ul
+              className={`mt-5 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-sand/15 pt-4 ${
+                feature ? "" : "sm:min-h-[3.5rem]"
+              }`}
+            >
               {(feature ? category.activities : category.activities.slice(0, 3)).map(
                 (a) => (
                   <li

@@ -113,8 +113,12 @@ sql += "\n\n" + Object.entries(settings)
   .join("\n");
 
 sql += "\n\n-- Example drivers (edit in the admin dashboard)\n";
+/* Gayan's row reads the canonical number rather than repeating it, because it
+   is the business line and not a personal one — the owner confirmed on
+   2026-08-12 that the old +94 77 801 0391 in this list was simply stale. The
+   other two are obvious placeholders and stay literal. */
 sql += [
-  ["Gayan", "+94778010391", ["English", "Sinhala"]],
+  ["Gayan", site.phoneE164, ["English", "Sinhala"]],
   ["Nuwan", "+94770000001", ["English", "Sinhala", "German"]],
   ["Kasun", "+94770000002", ["English", "Sinhala"]],
 ]

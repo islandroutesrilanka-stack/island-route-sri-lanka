@@ -57,7 +57,14 @@ export default async function HomePage() {
       }
     : null;
 
-  const featuredJourney = buildFeaturedJourney(tours, settings, reviews);
+  const featuredJourney = buildFeaturedJourney(
+    tours,
+    settings,
+    reviews,
+    // Fills the two smaller frames of the triptych when Settings hasn't —
+    // photographs of the places this journey actually visits. See JourneyStory.
+    destinations
+  );
 
   /* FAQPage structured data, matching what is actually on the page. */
   const faqJsonLd = {

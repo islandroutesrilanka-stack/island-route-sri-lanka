@@ -38,6 +38,30 @@ import type { MediaAsset, MediaProvenance } from "./types";
  * return 200 image/jpeg from upload.wikimedia.org. They are 1920px renditions,
  * not originals, so a 35-megapixel source does not become a 35-megapixel fetch.
  *
+ * ── Why the files are served from public/commons/ and not hotlinked ────────
+ *
+ * They used to point straight at upload.wikimedia.org. That looked fine in
+ * isolation and broke in the aggregate: a page with a dozen of these makes a
+ * dozen near-simultaneous requests from one server IP, and Wikimedia answers
+ * some of them with 429. Next's optimizer logs `upstream image response
+ * failed`, returns 400, and `next/image` renders nothing — so a tile simply
+ * isn't there, with no error anywhere a visitor or an editor would see it. It
+ * was reproduced on /experiences, where one of twelve went missing on a cold
+ * cache; which one varied per run.
+ *
+ * Wikimedia asks people not to hotlink for exactly this reason, and both CC BY
+ * and CC BY-SA permit redistribution as long as attribution travels with the
+ * file — which is the whole point of the `author` and `license` fields below.
+ * So the 1920px rendition is committed to public/commons/ and served from our
+ * own origin: no third-party request on the critical path, no rate limit, and
+ * an image that cannot vanish between deploys because someone else's CDN said
+ * no.
+ *
+ * To add one: download the rendition to public/commons/ with a descriptive
+ * filename, then record it here with its author and licence. Do not paste an
+ * upload.wikimedia.org URL into `src` — it will work on your machine and fail
+ * intermittently in production.
+ *
  * ── Licensing, which is a real obligation and not a footnote ───────────────
  *
  * These are free licences, not public domain. CC BY and CC BY-SA both require
@@ -63,7 +87,7 @@ export type CommonsPlaceAsset = MediaAsset & {
 export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
   /* ------------------------------ Cultural Triangle ------------------------ */
   Dambulla: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/3/30/Buddha_Statues_in_Dambulla%2C_Sri_Lanka_01.jpg",
+    src: "/commons/buddha-statues-in-dambulla-sri-lanka-01.jpg",
     alt: "Buddha statues inside the cave temples at Dambulla",
     width: 1200,
     height: 800,
@@ -79,7 +103,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Polonnaruwa: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Polonnaruwa_01.jpg/1920px-Polonnaruwa_01.jpg",
+    src: "/commons/polonnaruwa-01.jpg",
     alt: "Stone ruins in the ancient city of Polonnaruwa",
     width: 1920,
     height: 1332,
@@ -95,7 +119,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Anuradhapura: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Ruwanweli_Maha_Saaya.jpg/1920px-Ruwanweli_Maha_Saaya.jpg",
+    src: "/commons/ruwanweli-maha-saaya.jpg",
     alt: "The Ruwanweliseya stupa at Anuradhapura",
     width: 1920,
     height: 1440,
@@ -113,7 +137,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
   /** Hurulu Eco Park is at Habarana — the elephant parks our copy places
    *  "inside an hour" of the village. */
   Habarana: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Elephas_maximus_maximus%2C_Hurulu_Eco_Park%2C_Sri_Lanka%2C_20260201_1018_7843.jpg/1920px-Elephas_maximus_maximus%2C_Hurulu_Eco_Park%2C_Sri_Lanka%2C_20260201_1018_7843.jpg",
+    src: "/commons/elephas-maximus-maximus-hurulu-eco-park-sri-lanka-20260201-1018-7843.jpg",
     alt: "A Sri Lankan elephant in Hurulu Eco Park near Habarana",
     width: 1920,
     height: 1277,
@@ -131,7 +155,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
 
   /* -------------------------------- Hill Country --------------------------- */
   "Nuwara Eliya": {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/NuwaraEliya_from_top.jpg/1920px-NuwaraEliya_from_top.jpg",
+    src: "/commons/nuwaraeliya-from-top.jpg",
     alt: "Nuwara Eliya and the surrounding hills seen from above",
     width: 1920,
     height: 1440,
@@ -148,7 +172,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
   },
   /** Lipton's Seat, which the card's own copy names. */
   Haputale: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Lipton-seat_Sri_Lanka.jpg/1920px-Lipton-seat_Sri_Lanka.jpg",
+    src: "/commons/lipton-seat-sri-lanka.jpg",
     alt: "The view over tea country from Lipton's Seat above Haputale",
     width: 1920,
     height: 1279,
@@ -164,7 +188,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   "Horton Plains": {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Worlds_end_in_horton_plains_in_sri_lanka.jpg/1920px-Worlds_end_in_horton_plains_in_sri_lanka.jpg",
+    src: "/commons/worlds-end-in-horton-plains-in-sri-lanka.jpg",
     alt: "World's End, where the Horton Plains plateau drops away",
     width: 1920,
     height: 1080,
@@ -182,7 +206,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
 
   /* --------------------------------- South Coast --------------------------- */
   Unawatuna: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Unawatuna.jpg/1920px-Unawatuna.jpg",
+    src: "/commons/unawatuna.jpg",
     alt: "The sheltered bay at Unawatuna",
     width: 1920,
     height: 1312,
@@ -198,7 +222,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Weligama: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Weligama_Beach_in_Sri_Lanka.jpg/1920px-Weligama_Beach_in_Sri_Lanka.jpg",
+    src: "/commons/weligama-beach-in-sri-lanka.jpg",
     alt: "The beach at Weligama",
     width: 1920,
     height: 1440,
@@ -215,7 +239,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
   },
   /** Goyambokka — one of the coves the card's copy describes. */
   Tangalle: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Goyambokka_Beach%2C_Tangalle%2C_Sri_Lanka.jpg/1920px-Goyambokka_Beach%2C_Tangalle%2C_Sri_Lanka.jpg",
+    src: "/commons/goyambokka-beach-tangalle-sri-lanka.jpg",
     alt: "Goyambokka beach near Tangalle",
     width: 1920,
     height: 1080,
@@ -233,7 +257,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
 
   /* -------------------------------- The Wild South ------------------------- */
   Udawalawe: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Udawalawe_National_Park_%28Udawalawa_Reservoir%29.jpg/1920px-Udawalawe_National_Park_%28Udawalawa_Reservoir%29.jpg",
+    src: "/commons/udawalawe-national-park-udawalawa-reservoir.jpg",
     alt: "The reservoir at the centre of Udawalawe National Park",
     width: 1920,
     height: 830,
@@ -249,7 +273,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Tissamaharama: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Tissamaharama_dagoba.jpg/1920px-Tissamaharama_dagoba.jpg",
+    src: "/commons/tissamaharama-dagoba.jpg",
     alt: "The dagoba at Tissamaharama",
     width: 1920,
     height: 1440,
@@ -265,7 +289,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Bundala: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Bundala_National_Park.jpg/1920px-Bundala_National_Park.jpg",
+    src: "/commons/bundala-national-park.jpg",
     alt: "Wetland and lagoon in Bundala National Park",
     width: 1920,
     height: 1080,
@@ -283,7 +307,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
 
   /* --------------------------------- East Coast ---------------------------- */
   Trincomalee: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Bay_of_Trincomalee.jpg/1920px-Bay_of_Trincomalee.jpg",
+    src: "/commons/bay-of-trincomalee.jpg",
     alt: "The bay at Trincomalee",
     width: 1920,
     height: 1278,
@@ -299,7 +323,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Pasikuda: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Pasikudah_beach.JPG/1920px-Pasikudah_beach.JPG",
+    src: "/commons/pasikudah-beach.jpg",
     alt: "The beach at Pasikuda",
     width: 1920,
     height: 1279,
@@ -315,7 +339,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Batticaloa: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Sea_Fishing%2C_Batticaloa.jpg/1920px-Sea_Fishing%2C_Batticaloa.jpg",
+    src: "/commons/sea-fishing-batticaloa.jpg",
     alt: "Sea fishing off Batticaloa",
     width: 1920,
     height: 1345,
@@ -333,7 +357,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
 
   /* ---------------------------- West Coast & Colombo ----------------------- */
   Negombo: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Negambo_Lagoon%2C_Sri_Lanka._Where_boats_come_to_rest.jpg/1920px-Negambo_Lagoon%2C_Sri_Lanka._Where_boats_come_to_rest.jpg",
+    src: "/commons/negambo-lagoon-sri-lanka-where-boats-come-to-rest.jpg",
     alt: "Fishing boats moored in Negombo lagoon",
     width: 1920,
     height: 1440,
@@ -349,7 +373,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Bentota: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Sri_Lanka%2C_Bentota%2C_beach_%282%29.JPG/1920px-Sri_Lanka%2C_Bentota%2C_beach_%282%29.JPG",
+    src: "/commons/sri-lanka-bentota-beach-2.jpg",
     alt: "The beach at Bentota where the river meets the sea",
     width: 1920,
     height: 1276,
@@ -368,7 +392,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
    *  required exactly as for the CC files — but flagged here because it is the
    *  odd one out if anyone audits licences by grepping for "CC". */
   Kalpitiya: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/SL_Kalpitiya_asv2020-01_img4_Fishery_harbour.jpg/1920px-SL_Kalpitiya_asv2020-01_img4_Fishery_harbour.jpg",
+    src: "/commons/sl-kalpitiya-asv2020-01-img4-fishery-harbour.jpg",
     alt: "The fishery harbour at Kalpitiya",
     width: 1920,
     height: 1080,
@@ -387,7 +411,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
   /* --------------------------------- The North ----------------------------- */
   /** Nallur's gopuram — named in the card's own copy. */
   Jaffna: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Nallur_Kandasamy_front_entrance.jpg/1920px-Nallur_Kandasamy_front_entrance.jpg",
+    src: "/commons/nallur-kandasamy-front-entrance.jpg",
     alt: "The front entrance of the Nallur Kandaswamy temple in Jaffna",
     width: 1920,
     height: 1372,
@@ -403,7 +427,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Mannar: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Baobab_Tree_in_Mannar_2023-05-26-1.jpg/1920px-Baobab_Tree_in_Mannar_2023-05-26-1.jpg",
+    src: "/commons/baobab-tree-in-mannar-2023-05-26-1.jpg",
     alt: "A baobab tree on Mannar island",
     width: 1920,
     height: 1283,
@@ -419,7 +443,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Delft: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Ponies_of_the_Delft_Island.jpg/1920px-Ponies_of_the_Delft_Island.jpg",
+    src: "/commons/ponies-of-the-delft-island.jpg",
     alt: "Wild ponies grazing on Delft island",
     width: 1920,
     height: 1277,
@@ -435,7 +459,7 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
     },
   },
   Wilpattu: {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/WilpattuNationalPark-April2014_%283%29.JPG/1920px-WilpattuNationalPark-April2014_%283%29.JPG",
+    src: "/commons/wilpattunationalpark-april2014-3.jpg",
     alt: "Dry forest and open water in Wilpattu National Park",
     width: 1920,
     height: 1079,
@@ -446,6 +470,71 @@ export const commonsPlaces: Record<string, CommonsPlaceAsset> = {
       kind: "stock",
       source: "Wikimedia Commons",
       url: "https://commons.wikimedia.org/wiki/File:WilpattuNationalPark-April2014_(3).JPG",
+      license: "CC BY-SA 4.0",
+      verifiedLocation: true,
+    },
+  },
+};
+
+/**
+ * Commons photography that is about a *subject* rather than a place on the
+ * region map — so it has no `lib/regions.ts` name to key off, and would be
+ * unreachable from `commonsPlaces`.
+ *
+ * Sourced to the same standard: a real photograph, taken where it says, with
+ * author and licence recorded. Keyed by camelCase subject rather than by place
+ * name, which is what keeps the two records from being confused.
+ *
+ * ── On what could not be sourced here ──────────────────────────────────────
+ *
+ * The fleet cards on /about were the one part of the site Commons could not
+ * honestly serve. They name specific vehicle classes, and the candidates were
+ * all either car-spotter snapshots (a Prado in a Russian car park, a Coaster in
+ * Bangkok) or, worse, Sri Lankan safari jeeps carrying a *competing operator's*
+ * phone number and web address on the door. Neither belongs on a page selling
+ * Island Route's own vehicles.
+ *
+ * So only the safari jeep is here — an unbranded line of open-top jeeps on the
+ * Yala track, which is genuinely the vehicle that card describes. The other
+ * four fleet cards take contextual island photography instead: mood for the
+ * journey each vehicle is for, making no claim to be a portrait of the vehicle
+ * itself. Owner-supplied photographs of the actual fleet are the real fix and
+ * should replace them when they exist.
+ */
+export const commonsSubjects: Record<string, CommonsPlaceAsset> = {
+  /** Reef fish over the coral at Hikkaduwa. Chosen over a much more striking
+   *  turtle portrait from the same reef, which carried the photographer's own
+   *  visible watermark across the corner. */
+  hikkaduwaReef: {
+    src: "/commons/hikkaduwa-under-water.jpg",
+    alt: "Reef fish over the coral at Hikkaduwa",
+    width: 1920,
+    height: 1080,
+    focal: "50% 50%",
+    depicts: "Hikkaduwa coral sanctuary, South Coast",
+    author: "Janindu wijesoorya",
+    provenance: {
+      kind: "stock",
+      source: "Wikimedia Commons",
+      url: "https://commons.wikimedia.org/wiki/File:Hikkaduwa_under_water.jpg",
+      license: "CC BY-SA 4.0",
+      verifiedLocation: true,
+    },
+  },
+  /** Open-top jeeps on the Yala track. No operator branding is legible, which
+   *  is why this one and not the higher-resolution alternative. */
+  yalaSafariJeeps: {
+    src: "/commons/safari-yala-np.jpg",
+    alt: "Open-top safari jeeps on a track in Yala National Park",
+    width: 1920,
+    height: 1278,
+    focal: "50% 55%",
+    depicts: "Yala National Park",
+    author: "Dan arndt",
+    provenance: {
+      kind: "stock",
+      source: "Wikimedia Commons",
+      url: "https://commons.wikimedia.org/wiki/File:Safari_-_Yala_NP.jpg",
       license: "CC BY-SA 4.0",
       verifiedLocation: true,
     },

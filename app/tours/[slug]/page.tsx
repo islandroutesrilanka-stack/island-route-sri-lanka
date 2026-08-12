@@ -7,6 +7,7 @@ import { clampDesc } from "@/lib/seo";
 import { Check, Clock, Tag } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import { CTABand, TourCard } from "@/components/ui";
+import GradientPanel from "@/components/media/GradientPanel";
 import { getTours, getTourBySlug } from "@/lib/data";
 import { waLink, site } from "@/lib/site";
 
@@ -62,7 +63,9 @@ export default async function TourPage({ params }: { params: { slug: string } })
         "@type": "TouristTrip",
         name: tour.title,
         description: tour.excerpt,
-        image: tour.image,
+        // Omitted rather than sent empty: `"image": ""` is an invalid value in
+        // structured data, where a missing property is simply a missing one.
+        ...(tour.image ? { image: tour.image } : {}),
         touristType: tour.category,
         provider: { "@type": "TravelAgency", name: site.name, url: site.url },
         itinerary: tour.itinerary?.map((d, i) => ({
@@ -98,14 +101,22 @@ export default async function TourPage({ params }: { params: { slug: string } })
       />
       {/* Hero */}
       <section className="relative bg-deep pt-32 md:pt-44 pb-16 md:pb-20 overflow-hidden">
-        <Image
-          src={tour.image}
-          alt={tour.title}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-45"
-        />
+        {/* Empty is a real state — a journey written before anyone had a
+            verified photograph of its region keeps the gradient rather than
+            borrowing someone else's. next/image with src="" logs a React error
+            and paints nothing, so the treatment stands in explicitly. */}
+        {tour.image ? (
+          <Image
+            src={tour.image}
+            alt={tour.title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-45"
+          />
+        ) : (
+          <GradientPanel tone="deep" pattern="contour" className="absolute inset-0" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-deep/60 via-deep/40 to-deep" />
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <Reveal>
