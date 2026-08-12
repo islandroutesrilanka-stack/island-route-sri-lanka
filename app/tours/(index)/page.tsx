@@ -447,7 +447,7 @@ export default async function ToursPage({
             dark
             eyebrow="Build your own journey"
             title="Or start from a blank page"
-            intro="Tell us the shape of the trip you have in mind and we'll route it around you. Nothing below is a booking — it simply gives your enquiry a head start."
+            intro="Five short questions — all of them optional — and we'll route the trip around your answers. Nothing below is a booking; it simply gives your enquiry a head start."
           />
           <div className="mt-12">
             <JourneyBuilder />

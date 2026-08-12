@@ -137,10 +137,27 @@ export default function IslandMap({
   const region = regions.find((r) => r.slug === active) ?? regions[0];
 
   return (
-    <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+    /*
+      Mobile layout, and why it is a two-column grid rather than a stack.
+
+      Stacked, this section ran past 1,200px on a phone: a 280 × 493 map, then
+      the detail panel, then seven full-width rows — three screens to read one
+      component. Sri Lanka is 1 : 1.764, which is exactly the wrong shape to
+      give a full-width column and exactly the right shape to stand beside
+      text. So below `lg` the map takes an `auto` column sized by its own
+      width, the detail panel takes the `1fr` beside it, and the region index
+      spans both underneath in two columns. That is ~450px — one screen.
+
+      The map is sized by WIDTH, never by height. `aspect-[100/176]` then
+      derives the height, so the container ratio still matches the viewBox and
+      the hotspot percentages keep landing on the coastline (see the note on
+      ISLAND_PATH). Capping it with a viewport-height unit would have
+      letterboxed the SVG and quietly walked every dot off the island.
+    */
+    <div className="grid grid-cols-[auto_1fr] items-start gap-x-5 gap-y-8 sm:gap-x-8 lg:grid-cols-12 lg:items-center lg:gap-12">
       {/* ---------------------------------- Map ---------------------------------- */}
       <div className="lg:col-span-5">
-        <div className="relative mx-auto aspect-[100/176] w-full max-w-[17.5rem]">
+        <div className="relative aspect-[100/176] w-[clamp(7.5rem,34vw,10.5rem)] lg:mx-auto lg:w-full lg:max-w-[17.5rem]">
           {/*
             `overflow-visible` matters here. Sri Lanka's extremes — Point Pedro,
             Dondra Head, Sangaman Kanda, Delft — sit exactly on the viewBox
@@ -210,20 +227,24 @@ export default function IslandMap({
         </div>
       </div>
 
-      {/* ------------------------------- Detail panel ------------------------------ */}
-      <div className="lg:col-span-4">
+      {/* ------------------------------- Detail panel ------------------------------
+          `min-w-0` because this is the `1fr` track: without it a long region
+          name sets the column's min-content width and pushes the map off. */}
+      <div className="min-w-0 lg:col-span-4">
         <p className="eyebrow text-copper-light">{`Region ${
           regions.findIndex((r) => r.slug === region.slug) + 1
         } of ${regions.length}`}</p>
-        <h3 className="h-display mt-3 text-3xl text-sand md:text-4xl">
+        <h3 className="h-display mt-2 text-[1.55rem] leading-[1.1] text-sand sm:mt-3 sm:text-3xl lg:text-4xl">
           {region.name}
         </h3>
-        <p className="mt-4 leading-relaxed text-sand/70">{region.character}</p>
-        <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2">
+        <p className="mt-3 text-[15px] leading-relaxed text-sand/70 sm:mt-4 sm:text-base">
+          {region.character}
+        </p>
+        <ul className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 sm:mt-6 sm:gap-x-4 sm:gap-y-2">
           {region.places.map((p) => (
             <li
               key={p}
-              className="text-[12px] uppercase tracking-[0.14em] text-sand/55"
+              className="text-[11px] uppercase tracking-[0.12em] text-sand/55 sm:text-[12px] sm:tracking-[0.14em]"
             >
               {p}
             </li>
@@ -231,29 +252,40 @@ export default function IslandMap({
         </ul>
         <Link
           href={`${basePath}?region=${region.slug}`}
-          className="link-line mt-8 inline-flex items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-copper-light"
+          className="link-line mt-5 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] text-copper-light sm:mt-8 sm:text-[13px]"
         >
           Explore {region.name} <ArrowRight size={15} />
         </Link>
       </div>
 
-      {/* ------------------ Always-present list: not a JS fallback ----------------- */}
-      <nav aria-label="Regions of Sri Lanka" className="lg:col-span-3">
-        <ul className="divide-y divide-sand/10 border-y border-sand/10">
+      {/* ------------------ Always-present list: not a JS fallback -----------------
+          Two columns below `lg` — seven full-width rows were a third of the
+          section's height on a phone for content the map already shows. The
+          rules come from a `border-t` on each row plus a `border-b` on the
+          list rather than `divide-y`, which only draws between siblings and so
+          leaves a two-column grid unruled. At `lg` the result is identical to
+          the `border-y + divide-y` it replaces. The trailing arrow is desktop
+          only: at half width it steals the ~20px that keeps "West Coast &
+          Colombo" on one line. */}
+      <nav
+        aria-label="Regions of Sri Lanka"
+        className="col-span-2 lg:col-span-3"
+      >
+        <ul className="grid grid-cols-2 gap-x-5 border-b border-sand/10 sm:gap-x-8 lg:grid-cols-1 lg:gap-0">
           {regions.map((r) => (
-            <li key={r.slug}>
+            <li key={r.slug} className="border-t border-sand/10">
               <Link
                 href={`${basePath}?region=${r.slug}`}
                 onMouseEnter={() => setActive(r.slug)}
                 onFocus={() => setActive(r.slug)}
-                className={`flex items-center justify-between py-3.5 text-[13px] uppercase tracking-[0.14em] transition-colors ${
+                className={`flex items-center justify-between py-2.5 text-[11px] uppercase leading-tight tracking-[0.1em] transition-colors sm:text-[12px] lg:py-3.5 lg:text-[13px] lg:tracking-[0.14em] ${
                   r.slug === active
                     ? "text-copper-light"
                     : "text-sand/65 hover:text-sand"
                 }`}
               >
                 {r.name}
-                <ArrowRight size={14} className="opacity-60" />
+                <ArrowRight size={14} className="hidden opacity-60 lg:block" />
               </Link>
             </li>
           ))}

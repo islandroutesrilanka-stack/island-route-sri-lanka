@@ -6,6 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Img from "@/components/media/Img";
 import { destinationAsset } from "@/lib/media/registry";
+import { commonsPlaceAsset, type CommonsPlaceAsset } from "@/lib/media/commons";
+import { isLocationVerified } from "@/lib/media/types";
 import { regions } from "@/lib/regions";
 import { placesForRegion } from "@/lib/region-places";
 
@@ -31,6 +33,14 @@ import { placesForRegion } from "@/lib/region-places";
  *   • Only places with a published guide are linked. The rest are genuine stops
  *     with no page written yet, so their cards carry the copy and no link. A
  *     link to a 404 costs more than a card that simply doesn't offer one.
+ *
+ *   • A photograph and a guide are separate things. They used to be the same
+ *     thing here — the image resolved through `destinationAsset(d)`, so a place
+ *     could only ever show a photo if someone had written its guide. That was
+ *     the actual reason two thirds of the grid was gradients, and it is fixed:
+ *     a place now resolves the owner's own verified frame first and a located
+ *     Wikimedia Commons photograph second. `requireVerifiedLocation` stays on
+ *     throughout — nothing generic stands in for a named place.
  *
  * `destinations` is passed in rather than imported: the catalogue is
  * Supabase-backed and read on the server, and this is a client component.
@@ -84,6 +94,46 @@ export default function RegionExplorer({
 
   const places = useMemo(() => placesForRegion(region), [region]);
   const published = places.filter((p) => p.destinationSlug && bySlug.has(p.destinationSlug));
+
+  /*
+    Resolve each card's photograph once, here, rather than inline in the map.
+
+    Order: the owner's own photography (or a registry asset whose location is
+    verified) wins, because it is ours and it is better. Only when that is
+    absent or unverified does the Commons frame stand in. Resolving centrally
+    is also what keeps the credits list honest — it can only name images that
+    actually rendered, so a place with owner photography never accrues a credit
+    for a Commons file nobody sees.
+  */
+  const cards = useMemo(
+    () =>
+      places.map((p) => {
+        const d = p.destinationSlug ? bySlug.get(p.destinationSlug) : undefined;
+        const owned = d ? destinationAsset(d) : null;
+        const commons = isLocationVerified(owned) ? null : commonsPlaceAsset(p.name);
+        return {
+          place: p,
+          href: d ? `/destinations/${d.slug}` : undefined,
+          asset: commons ?? owned,
+          commons,
+        };
+      }),
+    [places, bySlug]
+  );
+
+  /* CC BY, CC BY-SA and the Free Art Licence all require attribution. De-duped
+     by src because one file could legitimately serve two places. */
+  const credits = useMemo(() => {
+    const seen = new Set<string>();
+    const out: CommonsPlaceAsset[] = [];
+    for (const c of cards) {
+      if (c.commons && !seen.has(c.commons.src)) {
+        seen.add(c.commons.src);
+        out.push(c.commons);
+      }
+    }
+    return out;
+  }, [cards]);
 
   /* Roving tabindex: only the selected tab is in the tab order, arrows move
      between them. Standard tab-widget behaviour, and the reason this is a
@@ -198,16 +248,14 @@ export default function RegionExplorer({
             </div>
 
             <ul className="mt-9 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-              {places.map((p, i) => {
-                const d = p.destinationSlug ? bySlug.get(p.destinationSlug) : undefined;
-                const asset = d ? destinationAsset(d) : null;
-                const href = d ? `/destinations/${d.slug}` : undefined;
-
+              {cards.map(({ place: p, href, asset }, i) => {
                 const media = (
                   <div className="img-frame aspect-[4/5]">
-                    {/* requireVerifiedLocation: these slots claim a named place,
-                        so an unverified photograph is worse than none. Places
-                        without approved photography take the gradient — the
+                    {/* requireVerifiedLocation stays: these slots claim a named
+                        place, so an unverified photograph is worse than none.
+                        The gate is still on — what changed is that far more
+                        places now clear it honestly. Anything still without a
+                        located photograph takes the gradient, which is the
                         designed placeholder, not a gap. */}
                     <Img
                       asset={asset}
@@ -285,6 +333,42 @@ export default function RegionExplorer({
                 />
               </Link>
             </div>
+
+            {/*
+              Attribution. Not optional and not decorative: every Commons image
+              above is under CC BY, CC BY-SA or the Free Art Licence, all three
+              of which require the photographer to be named and the licence
+              stated. A <details> keeps the obligation met without putting a
+              wall of credits between the reader and the next section — closed
+              it is one quiet line, and it is still in the page source, still
+              readable, still linked to each file.
+            */}
+            {credits.length > 0 && (
+              <details className="group mt-6 border-t border-ink/10 pt-5">
+                <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.16em] text-ink/40 transition-colors marker:content-none hover:text-ink/70">
+                  Photography credits
+                  <span aria-hidden className="ml-2 inline-block transition-transform group-open:rotate-90">
+                    ›
+                  </span>
+                </summary>
+                <ul className="mt-4 grid gap-2 text-[12px] leading-relaxed text-ink/45 sm:grid-cols-2 lg:grid-cols-3">
+                  {credits.map((c) => (
+                    <li key={c.src}>
+                      <span className="text-ink/60">{c.depicts ?? c.alt}</span> ·{" "}
+                      {c.author} ·{" "}
+                      <a
+                        href={c.provenance.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline decoration-ink/20 underline-offset-2 transition-colors hover:text-copper-deep"
+                      >
+                        {c.provenance.license}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

@@ -20,6 +20,9 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "images.pexels.com" },
       { protocol: "https", hostname: "*.supabase.co" },
+      // Freely-licensed place photography — see lib/media/commons.ts. Removing
+      // this line does not throw; it blanks every region-explorer card.
+      { protocol: "https", hostname: "upload.wikimedia.org" },
     ],
   },
   /*

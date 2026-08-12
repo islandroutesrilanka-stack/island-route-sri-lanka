@@ -14,9 +14,18 @@ import type { Region } from "./regions";
  * have no page for yet, so their cards carry the copy without a link — which is
  * the correct behaviour until the guide is written, not a gap to paper over.
  *
- * Images follow the site rule: a place card shows a photograph only when the
- * asset's location is verified, and otherwise takes the gradient treatment. No
- * generic tropical stock stands in for a named place.
+ * Images follow the site rule and always have: a place card shows a photograph
+ * only when the asset's location is verified, and otherwise takes the gradient
+ * treatment. No generic tropical stock stands in for a named place.
+ *
+ * What changed is the supply, not the rule. Photography used to arrive only
+ * through `destinationAsset(d)`, so a place without a guide could not have a
+ * picture no matter how many pictures of it existed. `lib/media/commons.ts` now
+ * supplies a located, freely-licensed photograph per place, and RegionExplorer
+ * falls back to it. There is deliberately no `image` field on RegionPlace: this
+ * file owns the words, the media layer owns the pictures and their provenance,
+ * and an image URL sitting next to the copy would invite exactly the untraceable
+ * pasted-in stock the media layer exists to prevent.
  */
 export type RegionPlace = {
   name: string;

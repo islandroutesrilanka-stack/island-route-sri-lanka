@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, MessageCircle } from "lucide-react";
-import { site, waLink, defaultWaMessage } from "@/lib/site";
+import { useEffect, useId, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import { waLink, defaultWaMessage } from "@/lib/site";
 
 /**
  * Primary navigation — five destinations and one action.
@@ -44,6 +44,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const reduce = useReducedMotion();
+  const uid = useId();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -80,8 +82,43 @@ export default function Navbar() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
+  /*
+    Entrance animation.
+
+    Transform and opacity only — never height or padding. Every page's top
+    padding is calibrated to this header's h-16/md:h-20, so anything that
+    animated its box would shift the whole document on load.
+
+    It plays once: Navbar is mounted by the root layout and survives client-side
+    navigation, so `initial` runs on first paint and never again. Framer writes
+    the initial transform into the server-rendered markup, so there is no
+    flash of an un-offset header before hydration.
+  */
+  const enter = reduce
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.2 } }
+    : {
+        initial: { opacity: 0, y: -18 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const, delay: 0.05 },
+      };
+
+  /* Links fade up fractionally after the bar itself, in reading order. */
+  const itemEnter = (i: number) =>
+    reduce
+      ? {}
+      : {
+          initial: { opacity: 0, y: -8 },
+          animate: { opacity: 1, y: 0 },
+          transition: {
+            duration: 0.5,
+            ease: [0.22, 1, 0.36, 1] as const,
+            delay: 0.22 + i * 0.055,
+          },
+        };
+
   return (
-    <header
+    <motion.header
+      {...enter}
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
         solid
           ? "border-b border-ink/10 bg-sand/95 backdrop-blur"
@@ -99,81 +136,88 @@ export default function Navbar() {
         {/* Height is unchanged (h-16 / md:h-20). Every page's top padding is
             calibrated to it, so anything added here has to fit inside it. */}
         <div className="flex h-16 items-center justify-between md:h-20">
-          <Link href="/" className="group flex items-baseline gap-2">
-            <span
-              className={`font-display text-xl tracking-tight transition-colors md:text-2xl ${
-                solid ? "text-ink" : "text-sand"
-              }`}
-            >
-              Island Route
-            </span>
-            <span
-              className={`eyebrow hidden transition-colors sm:inline ${
-                solid ? "text-copper-deep" : "text-sand/80"
-              }`}
-            >
-              Sri Lanka
-            </span>
-          </Link>
+          {/* Wordmark. Tighter optical tracking on the display face, and the
+              locality set in small caps rather than as a second-class label. */}
+          <motion.div {...itemEnter(0)}>
+            <Link href="/" className="group flex items-baseline gap-2.5">
+              <span
+                className={`font-display text-xl tracking-[-0.015em] transition-colors md:text-[1.6rem] ${
+                  solid ? "text-ink" : "text-sand"
+                }`}
+              >
+                Island Route
+              </span>
+              <span
+                className={`hidden text-[10px] uppercase tracking-[0.28em] transition-colors sm:inline ${
+                  solid ? "text-copper-deep/90" : "text-sand/70"
+                }`}
+              >
+                Sri Lanka
+              </span>
+            </Link>
+          </motion.div>
 
-          <nav aria-label="Main" className="hidden items-center gap-7 lg:flex">
-            {links.map((l) => {
+          {/*
+            Nav typography.
+
+            Smaller, wider and lighter than before — 11px at 0.2em reads as
+            considered rather than shouted, which is the whole difference
+            between a nav that looks premium and one that looks like a toolbar.
+            The active state is a shared-element rule that slides between items
+            (the same `layoutId` device RegionExplorer uses for its tabs), so
+            the current section is legible without heavy colour or weight.
+          */}
+          <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
+            {links.map((l, i) => {
               const active = isActive(l.href);
               return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`link-line text-[13px] uppercase tracking-[0.14em] transition-colors ${
-                    solid
-                      ? active
-                        ? "text-copper-deep"
-                        : "text-ink/80 hover:text-ink"
-                      : active
-                        ? "text-copper-light"
-                        : "text-sand/90 hover:text-sand"
-                  }`}
-                >
-                  {l.label}
-                </Link>
+                <motion.div key={l.href} {...itemEnter(i + 1)} className="relative">
+                  <Link
+                    href={l.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`relative block py-1 text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${
+                      solid
+                        ? active
+                          ? "text-copper-deep"
+                          : "text-ink/70 hover:text-ink"
+                        : active
+                          ? "text-copper-light"
+                          : "text-sand/80 hover:text-sand"
+                    }`}
+                  >
+                    {l.label}
+                  </Link>
+                  {active && (
+                    <motion.span
+                      layoutId={`${uid}-nav-rule`}
+                      aria-hidden
+                      className={`absolute -bottom-0.5 left-0 right-0 h-px ${
+                        solid ? "bg-copper-deep/70" : "bg-copper-light/80"
+                      }`}
+                      transition={
+                        reduce
+                          ? { duration: 0 }
+                          : { type: "spring", stiffness: 380, damping: 32 }
+                      }
+                    />
+                  )}
+                </motion.div>
               );
             })}
 
-            {/*
-              A visible human channel next to the CTA.
-
-              This is the single highest-trust element a small travel operator
-              has: a real number, answered by a person. It appears from xl only
-              so the five links and the CTA never crowd at lg, and it reuses the
-              header's own height rather than adding a strip above it — which
-              would shift the top of every page on the site.
-            */}
-            <a
-              href={waLink(defaultWaMessage)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`ml-1 hidden items-center gap-2 text-[13px] tracking-[0.06em] transition-colors xl:inline-flex ${
-                solid
-                  ? "text-ink/75 hover:text-copper-deep"
-                  : "text-sand/85 hover:text-sand"
-              }`}
-            >
-              <MessageCircle size={15} aria-hidden />
-              <span className="sr-only">WhatsApp us on </span>
-              {site.phoneDisplay}
-            </a>
-
-            <Link
-              href="/book"
-              aria-current={isActive("/book") ? "page" : undefined}
-              className={`ml-2 px-5 py-2.5 text-[13px] uppercase tracking-[0.14em] transition-all duration-300 ${
-                solid
-                  ? "bg-ink text-sand hover:bg-copper-deep"
-                  : "bg-sand text-ink hover:bg-copper-deep hover:text-sand"
-              }`}
-            >
-              Plan your journey
-            </Link>
+            <motion.div {...itemEnter(links.length + 1)}>
+              <Link
+                href="/book"
+                aria-current={isActive("/book") ? "page" : undefined}
+                className={`ml-1 inline-block px-6 py-3 text-[11px] uppercase tracking-[0.2em] transition-all duration-300 ${
+                  solid
+                    ? "bg-ink text-sand hover:bg-copper-deep"
+                    : "bg-sand text-ink hover:bg-copper-deep hover:text-sand"
+                }`}
+              >
+                Plan your journey
+              </Link>
+            </motion.div>
           </nav>
 
           <button
@@ -245,18 +289,21 @@ export default function Navbar() {
               >
                 Plan your journey
               </Link>
+              {/* The WhatsApp channel stays — the raw number does not. It opens
+                  a pre-filled chat, which is the useful part; printing the
+                  digits only added noise the header had to carry. */}
               <a
                 href={waLink(defaultWaMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 border border-ink/20 py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-ink"
               >
-                WhatsApp {site.phoneDisplay}
+                WhatsApp us
               </a>
             </div>
           </motion.nav>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 }
