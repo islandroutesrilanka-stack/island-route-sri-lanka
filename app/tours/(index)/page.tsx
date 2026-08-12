@@ -10,7 +10,8 @@ import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
 import { regions } from "@/lib/regions";
 import { formatPrice } from "@/utils/format";
-import { seasons, getSeason, currentSeasonKey } from "@/lib/seasons";
+import { seasons, getSeason, currentSeasonKey, type SeasonPick } from "@/lib/seasons";
+import type { Tour } from "@/lib/tours";
 import {
   filterTours,
   hasActiveFilters,
@@ -59,6 +60,22 @@ export default async function ToursPage({
   const season = getSeason(seasonKey);
   const isNow = season.key === currentSeasonKey();
   const bySlug = (slug: string) => all.find((t) => t.slug === slug);
+
+  /* `season.lead` is an ordered preference list, not a fixed pair: take the
+     first two picks that resolve to a live tour. A pick that isn't in the
+     catalogue — a signature journey before its row exists, or anything
+     unpublished in Supabase — is skipped rather than leaving a hole in a
+     two-column grid. The tail of each list is the catalogue tour that used to
+     hold the slot, so this section always fills.
+
+     `more` then drops whatever won a lead slot, since a tail entry is listed
+     in both and would otherwise appear twice on the same screen. */
+  const leads = season.lead
+    .map((pick) => ({ pick, tour: bySlug(pick.slug) }))
+    .filter((x): x is { pick: SeasonPick; tour: Tour } => Boolean(x.tour))
+    .slice(0, 2);
+  const leadSlugs = new Set(leads.map((x) => x.pick.slug));
+  const more = season.more.filter((p) => !leadSlugs.has(p.slug));
 
   return (
     <>
@@ -115,9 +132,7 @@ export default async function ToursPage({
               Best journeys for {season.months}
             </h3>
             <div className="mt-8 grid gap-8 md:grid-cols-2">
-              {season.lead.map((p) => {
-                const t = bySlug(p.slug);
-                if (!t) return null;
+              {leads.map(({ pick: p, tour: t }) => {
                 return (
                   <article key={p.slug} className="border-t border-ink/10 pt-6">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-copper-deep">
@@ -148,13 +163,13 @@ export default async function ToursPage({
             </div>
 
             {/* More ways to travel this season */}
-            {season.more.length > 0 && (
+            {more.length > 0 && (
               <>
                 <h3 className="mt-14 font-display text-xl text-ink">
                   More ways to travel this season
                 </h3>
                 <ul className="mt-6 grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {season.more.map((p) => {
+                  {more.map((p) => {
                     const t = bySlug(p.slug);
                     if (!t) return null;
                     return (
