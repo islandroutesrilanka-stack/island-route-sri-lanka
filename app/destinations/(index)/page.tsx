@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader, DestinationCard, CTABand } from "@/components/ui";
+import { PageHeader, DestinationCard, CTABand, SectionHeading } from "@/components/ui";
 import EmptyState from "@/components/patterns/EmptyState";
+import RegionExplorer from "@/components/patterns/RegionExplorer";
 import { getDestinations } from "@/lib/data";
 import { getRegion } from "@/lib/regions";
 import { clampDesc } from "@/lib/seo";
@@ -133,13 +134,50 @@ export default async function DestinationsPage({
             </EmptyState>
           </div>
         ) : (
-          <div className="mx-auto max-w-wrap px-5 md:px-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+          /* data-qa scopes the QA harness's destination-card selector to this
+             grid. The region explorer below also links to /destinations/…, and
+             a page-wide `a[href^="/destinations/"]` count would mix the two and
+             break the filter assertions. */
+          <div
+            data-qa="destination-grid"
+            className="mx-auto max-w-wrap px-5 md:px-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6"
+          >
             {destinations.map((d, i) => (
               <DestinationCard key={d.slug} d={d} index={i % 3} />
             ))}
           </div>
         )}
       </section>
+
+      {/*
+        The explorer covers the whole island — all seven regions and the
+        thirty-one places we actually run — while the grid above covers only
+        what has a published guide. Both are true and they are different sets,
+        so they are presented as different sections rather than merged.
+
+        It opens on the filtered region when one is applied, so arriving from
+        the homepage map lands on the matching tab.
+      */}
+      <section className="bg-dune/50 py-16 md:py-24" aria-label="Explore by region">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <SectionHeading
+            eyebrow="Explore by region"
+            title="Seven regions, one island"
+            intro="Sri Lanka changes character roughly every two hours of driving. This is how we group it — and what we'd take you to see in each."
+          />
+          <RegionExplorer
+            className="mt-12 md:mt-16"
+            defaultRegion={regionSlug}
+            destinations={all.map((d) => ({
+              slug: d.slug,
+              name: d.name,
+              region: d.region,
+              image: d.image,
+            }))}
+          />
+        </div>
+      </section>
+
       <CTABand
         title="Can't choose? You don't have to."
         body="Most of our routes link four or five of these destinations in a single seamless journey. Tell us what excites you most and we'll thread the rest."

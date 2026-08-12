@@ -1,4 +1,5 @@
 import { img } from "./images";
+import { journeys } from "./journeys";
 
 export type ItineraryDay = { day: string; title: string; detail: string };
 
@@ -33,7 +34,12 @@ export type Tour = {
   themeSlugs?: string[];
 };
 
-export const tours: Tour[] = [
+/**
+ * The original catalogue. Still sold, still correct — it is the accessible end
+ * of the range, and the day tours and half-day safaris have no equivalent in
+ * the premium collection.
+ */
+const catalogue: Tour[] = [
   /* --------------------------------- Multi-day -------------------------------- */
   {
     slug: "essential-sri-lanka-7-days",
@@ -327,6 +333,22 @@ export const tours: Tour[] = [
     includes: ["Private 4×4 jeep", "Park entrance coordination", "Hotel pickup nearby", "Binoculars & water"],
   },
 ];
+
+/**
+ * The signature journeys lead, the original catalogue follows.
+ *
+ * Order matters in two places: /tours renders in array order, and the homepage
+ * takes featuredTours[0] as its hero feature plus the next three. Leading with
+ * the premium collection is the point of it.
+ *
+ * Note what this does and does not do. With Supabase configured, `getTours()`
+ * returns the live `tours` table and this array is read only for the
+ * relationship graph — `destinationSlugs` and `themeSlugs`, which have no
+ * columns yet and are inherited by slug (see lib/data.ts). So adding the six
+ * here does not put them on the site: that takes
+ * `supabase/insert-premium-journeys.sql`, and the prices want checking first.
+ */
+export const tours: Tour[] = [...journeys, ...catalogue];
 
 export const featuredTours = tours.filter((t) => t.featured);
 export const getTour = (slug: string) => tours.find((t) => t.slug === slug);

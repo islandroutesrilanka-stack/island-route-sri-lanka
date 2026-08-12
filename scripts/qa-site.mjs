@@ -318,16 +318,28 @@ async function suiteTourFilters(ctx) {
   });
 }
 
+/*
+  Destination cards are counted inside [data-qa="destination-grid"], not
+  page-wide. /destinations now also carries the region explorer, whose cards
+  link to published guides too — a page-wide `a[href^="/destinations/"]` count
+  would fold those in and make a filtered page look unfiltered. The attribute
+  marks the one grid the region filter actually governs.
+*/
+const CARD_SEL = '[data-qa="destination-grid"] a[href^="/destinations/"]';
+
 async function suiteRegions(ctx) {
   // Unfiltered baseline, for comparison against each filtered result.
   const { page: basePage } = await visit(ctx, "/destinations");
   const baseCount = await basePage.evaluate(
-    () => document.querySelectorAll('a[href^="/destinations/"]').length
+    (sel) => document.querySelectorAll(sel).length,
+    CARD_SEL
   );
-  const baseSlugs = await basePage.evaluate(() =>
-    Array.from(document.querySelectorAll('a[href^="/destinations/"]'))
-      .map((a) => a.getAttribute("href").split("?")[0].replace("/destinations/", ""))
-      .filter((v, i, arr) => v && arr.indexOf(v) === i)
+  const baseSlugs = await basePage.evaluate(
+    (sel) =>
+      Array.from(document.querySelectorAll(sel))
+        .map((a) => a.getAttribute("href").split("?")[0].replace("/destinations/", ""))
+        .filter((v, i, arr) => v && arr.indexOf(v) === i),
+    CARD_SEL
   );
   await basePage.close();
 
@@ -363,10 +375,12 @@ async function suiteRegions(ctx) {
   for (const slug of regionSlugs) {
     const route = `/destinations?region=${slug}`;
     const { page: p, text } = await visit(ctx, route);
-    const slugs = await p.evaluate(() =>
-      Array.from(document.querySelectorAll('a[href^="/destinations/"]'))
-        .map((a) => a.getAttribute("href").split("?")[0].replace("/destinations/", ""))
-        .filter((v, i, arr) => v && arr.indexOf(v) === i)
+    const slugs = await p.evaluate(
+      (sel) =>
+        Array.from(document.querySelectorAll(sel))
+          .map((a) => a.getAttribute("href").split("?")[0].replace("/destinations/", ""))
+          .filter((v, i, arr) => v && arr.indexOf(v) === i),
+      CARD_SEL
     );
     const count = slugs.length;
     const summary = /region:/i.test(text);
@@ -402,7 +416,8 @@ async function suiteRegions(ctx) {
 
   const { page: u, text: ut } = await visit(ctx, "/destinations?region=not-a-region");
   const uCount = await u.evaluate(
-    () => document.querySelectorAll('a[href^="/destinations/"]').length
+    (sel) => document.querySelectorAll(sel).length,
+    CARD_SEL
   );
   add({
     route: "/destinations?region=not-a-region", test: "unknown region degrades safely",
@@ -412,6 +427,128 @@ async function suiteRegions(ctx) {
     severity: uCount > 0 ? "-" : "P1", evidence: "",
   });
   await u.close();
+}
+
+/*
+  The region explorer on /destinations.
+
+  It is the only client-interactive component on the page, so nothing else in
+  this harness would notice if it stopped switching panels — the server HTML
+  would still contain the first region's cards and every other check would pass.
+  These assertions exercise it the way a visitor does: click, keyboard, and the
+  mobile control.
+*/
+async function suiteRegionExplorer(ctx, browser) {
+  const readPanel = (page) =>
+    page.evaluate(() => {
+      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      const panel = document.querySelector('[role="tabpanel"]');
+      return {
+        tabs: tabs.length,
+        selected: tabs.find((t) => t.getAttribute("aria-selected") === "true")?.textContent?.trim() ?? null,
+        roving: tabs.filter((t) => t.tabIndex === 0).length,
+        cards: Array.from(panel?.querySelectorAll("li h3") ?? []).map((h) => h.textContent.trim()),
+        links: Array.from(panel?.querySelectorAll('a[href^="/destinations/"]') ?? []).length,
+      };
+    });
+
+  const { page } = await visit(ctx, "/destinations");
+  const first = await readPanel(page);
+
+  add({
+    route: "/destinations", test: "region explorer renders all seven tabs",
+    status: first.tabs === 7 ? "PASS" : "FAIL",
+    expected: "7 tabs, exactly one selected, roving tabindex",
+    actual: `${first.tabs} tabs; selected=${first.selected}; tabindex0=${first.roving}`,
+    severity: first.tabs === 7 ? "-" : "P2", evidence: "",
+  });
+
+  // Click the last tab — a different region must actually load into the panel.
+  await page.evaluate(() => {
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    tabs[tabs.length - 1].click();
+  });
+  await page.waitForTimeout(700);
+  const clicked = await readPanel(page);
+  const changed =
+    clicked.selected !== first.selected &&
+    clicked.cards.length > 0 &&
+    clicked.cards.join() !== first.cards.join();
+  add({
+    route: "/destinations", test: "clicking a region tab swaps the panel",
+    status: changed ? "PASS" : "FAIL",
+    expected: "new region selected and a different set of place cards",
+    actual: `${first.selected} → ${clicked.selected}; [${clicked.cards.join(", ")}]`,
+    severity: changed ? "-" : "P2", evidence: "",
+  });
+
+  // Arrow keys must move between tabs — the widget is unusable without them.
+  await page.evaluate(() =>
+    document.querySelector('[role="tab"][aria-selected="true"]')?.focus()
+  );
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(500);
+  const keyed = await readPanel(page);
+  add({
+    route: "/destinations", test: "region tabs respond to arrow keys",
+    status: keyed.selected && keyed.selected !== clicked.selected ? "PASS" : "FAIL",
+    expected: "ArrowRight selects the next region (wrapping)",
+    actual: `${clicked.selected} → ${keyed.selected}`,
+    severity: keyed.selected !== clicked.selected ? "-" : "P2", evidence: "",
+  });
+  await page.close();
+
+  // On a phone the tablist is replaced by a native select. Both must not be
+  // visible at once, and the select must drive the same panel.
+  // Viewport is a context-level setting here, so the phone case needs its own.
+  const mobileCtx = await browser.newContext({ viewport: { width: 320, height: 800 } });
+  const m = await mobileCtx.newPage();
+  await m.goto(base + "/destinations", { waitUntil: "domcontentloaded", timeout: 60000 });
+  await m.waitForTimeout(1200);
+  const mobile = await m.evaluate(() => {
+    const sel = document.querySelector("select");
+    const tablist = document.querySelector('[role="tablist"]');
+    return {
+      select: !!sel && sel.offsetParent !== null,
+      options: sel?.options?.length ?? 0,
+      tablist: !!tablist && tablist.offsetParent !== null,
+    };
+  });
+  add({
+    route: "/destinations @ mobile 320", test: "region control degrades to a select",
+    status: mobile.select && mobile.options === 7 && !mobile.tablist ? "PASS" : "FAIL",
+    expected: "select with 7 options visible, tablist hidden",
+    actual: `select=${mobile.select} (${mobile.options} options); tablist=${mobile.tablist}`,
+    severity: mobile.select ? "-" : "P2", evidence: "",
+  });
+
+  if (mobile.select) {
+    const before = await readPanel(m);
+    await m.selectOption("select", "hill-country");
+    await m.waitForTimeout(700);
+    const after = await readPanel(m);
+    add({
+      route: "/destinations @ mobile 320", test: "select changes the region panel",
+      status: after.cards.length && after.cards.join() !== before.cards.join() ? "PASS" : "FAIL",
+      expected: "Hill Country places replace the previous set",
+      actual: `[${after.cards.join(", ")}]`,
+      severity: after.cards.length ? "-" : "P2", evidence: "",
+    });
+  }
+  await m.close();
+  await mobileCtx.close();
+
+  // ?region= should open the matching tab, so the homepage map lands correctly.
+  const { page: deep } = await visit(ctx, "/destinations?region=east-coast");
+  const deepPanel = await readPanel(deep);
+  add({
+    route: "/destinations?region=east-coast", test: "explorer opens on the linked region",
+    status: /east coast/i.test(deepPanel.selected ?? "") ? "PASS" : "WARN",
+    expected: "East Coast tab selected on load",
+    actual: `selected=${deepPanel.selected}`,
+    severity: "-", evidence: "",
+  });
+  await deep.close();
 }
 
 async function suiteBook(ctx) {
@@ -770,6 +907,7 @@ function report() {
     await suiteNotFound();
     await suiteTourFilters(ctx);
     await suiteRegions(ctx);
+    await suiteRegionExplorer(ctx, browser);
     await suiteBook(ctx);
     await suiteNav(ctx);
     await ctx.close();
