@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Menu, X } from "lucide-react";
 import { waLink, defaultWaMessage } from "@/lib/site";
 
@@ -22,6 +28,23 @@ import { waLink, defaultWaMessage } from "@/lib/site";
  * Services, Gallery and Reviews are demoted, not removed: they stay in the
  * mobile sheet and in the footer. Fleet and Contact live in the footer only —
  * they are merging into /about and /book respectively.
+ *
+ * ── On the absence of an animation library ──────────────────────────────────
+ *
+ * This component used framer-motion, and because it is mounted by the root
+ * layout that put framer on the critical path of every page on the site:
+ * 107 kB of JavaScript to download, parse and execute before anything could
+ * hydrate, measured at roughly a fifth of the page's total main-thread time.
+ * Worse, `initial={{ opacity: 0 }}` is written into the server HTML, so the
+ * header — the topmost element on every page — was painted invisible and
+ * stayed that way until the bundle had run.
+ *
+ * Every gesture below is the same as it was. The entrance is the same curve,
+ * distance and stagger as CSS keyframes (globals.css), which run off the style
+ * sheet rather than off hydration. The sliding rule is the one thing that
+ * genuinely needed measurement, and it gets exactly that: eighteen lines that
+ * read the active link's box and hand it to a CSS transition. That is what
+ * framer's shared-layout animation does internally, minus the library.
  */
 const links = [
   { href: "/tours", label: "Journeys" },
@@ -39,13 +62,22 @@ const secondaryLinks = [
   { href: "/about#reviews", label: "Reviews" },
 ];
 
+/** Entrance: transform and opacity only. See the note at the render below. */
+const enter = (delay: number, from: string, dur: string): CSSProperties =>
+  ({
+    "--rise-from": from,
+    "--rise-dur": dur,
+    animationDelay: `${delay}s`,
+  }) as CSSProperties;
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const reduce = useReducedMotion();
-  const uid = useId();
+
+  const navRef = useRef<HTMLElement>(null);
+  const [rule, setRule] = useState<{ x: number; w: number } | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -83,46 +115,55 @@ export default function Navbar() {
     pathname === href || pathname.startsWith(`${href}/`);
 
   /*
-    Entrance animation.
+    The sliding rule.
 
-    Transform and opacity only — never height or padding. Every page's top
-    padding is calibrated to this header's h-16/md:h-20, so anything that
-    animated its box would shift the whole document on load.
+    Measure the current link's box against the nav and hand the numbers to a
+    CSS transition on a single shared element — which is what a shared-layout
+    animation is, once the library is taken away. Layout effect rather than
+    effect so the first measurement lands before paint and the rule never
+    appears in the wrong place.
 
-    It plays once: Navbar is mounted by the root layout and survives client-side
-    navigation, so `initial` runs on first paint and never again. Framer writes
-    the initial transform into the server-rendered markup, so there is no
-    flash of an un-offset header before hydration.
+    It is rendered only once a measurement exists. That makes it the one part
+    of the header that needs JavaScript, and it is the right part to give up:
+    the current section is already carried by `aria-current` and by the copper
+    of the active label. The rule is the flourish on top of a state that is
+    legible without it.
   */
-  const enter = reduce
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.2 } }
-    : {
-        initial: { opacity: 0, y: -18 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const, delay: 0.05 },
-      };
+  const measure = useCallback(() => {
+    const nav = navRef.current;
+    const el = nav?.querySelector<HTMLElement>("[data-nav-active]");
+    if (!nav || !el) return setRule(null);
+    setRule({ x: el.offsetLeft, w: el.offsetWidth });
+  }, []);
 
-  /* Links fade up fractionally after the bar itself, in reading order. */
-  const itemEnter = (i: number) =>
-    reduce
-      ? {}
-      : {
-          initial: { opacity: 0, y: -8 },
-          animate: { opacity: 1, y: 0 },
-          transition: {
-            duration: 0.5,
-            ease: [0.22, 1, 0.36, 1] as const,
-            delay: 0.22 + i * 0.055,
-          },
-        };
+  useLayoutEffect(measure, [measure, pathname]);
+
+  useEffect(() => {
+    // Nav labels reflow when the font swaps in and when the viewport changes.
+    window.addEventListener("resize", measure);
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
 
   return (
-    <motion.header
-      {...enter}
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+    /*
+      Entrance animation.
+
+      Transform and opacity only — never height or padding. Every page's top
+      padding is calibrated to this header's h-16/md:h-20, so anything that
+      animated its box would shift the whole document on load.
+
+      It plays once: Navbar is mounted by the root layout and survives
+      client-side navigation, so the keyframe runs on first paint and never
+      again. Reduced motion is handled globally in globals.css, which collapses
+      every animation on the site to a single frame.
+    */
+    <header
+      style={enter(0.05, "-18px", "0.7s")}
+      className={`rise-in fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
         solid
           ? "border-b border-ink/10 bg-sand/95 backdrop-blur"
-          : "bg-transparent"
+          : "border-b border-transparent bg-transparent"
       }`}
     >
       {/* Scrim keeps nav text legible over bright hero imagery */}
@@ -138,7 +179,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between md:h-20">
           {/* Wordmark. Tighter optical tracking on the display face, and the
               locality set in small caps rather than as a second-class label. */}
-          <motion.div {...itemEnter(0)}>
+          <div className="rise-in" style={enter(0.22, "-8px", "0.5s")}>
             <Link href="/" className="group flex items-baseline gap-2.5">
               <span
                 className={`font-display text-xl tracking-[-0.015em] transition-colors md:text-[1.6rem] ${
@@ -155,7 +196,7 @@ export default function Navbar() {
                 Sri Lanka
               </span>
             </Link>
-          </motion.div>
+          </div>
 
           {/*
             Nav typography.
@@ -163,17 +204,26 @@ export default function Navbar() {
             Smaller, wider and lighter than before — 11px at 0.2em reads as
             considered rather than shouted, which is the whole difference
             between a nav that looks premium and one that looks like a toolbar.
-            The active state is a shared-element rule that slides between items
-            (the same `layoutId` device RegionExplorer uses for its tabs), so
-            the current section is legible without heavy colour or weight.
+            The active state is a single rule that slides between items (the
+            same device RegionExplorer uses for its tabs), so the current
+            section is legible without heavy colour or weight.
           */}
-          <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
+          <nav
+            ref={navRef}
+            aria-label="Main"
+            className="relative hidden items-center gap-9 lg:flex"
+          >
             {links.map((l, i) => {
               const active = isActive(l.href);
               return (
-                <motion.div key={l.href} {...itemEnter(i + 1)} className="relative">
+                <div
+                  key={l.href}
+                  className="rise-in"
+                  style={enter(0.275 + i * 0.055, "-8px", "0.5s")}
+                >
                   <Link
                     href={l.href}
+                    data-nav-active={active ? "" : undefined}
                     aria-current={active ? "page" : undefined}
                     className={`relative block py-1 text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${
                       solid
@@ -187,25 +237,24 @@ export default function Navbar() {
                   >
                     {l.label}
                   </Link>
-                  {active && (
-                    <motion.span
-                      layoutId={`${uid}-nav-rule`}
-                      aria-hidden
-                      className={`absolute -bottom-0.5 left-0 right-0 h-px ${
-                        solid ? "bg-copper-deep/70" : "bg-copper-light/80"
-                      }`}
-                      transition={
-                        reduce
-                          ? { duration: 0 }
-                          : { type: "spring", stiffness: 380, damping: 32 }
-                      }
-                    />
-                  )}
-                </motion.div>
+                </div>
               );
             })}
 
-            <motion.div {...itemEnter(links.length + 1)}>
+            {rule && (
+              <span
+                aria-hidden
+                style={{ transform: `translateX(${rule.x}px)`, width: rule.w }}
+                className={`pointer-events-none absolute bottom-1 left-0 h-px origin-left transition-[transform,width,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  solid ? "bg-copper-deep/70" : "bg-copper-light/80"
+                }`}
+              />
+            )}
+
+            <div
+              className="rise-in"
+              style={enter(0.275 + links.length * 0.055, "-8px", "0.5s")}
+            >
               <Link
                 href="/book"
                 aria-current={isActive("/book") ? "page" : undefined}
@@ -217,7 +266,7 @@ export default function Navbar() {
               >
                 Plan your journey
               </Link>
-            </motion.div>
+            </div>
           </nav>
 
           <button
@@ -235,75 +284,93 @@ export default function Navbar() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {open && (
-          <motion.nav
-            id="mobile-nav"
-            aria-label="Main"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="max-h-[calc(100svh-4rem)] overflow-y-auto border-b border-ink/10 bg-sand lg:hidden"
-          >
-            <div className="flex flex-col px-5 pb-8 pt-2">
-              {links.map((l, i) => {
-                const active = isActive(l.href);
-                return (
-                  <motion.div
-                    key={l.href}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 * i }}
+      {/*
+        Mobile sheet.
+
+        `grid-template-rows: 0fr → 1fr` is the height-auto transition without a
+        measurement — the row resolves to the content's natural height at both
+        ends, so it animates open and shut without anything reading a box. It
+        replaces an AnimatePresence whose only job was the same two states.
+
+        `visibility` is in the transition list on purpose: it is discrete, so it
+        holds `visible` for the full collapse and only then flips, which both
+        keeps the closing animation on screen and takes the links out of the
+        tab order once they are gone.
+      */}
+      <div
+        className={`grid overflow-hidden transition-[grid-template-rows,opacity,visibility] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden ${
+          open
+            ? "visible grid-rows-[1fr] opacity-100"
+            : "invisible grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <nav
+          id="mobile-nav"
+          aria-label="Main"
+          className="min-h-0 overflow-hidden border-b border-ink/10 bg-sand"
+        >
+          <div className="max-h-[calc(100svh-4rem)] overflow-y-auto px-5 pb-8 pt-2">
+            {links.map((l, i) => {
+              const active = isActive(l.href);
+              return (
+                /* `key` carries `open` so the stagger restarts on each opening
+                   — a CSS animation only replays if the element is new. */
+                <div
+                  key={`${l.href}-${open}`}
+                  className={open ? "slide-in" : undefined}
+                  style={
+                    open
+                      ? ({ animationDelay: `${0.05 * i}s` } as CSSProperties)
+                      : undefined
+                  }
+                >
+                  <Link
+                    href={l.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`block border-b border-ink/5 py-3 font-display text-2xl transition-colors ${
+                      active ? "text-copper-deep" : "text-ink"
+                    }`}
                   >
-                    <Link
-                      href={l.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`block border-b border-ink/5 py-3 font-display text-2xl transition-colors ${
-                        active ? "text-copper-deep" : "text-ink"
-                      }`}
-                    >
-                      {l.label}
-                    </Link>
-                  </motion.div>
-                );
-              })}
+                    {l.label}
+                  </Link>
+                </div>
+              );
+            })}
 
-              {/* Secondary — present and reachable, given less weight */}
-              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
-                {secondaryLinks.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-[12px] uppercase tracking-[0.14em] text-ink/65"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            {/* Secondary — present and reachable, given less weight */}
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+              {secondaryLinks.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="text-[12px] uppercase tracking-[0.14em] text-ink/65"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-              <Link
-                href="/book"
-                className="mt-6 bg-ink py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-sand"
-              >
-                Plan your journey
-              </Link>
-              {/* The WhatsApp channel stays — the raw number does not. It opens
-                  a pre-filled chat, which is the useful part; printing the
-                  digits only added noise the header had to carry. */}
-              <a
-                href={waLink(defaultWaMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 border border-ink/20 py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-ink"
-              >
-                WhatsApp us
-              </a>
-            </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
-    </motion.header>
+            <Link
+              href="/book"
+              className="mt-6 block bg-ink py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-sand"
+            >
+              Plan your journey
+            </Link>
+            {/* The WhatsApp channel stays — the raw number does not. It opens
+                a pre-filled chat, which is the useful part; printing the
+                digits only added noise the header had to carry. */}
+            <a
+              href={waLink(defaultWaMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 block border border-ink/20 py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-ink"
+            >
+              WhatsApp us
+            </a>
+          </div>
+        </nav>
+      </div>
+    </header>
   );
 }

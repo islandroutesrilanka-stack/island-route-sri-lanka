@@ -259,7 +259,9 @@ export default function JourneyBuilder() {
   };
 
   const toggleStop = (slug: string) =>
-    setStops((s) => (s.includes(slug) ? s.filter((x) => x !== slug) : [...s, slug]));
+    setStops((s) =>
+      s.includes(slug) ? s.filter((x) => x !== slug) : [...s, slug],
+    );
 
   /** Toggling the selected value off is how a visitor clears one choice. */
   const pick =
@@ -272,7 +274,7 @@ export default function JourneyBuilder() {
       stops
         .map((s) => destinations.find((d) => d.slug === s)?.name)
         .filter((n): n is string => Boolean(n)),
-    [stops]
+    [stops],
   );
 
   const href = useMemo(() => {
@@ -314,7 +316,7 @@ export default function JourneyBuilder() {
   };
   const questionCount = STEPS.length - 1; // review asks nothing
   const answeredCount = STEPS.filter(
-    (s) => s.id !== "review" && answers[s.id]
+    (s) => s.id !== "review" && answers[s.id],
   ).length;
 
   /** Clears just this step, for the visitor who picked the wrong thing and
@@ -380,7 +382,10 @@ export default function JourneyBuilder() {
                       ? "text-copper-light"
                       : passed || answered
                         ? "text-sand/70 hover:text-sand"
-                        : "text-sand/35 hover:text-sand/70"
+                        : /* /55 (4.7:1 on this ground) is the floor for AA;
+                             /35 was 2.97:1. The three states still read as
+                             three, because /70 above is a further step up. */
+                          "text-sand/55 hover:text-sand/80"
                   }`}
                 >
                   <span
@@ -390,7 +395,7 @@ export default function JourneyBuilder() {
                         ? "border-copper-light/40 bg-copper-light/15 text-copper-light"
                         : here
                           ? "border-copper-light text-copper-light"
-                          : "border-sand/25 text-sand/40 group-hover:border-sand/50"
+                          : "border-sand/25 text-sand/55 group-hover:border-sand/50"
                     }`}
                   >
                     {answered ? <Check size={11} strokeWidth={3} /> : i + 1}
@@ -451,7 +456,7 @@ export default function JourneyBuilder() {
                             "border-copper-light bg-copper-light text-deep"
                           : answered
                             ? "border-copper-light/40 bg-copper-light/15 text-copper-light"
-                            : "border-sand/25 text-sand/40"
+                            : "border-sand/25 text-sand/55"
                       }`}
                     >
                       {answered ? <Check size={11} strokeWidth={3} /> : i + 1}
@@ -466,7 +471,7 @@ export default function JourneyBuilder() {
           <p
             aria-live="polite"
             className={`shrink-0 text-[11px] uppercase tracking-[0.14em] ${
-              answeredCount ? "text-copper-light" : "text-sand/35"
+              answeredCount ? "text-copper-light" : "text-sand/55"
             }`}
           >
             {answeredCount} of {questionCount} answered
@@ -480,7 +485,10 @@ export default function JourneyBuilder() {
           <motion.div
             key={current.id}
             {...slide}
-            transition={{ duration: reduce ? 0.15 : 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              duration: reduce ? 0.15 : 0.28,
+              ease: [0.22, 1, 0.36, 1],
+            }}
           >
             <div className="flex items-start justify-between gap-5">
               <StepHeading
@@ -496,7 +504,7 @@ export default function JourneyBuilder() {
                 <button
                   type="button"
                   onClick={clearStep}
-                  className="mt-1.5 shrink-0 text-[11px] uppercase tracking-[0.14em] text-sand/45 transition-colors hover:text-copper-light"
+                  className="mt-1.5 shrink-0 text-[11px] uppercase tracking-[0.14em] text-sand/55 transition-colors hover:text-copper-light"
                 >
                   Clear
                 </button>
@@ -596,9 +604,10 @@ export default function JourneyBuilder() {
                 <div className="border border-sand/15 p-6 md:p-8">
                   {chosenCount === 0 ? (
                     <p className="text-[15px] leading-relaxed text-sand/60">
-                      You haven&apos;t chosen anything — which is a perfectly good
-                      start. Send it as it is and we&apos;ll ask the questions
-                      ourselves, or step back and pick whatever you already know.
+                      You haven&apos;t chosen anything — which is a perfectly
+                      good start. Send it as it is and we&apos;ll ask the
+                      questions ourselves, or step back and pick whatever you
+                      already know.
                     </p>
                   ) : (
                     <div className="space-y-5">
@@ -619,7 +628,7 @@ export default function JourneyBuilder() {
 
                       {stopNames.length > 0 && (
                         <div>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-sand/40">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-sand/55">
                             Your route
                           </p>
                           <p className="mt-1.5 text-[15px] leading-relaxed text-sand/85">
@@ -632,7 +641,10 @@ export default function JourneyBuilder() {
                           wrong shouldn't mean walking back through the steps. */}
                       <div className="flex flex-wrap gap-2 pt-1">
                         {themeName && (
-                          <SummaryPill text={themeName} onClear={() => setTheme(undefined)} />
+                          <SummaryPill
+                            text={themeName}
+                            onClear={() => setTheme(undefined)}
+                          />
                         )}
                         {duration && (
                           <SummaryPill
@@ -647,7 +659,8 @@ export default function JourneyBuilder() {
                           />
                         )}
                         {stops.map((s) => {
-                          const name = destinations.find((d) => d.slug === s)?.name ?? s;
+                          const name =
+                            destinations.find((d) => d.slug === s)?.name ?? s;
                           return (
                             <SummaryPill
                               key={s}
@@ -677,7 +690,7 @@ export default function JourneyBuilder() {
                           setStops([]);
                           goTo(0);
                         }}
-                        className="text-[12px] uppercase tracking-[0.14em] text-sand/45 transition-colors hover:text-sand"
+                        className="text-[12px] uppercase tracking-[0.14em] text-sand/55 transition-colors hover:text-sand"
                       >
                         Start over
                       </button>
@@ -715,7 +728,7 @@ export default function JourneyBuilder() {
             on screen together — one live region at a time, announced once. */}
         <p
           aria-live="polite"
-          className="hidden text-[11px] uppercase tracking-[0.14em] text-sand/35 md:block"
+          className="hidden text-[11px] uppercase tracking-[0.14em] text-sand/55 md:block"
         >
           {answeredCount === 0
             ? "Every step is optional"

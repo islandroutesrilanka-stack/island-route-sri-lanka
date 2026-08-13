@@ -3,8 +3,16 @@
 import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { Send, Check, Loader2, Sparkles, Car, PenLine, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
+import {
+  Send,
+  Check,
+  Loader2,
+  Sparkles,
+  Car,
+  PenLine,
+  ChevronDown,
+} from "lucide-react";
 import GradientPanel from "@/components/media/GradientPanel";
 import { site } from "@/lib/site";
 import { submitBooking, submitInquiry } from "@/lib/actions";
@@ -66,7 +74,12 @@ export type JourneyOption = {
 
 type Mode = "journey" | "transfer" | "tailor";
 
-const modes: { id: Mode; label: string; hint: string; icon: typeof Sparkles }[] = [
+const modes: {
+  id: Mode;
+  label: string;
+  hint: string;
+  icon: typeof Sparkles;
+}[] = [
   {
     id: "journey",
     label: "A signature journey",
@@ -107,8 +120,14 @@ const serviceForCategory: Record<string, string> = {
   "Day Tour": "Day Tour",
 };
 
+/*
+  Placeholders are text and WCAG scores them like any other: /55 composited over
+  this panel is 3.8:1. /65 (5.0:1) is the lowest ink opacity that clears AA and
+  is still visibly lighter than a filled value, which is the distinction the
+  placeholder has to carry.
+*/
 const inputCls =
-  "w-full border border-ink/25 bg-white/70 px-4 py-3.5 text-[15px] text-ink placeholder:text-ink/55 focus:border-copper transition-colors";
+  "w-full border border-ink/25 bg-white/70 px-4 py-3.5 text-[15px] text-ink placeholder:text-ink/65 focus:border-copper transition-colors";
 
 const money = (n: number) => `US$${n.toLocaleString("en-US")}`;
 
@@ -130,8 +149,10 @@ function Section({
 }) {
   return (
     <section className="border-t border-ink/10 pt-7 first:border-0 first:pt-0">
-      <p className="eyebrow mb-5 flex items-center gap-2.5 text-ink/55">
-        <span className="text-copper-deep">{String(step).padStart(2, "0")}</span>
+      <p className="eyebrow mb-5 flex items-center gap-2.5 text-ink/65">
+        <span className="text-copper-deep">
+          {String(step).padStart(2, "0")}
+        </span>
         {title}
       </p>
       {children}
@@ -179,22 +200,29 @@ function JourneyTile({
             aria-hidden
           />
         ) : (
-          <GradientPanel tone="moss" pattern="contour" className="h-full w-full" />
+          <GradientPanel
+            tone="moss"
+            pattern="contour"
+            className="h-full w-full"
+          />
         )}
       </div>
       <div className="min-w-0 self-center">
         <p
           className={`font-display text-[19px] leading-tight transition-colors ${
-            checked ? "text-copper-deep" : "text-ink group-hover:text-copper-deep"
+            checked
+              ? "text-copper-deep"
+              : "text-ink group-hover:text-copper-deep"
           }`}
         >
           {journey.title}
         </p>
-        <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-ink/55">
+        <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-ink/65">
           {journey.duration}
         </p>
         <p className="mt-0.5 text-[13px] text-ink/70">
-          from <span className="text-ink">{money(journey.priceFrom)}</span> per person
+          from <span className="text-ink">{money(journey.priceFrom)}</span> per
+          person
         </p>
       </div>
       {checked && (
@@ -240,7 +268,11 @@ function SelectedJourneyCard({
               aria-hidden
             />
           ) : (
-            <GradientPanel tone="deep" pattern="contour" className="h-full w-full" />
+            <GradientPanel
+              tone="deep"
+              pattern="contour"
+              className="h-full w-full"
+            />
           )}
         </div>
         <div className="min-w-0 flex-1 p-5 md:p-6">
@@ -248,11 +280,12 @@ function SelectedJourneyCard({
           <p className="font-display mt-2 text-2xl leading-tight text-ink md:text-3xl">
             {journey.title}
           </p>
-          <p className="mt-2 text-[13px] uppercase tracking-[0.14em] text-ink/55">
+          <p className="mt-2 text-[13px] uppercase tracking-[0.14em] text-ink/65">
             {journey.duration}
           </p>
           <p className="mt-1 text-[15px] text-ink/75">
-            from <span className="text-ink">{money(journey.priceFrom)}</span> per person
+            from <span className="text-ink">{money(journey.priceFrom)}</span>{" "}
+            per person
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             <button
@@ -325,10 +358,10 @@ export default function BookingForm({
     selectedJourney || customJourneyLabel
       ? "journey"
       : defaultService && transferOptions.includes(defaultService)
-      ? "transfer"
-      : defaultService && !transferOptions.includes(defaultService)
-      ? "tailor"
-      : "journey";
+        ? "transfer"
+        : defaultService && !transferOptions.includes(defaultService)
+          ? "tailor"
+          : "journey";
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const [journey, setJourney] = useState<JourneyOption | null>(selectedJourney);
@@ -336,7 +369,9 @@ export default function BookingForm({
    *  its card first and expands the picker only if asked. */
   const [picking, setPicking] = useState(!selectedJourney);
   const [transfer, setTransfer] = useState(
-    defaultService && transferOptions.includes(defaultService) ? defaultService : ""
+    defaultService && transferOptions.includes(defaultService)
+      ? defaultService
+      : "",
   );
   /* Held as a slug rather than a title: titles are not guaranteed unique once
      the catalogue is CMS-edited, and the category behind the slug is what
@@ -358,9 +393,14 @@ export default function BookingForm({
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const set = (k: keyof typeof form) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof form) =>
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >,
+    ) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   /*
     What actually goes into the two database columns.
@@ -397,7 +437,15 @@ export default function BookingForm({
       return { service: "Custom Itinerary", tourTitle: customJourneyLabel };
     // "recommend one" — a real answer, and one the team can act on
     return { service: "Signature Journey", tourTitle: undefined };
-  }, [kind, mode, transfer, journey, dayTripTour, customJourneyLabel, defaultTourTitle]);
+  }, [
+    kind,
+    mode,
+    transfer,
+    journey,
+    dayTripTour,
+    customJourneyLabel,
+    defaultTourTitle,
+  ]);
 
   const composed = useMemo(() => {
     const lines = [
@@ -472,423 +520,471 @@ export default function BookingForm({
    * so nothing the visitor typed is lost if the save fails.
    */
   const mailto = `mailto:${site.email}?subject=${encodeURIComponent(
-    `Trip enquiry — ${tourTitle || service || "Sri Lanka travel"}`
+    `Trip enquiry — ${tourTitle || service || "Sri Lanka travel"}`,
   )}&body=${encodeURIComponent(composed)}`;
 
   if (state === "saved") {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="border border-copper/30 bg-white/60 p-8 md:p-10 text-center"
-      >
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-copper/10 text-copper-deep">
-          <Check size={26} />
-        </div>
-        <h3 className="font-display text-3xl text-ink mt-5">Request received</h3>
-        <p className="mt-3 text-ink/70 leading-relaxed max-w-md mx-auto">
-          Thank you, {form.name.split(" ")[0] || "traveller"} — we&apos;ll reply
-          to <span className="text-ink">{form.email}</span> within a few hours
-          with a personal quote. A confirmation email is on its way.
-        </p>
-        {/* Somewhere to go next, rather than a dead end. Deliberately a quiet
+      /* Reduced motion is declared per-surface now that framer-motion no longer
+         loads from the root layout — see the note there. Both of this
+         component's return paths carry it. */
+      <MotionConfig reducedMotion="user">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border border-copper/30 bg-white/60 p-8 md:p-10 text-center"
+        >
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-copper/10 text-copper-deep">
+            <Check size={26} />
+          </div>
+          <h3 className="font-display text-3xl text-ink mt-5">
+            Request received
+          </h3>
+          <p className="mt-3 text-ink/70 leading-relaxed max-w-md mx-auto">
+            Thank you, {form.name.split(" ")[0] || "traveller"} — we&apos;ll
+            reply to <span className="text-ink">{form.email}</span> within a few
+            hours with a personal quote. A confirmation email is on its way.
+          </p>
+          {/* Somewhere to go next, rather than a dead end. Deliberately a quiet
             secondary link: the request is already in, and the visitor has no
             further action to take. */}
-        <Link
-          href="/tours"
-          className="mt-7 inline-block border border-ink/25 px-7 py-3.5 text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:border-copper-deep hover:text-copper-deep"
-        >
-          Browse our journeys
-        </Link>
-      </motion.div>
+          <Link
+            href="/tours"
+            className="mt-7 inline-block border border-ink/25 px-7 py-3.5 text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:border-copper-deep hover:text-copper-deep"
+          >
+            Browse our journeys
+          </Link>
+        </motion.div>
+      </MotionConfig>
     );
   }
 
   const showPicker = mode === "journey" && (picking || !journey);
 
   return (
-    <form onSubmit={submit} className="relative space-y-8" noValidate={false}>
-      {kind === "booking" && (
-        <Section step={1} title="What can we plan for you?">
-          {/* A radiogroup, not three buttons: this is one choice among three,
+    <MotionConfig reducedMotion="user">
+      <form onSubmit={submit} className="relative space-y-8" noValidate={false}>
+        {kind === "booking" && (
+          <Section step={1} title="What can we plan for you?">
+            {/* A radiogroup, not three buttons: this is one choice among three,
               and arrow-key navigation between them is the behaviour a keyboard
               user expects from that. */}
-          <div role="radiogroup" aria-label="What can we plan for you?" className="grid gap-3 sm:grid-cols-3">
-            {modes.map((m) => {
-              const active = mode === m.id;
-              return (
-                <label
-                  key={m.id}
-                  className={`flex cursor-pointer flex-col gap-2 border p-4 transition-colors ${
-                    active
-                      ? "border-copper bg-copper/[0.06]"
-                      : "border-ink/15 bg-white/50 hover:border-copper/50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="mode"
-                    className="sr-only"
-                    checked={active}
-                    onChange={() => setMode(m.id)}
-                  />
-                  <m.icon
-                    size={19}
-                    strokeWidth={1.6}
-                    className={active ? "text-copper-deep" : "text-ink/50"}
-                    aria-hidden
-                  />
-                  <span
-                    className={`text-[15px] leading-snug ${
-                      active ? "text-copper-deep" : "text-ink"
+            <div
+              role="radiogroup"
+              aria-label="What can we plan for you?"
+              className="grid gap-3 sm:grid-cols-3"
+            >
+              {modes.map((m) => {
+                const active = mode === m.id;
+                return (
+                  <label
+                    key={m.id}
+                    className={`flex cursor-pointer flex-col gap-2 border p-4 transition-colors ${
+                      active
+                        ? "border-copper bg-copper/[0.06]"
+                        : "border-ink/15 bg-white/50 hover:border-copper/50"
                     }`}
                   >
-                    {m.label}
-                  </span>
-                  <span className="text-[13px] leading-relaxed text-ink/60">
-                    {m.hint}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+                    <input
+                      type="radio"
+                      name="mode"
+                      className="sr-only"
+                      checked={active}
+                      onChange={() => setMode(m.id)}
+                    />
+                    <m.icon
+                      size={19}
+                      strokeWidth={1.6}
+                      className={active ? "text-copper-deep" : "text-ink/50"}
+                      aria-hidden
+                    />
+                    <span
+                      className={`text-[15px] leading-snug ${
+                        active ? "text-copper-deep" : "text-ink"
+                      }`}
+                    >
+                      {m.label}
+                    </span>
+                    <span className="text-[13px] leading-relaxed text-ink/65">
+                      {m.hint}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
 
-          {/* min-h keeps the fields below from jumping as the modes swap. The
+            {/* min-h keeps the fields below from jumping as the modes swap. The
               value is the tallest revealed block (the two-column picker at sm),
               measured rather than guessed; re-check it if a mode gains a
               control. */}
-          <div className="mt-6">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={mode}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-              >
-                {mode === "journey" && (
-                  <>
-                    {customJourneyLabel && !journey && !dayTrip && (
-                      <div className="mb-5 border border-copper/35 bg-copper/[0.06] p-5">
-                        <p className="eyebrow text-copper-deep">Your outline</p>
-                        <p className="mt-2 text-[15px] leading-relaxed text-ink">
-                          {customJourneyLabel}
-                        </p>
-                        <p className="mt-2 text-[13px] leading-relaxed text-ink/65">
-                          Sent through from the journey planner. Pick a signature
-                          journey below if you&apos;d rather start from one — or
-                          leave it as it is and we&apos;ll build around it.
-                        </p>
-                      </div>
-                    )}
+            <div className="mt-6">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={mode}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  {mode === "journey" && (
+                    <>
+                      {customJourneyLabel && !journey && !dayTrip && (
+                        <div className="mb-5 border border-copper/35 bg-copper/[0.06] p-5">
+                          <p className="eyebrow text-copper-deep">
+                            Your outline
+                          </p>
+                          <p className="mt-2 text-[15px] leading-relaxed text-ink">
+                            {customJourneyLabel}
+                          </p>
+                          <p className="mt-2 text-[13px] leading-relaxed text-ink/65">
+                            Sent through from the journey planner. Pick a
+                            signature journey below if you&apos;d rather start
+                            from one — or leave it as it is and we&apos;ll build
+                            around it.
+                          </p>
+                        </div>
+                      )}
 
-                    {journey && !picking ? (
-                      <SelectedJourneyCard
-                        journey={journey}
-                        onChange={() => setPicking(true)}
-                      />
-                    ) : (
-                      showPicker && (
-                        <>
-                          <div role="radiogroup" aria-label="Signature journeys" className="grid gap-3 sm:grid-cols-2">
-                            {signature.map((j) => (
-                              <JourneyTile
-                                key={j.slug}
-                                journey={j}
-                                checked={journey?.slug === j.slug}
-                                onSelect={() => {
-                                  setJourney(j);
-                                  setDayTrip("");
-                                  setPicking(false);
-                                }}
-                              />
-                            ))}
-                            <label
-                              className={`flex cursor-pointer items-center gap-3 border p-4 transition-colors sm:col-span-2 ${
-                                !journey && !dayTrip
-                                  ? "border-copper bg-copper/[0.06]"
-                                  : "border-ink/15 bg-white/50 hover:border-copper/50"
-                              }`}
+                      {journey && !picking ? (
+                        <SelectedJourneyCard
+                          journey={journey}
+                          onChange={() => setPicking(true)}
+                        />
+                      ) : (
+                        showPicker && (
+                          <>
+                            <div
+                              role="radiogroup"
+                              aria-label="Signature journeys"
+                              className="grid gap-3 sm:grid-cols-2"
                             >
-                              <input
-                                type="radio"
-                                name="journey"
-                                className="sr-only"
-                                checked={!journey && !dayTrip}
-                                onChange={() => {
-                                  setJourney(null);
-                                  setDayTrip("");
-                                }}
-                              />
-                              <span className="text-[15px] text-ink">
-                                Not sure yet — recommend something
-                              </span>
-                              <span className="text-[13px] text-ink/60">
-                                Tell us below what you&apos;re after and we&apos;ll
-                                propose the right one.
-                              </span>
-                            </label>
-                          </div>
-
-                          {dayTrips.length > 0 && (
-                            <div className="mt-5">
-                              <label
-                                className="eyebrow mb-2 block text-ink/65"
-                                htmlFor="bf-daytrip"
-                              >
-                                Or something from the wider catalogue
-                              </label>
-                              <div className="relative">
-                                <select
-                                  id="bf-daytrip"
-                                  className={`${inputCls} appearance-none pr-11`}
-                                  value={dayTrip}
-                                  onChange={(e) => {
-                                    setDayTrip(e.target.value);
-                                    if (e.target.value) setJourney(null);
+                              {signature.map((j) => (
+                                <JourneyTile
+                                  key={j.slug}
+                                  journey={j}
+                                  checked={journey?.slug === j.slug}
+                                  onSelect={() => {
+                                    setJourney(j);
+                                    setDayTrip("");
+                                    setPicking(false);
                                   }}
-                                >
-                                  <option value="">
-                                    Day tours, safaris & shorter trips…
-                                  </option>
-                                  {dayTrips.map((d) => (
-                                    <option key={d.slug} value={d.slug}>
-                                      {d.title} — {d.duration}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown
-                                  size={16}
-                                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/45"
-                                  aria-hidden
                                 />
-                              </div>
+                              ))}
+                              <label
+                                className={`flex cursor-pointer items-center gap-3 border p-4 transition-colors sm:col-span-2 ${
+                                  !journey && !dayTrip
+                                    ? "border-copper bg-copper/[0.06]"
+                                    : "border-ink/15 bg-white/50 hover:border-copper/50"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="journey"
+                                  className="sr-only"
+                                  checked={!journey && !dayTrip}
+                                  onChange={() => {
+                                    setJourney(null);
+                                    setDayTrip("");
+                                  }}
+                                />
+                                <span className="text-[15px] text-ink">
+                                  Not sure yet — recommend something
+                                </span>
+                                <span className="text-[13px] text-ink/65">
+                                  Tell us below what you&apos;re after and
+                                  we&apos;ll propose the right one.
+                                </span>
+                              </label>
                             </div>
-                          )}
-                        </>
-                      )
-                    )}
-                  </>
-                )}
 
-                {mode === "transfer" && (
-                  <div>
-                    <label className="eyebrow mb-2 block text-ink/65" htmlFor="bf-transfer">
-                      Which service?
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="bf-transfer"
-                        required
-                        className={`${inputCls} appearance-none pr-11`}
-                        value={transfer}
-                        onChange={(e) => setTransfer(e.target.value)}
+                            {dayTrips.length > 0 && (
+                              <div className="mt-5">
+                                <label
+                                  className="eyebrow mb-2 block text-ink/65"
+                                  htmlFor="bf-daytrip"
+                                >
+                                  Or something from the wider catalogue
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    id="bf-daytrip"
+                                    className={`${inputCls} appearance-none pr-11`}
+                                    value={dayTrip}
+                                    onChange={(e) => {
+                                      setDayTrip(e.target.value);
+                                      if (e.target.value) setJourney(null);
+                                    }}
+                                  >
+                                    <option value="">
+                                      Day tours, safaris & shorter trips…
+                                    </option>
+                                    {dayTrips.map((d) => (
+                                      <option key={d.slug} value={d.slug}>
+                                        {d.title} — {d.duration}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown
+                                    size={16}
+                                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/45"
+                                    aria-hidden
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )
+                      )}
+                    </>
+                  )}
+
+                  {mode === "transfer" && (
+                    <div>
+                      <label
+                        className="eyebrow mb-2 block text-ink/65"
+                        htmlFor="bf-transfer"
                       >
-                        <option value="" disabled>
-                          Select…
-                        </option>
-                        {transferOptions.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
+                        Which service?
+                      </label>
+                      <div className="relative">
+                        <select
+                          id="bf-transfer"
+                          required
+                          className={`${inputCls} appearance-none pr-11`}
+                          value={transfer}
+                          onChange={(e) => setTransfer(e.target.value)}
+                        >
+                          <option value="" disabled>
+                            Select…
                           </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        size={16}
-                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/45"
-                        aria-hidden
-                      />
+                          {transferOptions.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          size={16}
+                          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/45"
+                          aria-hidden
+                        />
+                      </div>
+                      <p className="mt-2.5 text-[13px] leading-relaxed text-ink/65">
+                        Add pick-up and drop-off points, flight numbers and
+                        times further down and we&apos;ll quote the exact run.
+                      </p>
                     </div>
-                    <p className="mt-2.5 text-[13px] leading-relaxed text-ink/60">
-                      Add pick-up and drop-off points, flight numbers and times
-                      further down and we&apos;ll quote the exact run.
+                  )}
+
+                  {mode === "tailor" && (
+                    <p className="border border-ink/15 bg-white/50 p-5 text-[15px] leading-relaxed text-ink/75">
+                      Nothing to choose here — the details box further down is
+                      the brief. Dates, the places you have in mind, how you
+                      like to travel, an occasion worth marking. We design from
+                      whatever you have, however rough.
                     </p>
-                  </div>
-                )}
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </Section>
+        )}
 
-                {mode === "tailor" && (
-                  <p className="border border-ink/15 bg-white/50 p-5 text-[15px] leading-relaxed text-ink/75">
-                    Nothing to choose here — the details box further down is the
-                    brief. Dates, the places you have in mind, how you like to
-                    travel, an occasion worth marking. We design from whatever
-                    you have, however rough.
-                  </p>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </Section>
-      )}
-
-      <Section step={kind === "booking" ? 2 : 1} title="Who we're replying to">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-name">
-              Your name
-            </label>
-            <input
-              id="bf-name"
-              required
-              autoComplete="name"
-              className={inputCls}
-              placeholder="Jane Traveller"
-              value={form.name}
-              onChange={set("name")}
-            />
-          </div>
-          <div>
-            <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-email">
-              Email
-            </label>
-            <input
-              id="bf-email"
-              type="email"
-              required
-              autoComplete="email"
-              inputMode="email"
-              pattern="[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}"
-              className={inputCls}
-              placeholder="you@email.com"
-              value={form.email}
-              onChange={set("email")}
-            />
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-phone">
-            Phone <span className="normal-case tracking-normal">(optional)</span>
-          </label>
-          <input
-            id="bf-phone"
-            type="tel"
-            autoComplete="tel"
-            inputMode="tel"
-            className={`${inputCls} sm:max-w-[calc(50%-0.625rem)]`}
-            placeholder="+44 …"
-            value={form.phone}
-            onChange={set("phone")}
-          />
-        </div>
-      </Section>
-
-      <Section step={kind === "booking" ? 3 : 2} title="The details">
-        {kind === "booking" && (
+        <Section
+          step={kind === "booking" ? 2 : 1}
+          title="Who we're replying to"
+        >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-date">
-                Travel date
+              <label
+                className="eyebrow text-ink/65 block mb-2"
+                htmlFor="bf-name"
+              >
+                Your name
               </label>
               <input
-                id="bf-date"
-                type="date"
-                min={today}
+                id="bf-name"
+                required
+                autoComplete="name"
                 className={inputCls}
-                value={form.date}
-                onChange={set("date")}
+                placeholder="Jane Traveller"
+                value={form.name}
+                onChange={set("name")}
               />
             </div>
             <div>
-              <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-pax">
-                Travellers
+              <label
+                className="eyebrow text-ink/65 block mb-2"
+                htmlFor="bf-email"
+              >
+                Email
               </label>
-              <div className="relative">
-                <select
-                  id="bf-pax"
-                  className={`${inputCls} appearance-none pr-11`}
-                  value={form.travellers}
-                  onChange={set("travellers")}
-                >
-                  {["1", "2", "3", "4", "5", "6", "7", "8+"].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/45"
-                  aria-hidden
-                />
-              </div>
+              <input
+                id="bf-email"
+                type="email"
+                required
+                autoComplete="email"
+                inputMode="email"
+                pattern="[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}"
+                className={inputCls}
+                placeholder="you@email.com"
+                value={form.email}
+                onChange={set("email")}
+              />
             </div>
           </div>
-        )}
 
-        <div className={kind === "booking" ? "mt-5" : ""}>
-          <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-msg">
-            {kind === "booking" ? "Tell us about your trip" : "Your message"}
-          </label>
-          <textarea
-            id="bf-msg"
-            rows={5}
-            className={inputCls}
-            placeholder="Route ideas, hotels, interests, special occasions…"
-            value={form.message}
-            onChange={set("message")}
+          <div className="mt-5">
+            <label
+              className="eyebrow text-ink/65 block mb-2"
+              htmlFor="bf-phone"
+            >
+              Phone{" "}
+              <span className="normal-case tracking-normal">(optional)</span>
+            </label>
+            <input
+              id="bf-phone"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              className={`${inputCls} sm:max-w-[calc(50%-0.625rem)]`}
+              placeholder="+44 …"
+              value={form.phone}
+              onChange={set("phone")}
+            />
+          </div>
+        </Section>
+
+        <Section step={kind === "booking" ? 3 : 2} title="The details">
+          {kind === "booking" && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label
+                  className="eyebrow text-ink/65 block mb-2"
+                  htmlFor="bf-date"
+                >
+                  Travel date
+                </label>
+                <input
+                  id="bf-date"
+                  type="date"
+                  min={today}
+                  className={inputCls}
+                  value={form.date}
+                  onChange={set("date")}
+                />
+              </div>
+              <div>
+                <label
+                  className="eyebrow text-ink/65 block mb-2"
+                  htmlFor="bf-pax"
+                >
+                  Travellers
+                </label>
+                <div className="relative">
+                  <select
+                    id="bf-pax"
+                    className={`${inputCls} appearance-none pr-11`}
+                    value={form.travellers}
+                    onChange={set("travellers")}
+                  >
+                    {["1", "2", "3", "4", "5", "6", "7", "8+"].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/45"
+                    aria-hidden
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={kind === "booking" ? "mt-5" : ""}>
+            <label className="eyebrow text-ink/65 block mb-2" htmlFor="bf-msg">
+              {kind === "booking" ? "Tell us about your trip" : "Your message"}
+            </label>
+            <textarea
+              id="bf-msg"
+              rows={5}
+              className={inputCls}
+              placeholder="Route ideas, hotels, interests, special occasions…"
+              value={form.message}
+              onChange={set("message")}
+            />
+          </div>
+        </Section>
+
+        {/* Honeypot: hidden from people, irresistible to bots */}
+        <div
+          className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+          aria-hidden
+        >
+          <label htmlFor="bf-company">Company (leave blank)</label>
+          <input
+            id="bf-company"
+            name="company"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form.company}
+            onChange={set("company")}
           />
         </div>
-      </Section>
 
-      {/* Honeypot: hidden from people, irresistible to bots */}
-      <div className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden" aria-hidden>
-        <label htmlFor="bf-company">Company (leave blank)</label>
-        <input
-          id="bf-company"
-          name="company"
-          type="text"
-          tabIndex={-1}
-          autoComplete="off"
-          value={form.company}
-          onChange={set("company")}
-        />
-      </div>
-
-      {/* One button now. It was previously paired with a WhatsApp button of
+        {/* One button now. It was previously paired with a WhatsApp button of
           equal weight, which made "how do I send this?" a question the form
           asked the visitor rather than answered. */}
-      <div className="border-t border-ink/10 pt-7">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          type="submit"
-          disabled={pending}
-          className="flex w-full items-center justify-center gap-2.5 bg-ink px-8 py-4 text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-deep disabled:opacity-60 sm:w-auto"
-        >
-          {pending ? (
-            <Loader2 size={17} className="animate-spin" />
-          ) : (
-            <Send size={16} />
-          )}
-          {pending ? "Sending…" : "Request your proposal"}
-        </motion.button>
+        <div className="border-t border-ink/10 pt-7">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={pending}
+            className="flex w-full items-center justify-center gap-2.5 bg-ink px-8 py-4 text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-deep disabled:opacity-60 sm:w-auto"
+          >
+            {pending ? (
+              <Loader2 size={17} className="animate-spin" />
+            ) : (
+              <Send size={16} />
+            )}
+            {pending ? "Sending…" : "Request your proposal"}
+          </motion.button>
 
-        <div aria-live="polite">
-          {state === "error" && (
-            <p className="pt-4 text-sm text-copper-deep">
-              {error || "Something went wrong saving your request"} — please
-              email us directly at{" "}
-              <a href={mailto} className="underline">
-                {site.email}
-              </a>
-              . Your message is already prefilled.
-            </p>
-          )}
-        </div>
+          <div aria-live="polite">
+            {state === "error" && (
+              <p className="pt-4 text-sm text-copper-deep">
+                {error || "Something went wrong saving your request"} — please
+                email us directly at{" "}
+                <a href={mailto} className="underline">
+                  {site.email}
+                </a>
+                . Your message is already prefilled.
+              </p>
+            )}
+          </div>
 
-        {/* Kept as a phone line only. WhatsApp is still one tap away on every
+          {/* Kept as a phone line only. WhatsApp is still one tap away on every
             page (the floating button, the footer, the navbar) — it just isn't
             offered from inside the form, where it read as a second way to send
             this enquiry. */}
-        <p className="pt-4 text-xs leading-relaxed text-ink/65">
-          Prefer to talk it through? Call us on{" "}
-          <a href={`tel:${site.phoneE164}`} className="underline hover:text-copper-deep">
-            {site.phoneDisplay}
-          </a>
-          . No payment is taken online — everything is confirmed personally
-          first.
-        </p>
-      </div>
-    </form>
+          <p className="pt-4 text-xs leading-relaxed text-ink/65">
+            Prefer to talk it through? Call us on{" "}
+            <a
+              href={`tel:${site.phoneE164}`}
+              className="underline hover:text-copper-deep"
+            >
+              {site.phoneDisplay}
+            </a>
+            . No payment is taken online — everything is confirmed personally
+            first.
+          </p>
+        </div>
+      </form>
+    </MotionConfig>
   );
 }

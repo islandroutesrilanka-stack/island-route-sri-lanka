@@ -29,6 +29,25 @@ const config: Config = {
         // self-hosts both faces and injects matched fallback metrics.
         display: ["var(--font-display)", "Georgia", "serif"],
         body: ["var(--font-body)", "system-ui", "sans-serif"],
+        /**
+         * Fraunces italic, as a separate face — and it must be reached through
+         * this utility, never through `font-display italic`.
+         *
+         * `--font-display` is the variable Fraunces: a wght 100–900 range plus
+         * the optical-size axis, which is 66 kB. Asking Google for its italic
+         * in the same shape costs another 80 kB — the single largest file the
+         * site downloads, and larger than the roman it accompanies. Every
+         * italic on this site is one weight (400) at one or two display sizes,
+         * so it is loaded as a static 400 instead: 22 kB, pixel-identical
+         * everywhere it is actually used.
+         *
+         * Writing `font-display italic` would silently get you a browser-
+         * synthesised slant of the roman rather than Fraunces' true italic —
+         * different letterforms (a, e, g are drawn, not sheared), and visibly
+         * worse at the display sizes this is used at. Use `font-display-italic`
+         * and no `italic` class; the face carries its own style.
+         */
+        "display-italic": ["var(--font-display-italic)", "Georgia", "serif"],
       },
       letterSpacing: {
         widest2: "0.28em",

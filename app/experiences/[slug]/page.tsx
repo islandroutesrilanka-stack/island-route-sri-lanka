@@ -43,7 +43,7 @@ export async function generateMetadata({
     description: clampDesc(
       `${category.blurb} ${tours.length} private ${
         tours.length === 1 ? "journey" : "journeys"
-      } — ${category.activities.join(", ")}.`
+      } — ${category.activities.join(", ")}.`,
     ),
     alternates: { canonical: `/experiences/${category.slug}` },
     openGraph: {
@@ -88,14 +88,14 @@ export default async function ExperiencePage({
     is tea country, which is false. The heading states the derivation instead.
   */
   const destinationSlugs = new Set(
-    themeTours.flatMap((t) => t.destinationSlugs ?? [])
+    themeTours.flatMap((t) => t.destinationSlugs ?? []),
   );
   const relatedDestinations = allDestinations.filter((d) =>
-    destinationSlugs.has(d.slug)
+    destinationSlugs.has(d.slug),
   );
 
   const others = publishedExperiences(tours).filter(
-    (e) => e.category.slug !== category.slug
+    (e) => e.category.slug !== category.slug,
   );
 
   const jsonLd = {
@@ -157,7 +157,7 @@ export default async function ExperiencePage({
             <h1 className="h-display max-w-3xl text-5xl text-sand md:text-7xl">
               {category.name}
             </h1>
-            <p className="mt-5 max-w-2xl font-display text-xl italic text-sand/85 md:text-2xl">
+            <p className="mt-5 max-w-2xl font-display-italic text-xl text-sand/85 md:text-2xl">
               {category.blurb}
             </p>
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-sand/75">
@@ -181,7 +181,7 @@ export default async function ExperiencePage({
               stated wherever the image is used — including here, where the
               photograph is a dimmed backdrop rather than the subject. */}
           {heroCredit && (
-            <p className="mt-10 text-[11px] text-sand/35">
+            <p className="mt-10 text-[11px] text-sand/55">
               Photograph: {heroCredit.author} ·{" "}
               <a
                 href={heroCredit.url}
@@ -226,7 +226,8 @@ export default async function ExperiencePage({
               <p className="mt-9 border-l-2 border-copper/30 pl-5 text-[15px] leading-relaxed text-ink/70">
                 Every journey below is private and chauffeur-driven, so the
                 itinerary bends around the experience rather than the other way
-                round. If none of them is quite it, we&apos;ll build one that is.
+                round. If none of them is quite it, we&apos;ll build one that
+                is.
               </p>
             </Reveal>
           </div>
@@ -254,7 +255,7 @@ export default async function ExperiencePage({
                 </Link>
                 <a
                   href={waLink(
-                    `Hello Island Route! I'm interested in ${category.name.toLowerCase()} in Sri Lanka.`
+                    `Hello Island Route! I'm interested in ${category.name.toLowerCase()} in Sri Lanka.`,
                   )}
                   target="_blank"
                   rel="noopener noreferrer"

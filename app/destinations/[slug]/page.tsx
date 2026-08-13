@@ -107,7 +107,7 @@ export default async function DestinationPage({
             <h1 className="h-display mt-3 text-5xl md:text-7xl text-sand">
               {d.name}
             </h1>
-            <p className="mt-5 max-w-2xl font-display italic text-xl md:text-2xl text-sand/85">
+            <p className="mt-5 max-w-2xl font-display-italic text-xl md:text-2xl text-sand/85">
               {d.headline}
             </p>
           </Reveal>

@@ -36,7 +36,9 @@ function PostCard({
   return (
     <Reveal index={index}>
       <Link href={`/blog/${post.slug}`} className="group block">
-        <div className={`img-frame ${lead ? "aspect-[4/3] md:aspect-[21/9]" : "aspect-[16/9]"}`}>
+        <div
+          className={`img-frame ${lead ? "aspect-[4/3] md:aspect-[21/9]" : "aspect-[16/9]"}`}
+        >
           <Image
             src={post.image}
             /* Decorative: the headline it sits above says the same thing, and a
@@ -44,18 +46,24 @@ function PostCard({
             alt=""
             fill
             priority={lead}
-            sizes={lead ? "(min-width: 1216px) 1216px, 100vw" : "(min-width: 768px) 50vw, 100vw"}
+            sizes={
+              lead
+                ? "(min-width: 1216px) 1216px, 100vw"
+                : "(min-width: 768px) 50vw, 100vw"
+            }
             className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
           />
         </div>
-        <p className="mt-5 flex flex-wrap items-center gap-x-3 text-[11px] uppercase tracking-[0.16em] text-ink/55">
+        <p className="mt-5 flex flex-wrap items-center gap-x-3 text-[11px] uppercase tracking-[0.16em] text-ink/65">
           <time dateTime={toIsoDate(post.date)}>{formatDate(post.date)}</time>
           <span aria-hidden className="h-3 w-px bg-ink/20" />
           {post.readTime}
         </p>
         <h2
           className={`h-display mt-2.5 leading-[1.15] text-ink transition-colors group-hover:text-copper-deep ${
-            lead ? "max-w-3xl text-[34px] md:text-5xl" : "text-[26px] md:text-3xl"
+            lead
+              ? "max-w-3xl text-[34px] md:text-5xl"
+              : "text-[26px] md:text-3xl"
           }`}
         >
           {post.title}

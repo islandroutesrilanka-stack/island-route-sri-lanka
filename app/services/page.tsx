@@ -179,7 +179,7 @@ export default async function ServicesPage() {
                         <h2 className="h-display mt-4 text-3xl md:text-4xl text-ink">
                           {s.name}
                         </h2>
-                        <p className="mt-2 font-display text-lg italic text-copper-deep">
+                        <p className="mt-2 font-display-italic text-lg text-copper-deep">
                           {s.tagline}
                         </p>
                         <p className="mt-5 text-[15px] leading-relaxed text-ink/65">

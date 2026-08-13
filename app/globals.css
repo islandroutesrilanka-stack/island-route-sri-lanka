@@ -56,6 +56,114 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Entrance motion.
+
+   These four rules replace what framer-motion was doing for every revealed
+   section, every staggered card and the floating WhatsApp button. The library
+   is still loaded — the navbar's shared-underline and the region explorer's
+   panel transition are genuinely worth it — but it was measured at 220 ms of
+   main-thread time on /destinations, more than React itself, most of it
+   mounting three dozen animation components whose whole job was a fade and a
+   28px rise.
+
+   The more important half of the change is *when* they run. A framer entrance
+   is JavaScript: the element is painted at opacity 0 and stays there until
+   hydration finishes. Nearly every section on this site sat inside one, so the
+   page could not report a first contentful paint until its bundle had
+   downloaded, parsed and hydrated. These run off the CSS parse instead, on the
+   compositor, and above-the-fold copy opts out of hiding altogether (see the
+   `immediate` prop on Reveal).
+   --------------------------------------------------------------------------- */
+
+/* Scroll-triggered. `.is-in` is added by a single shared IntersectionObserver
+   in components/motion.tsx; delay is set inline for staggered siblings. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Runs on load, no observer: for elements known to be in the first viewport. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise-from, 16px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in {
+  animation: rise-in var(--rise-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Mobile nav items, entering from the leading edge as the sheet opens. */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.slide-in {
+  animation: slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes settle-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(20px);
+  }
+  60% {
+    transform: scale(1.06) translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.settle-in {
+  animation: settle-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Slow Ken-Burns push on hero imagery. */
+@keyframes ken-burns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.ken-burns {
+  animation: ken-burns 2.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Nothing may depend on JavaScript to become visible. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Editorial display defaults */
 .h-display {
   @apply font-display font-light leading-[1.05] tracking-tight;

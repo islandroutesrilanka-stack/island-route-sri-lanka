@@ -134,7 +134,7 @@ export default async function BookPage({
   const service = one(searchParams.service);
   const tour = one(searchParams.tour);
 
-  const defaultService = service ? normalize[service] ?? "" : "";
+  const defaultService = service ? (normalize[service] ?? "") : "";
 
   /*
     The catalogue, split the way the form asks about it.
@@ -161,8 +161,7 @@ export default async function BookPage({
   */
   const matched = tour
     ? all.find(
-        (t) =>
-          t.slug === tour || t.title.toLowerCase() === tour.toLowerCase()
+        (t) => t.slug === tour || t.title.toLowerCase() === tour.toLowerCase(),
       )
     : undefined;
 
@@ -180,7 +179,8 @@ export default async function BookPage({
     it cannot filter the catalogue.
   */
   const context = describeFilters(parseTourFilters(searchParams), {
-    themeName: (slug) => experienceCategories.find((c) => c.slug === slug)?.name,
+    themeName: (slug) =>
+      experienceCategories.find((c) => c.slug === slug)?.name,
     destinationName: (slug) => destinations.find((d) => d.slug === slug)?.name,
   });
 
@@ -246,12 +246,14 @@ export default async function BookPage({
                   ],
                 ].map(([t, b], i) => (
                   <li key={t} className="flex gap-4">
-                    <span className="font-display text-3xl text-copper-deep/60 leading-none">
+                    <span className="font-display text-3xl text-copper-deep/75 leading-none">
                       {i + 1}
                     </span>
                     <div>
                       <p className="font-semibold text-ink">{t}</p>
-                      <p className="mt-1 text-sm text-ink/70 leading-relaxed">{b}</p>
+                      <p className="mt-1 text-sm text-ink/70 leading-relaxed">
+                        {b}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -265,8 +267,8 @@ export default async function BookPage({
             >
               <p className="eyebrow text-copper-deep">Speak to us directly</p>
               <p className="mt-4 text-sm leading-relaxed text-ink/70">
-                Some things are easier said than typed. Call, write, or ask for a
-                time that suits you — you will be speaking with the people who
+                Some things are easier said than typed. Call, write, or ask for
+                a time that suits you — you will be speaking with the people who
                 will plan and drive your journey, not a call centre.
               </p>
               <div className="mt-7 space-y-5">
@@ -288,7 +290,9 @@ export default async function BookPage({
                           {c.value}
                         </a>
                       ) : (
-                        <p className="mt-1 text-[15px] text-ink/80">{c.value}</p>
+                        <p className="mt-1 text-[15px] text-ink/80">
+                          {c.value}
+                        </p>
                       )}
                     </div>
                   </div>

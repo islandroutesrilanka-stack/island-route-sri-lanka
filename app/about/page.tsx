@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Users, Briefcase, Check } from "lucide-react";
-import { PageHeader, CTABand, SectionHeading, ReviewCard } from "@/components/ui";
+import {
+  PageHeader,
+  CTABand,
+  SectionHeading,
+  ReviewCard,
+} from "@/components/ui";
 import Img from "@/components/media/Img";
 import EmptyState from "@/components/patterns/EmptyState";
 import { Reveal } from "@/components/motion";
@@ -99,10 +104,22 @@ export default async function AboutPage() {
                 location-verified photographs, and the alt text now describes
                 what is actually in the frame. */}
             <Reveal index={1} className="img-frame aspect-[3/4]">
-              <Image src={media.kandyTempleMoat.src} alt={media.kandyTempleMoat.alt} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
+              <Image
+                src={media.kandyTempleMoat.src}
+                alt={media.kandyTempleMoat.alt}
+                fill
+                sizes="(max-width:768px) 50vw, 25vw"
+                className="object-cover"
+              />
             </Reveal>
             <Reveal index={2} className="img-frame aspect-[3/4] mt-10">
-              <Image src={media.elephantRock.src} alt={media.elephantRock.alt} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />
+              <Image
+                src={media.elephantRock.src}
+                alt={media.elephantRock.alt}
+                fill
+                sizes="(max-width:768px) 50vw, 25vw"
+                className="object-cover"
+              />
             </Reveal>
           </div>
         </div>
@@ -132,11 +149,16 @@ export default async function AboutPage() {
             ].map(([t, b], i) => (
               <Reveal key={t} index={i}>
                 <div className="border border-ink/10 bg-sand p-8 h-full">
-                  <p className="font-display text-4xl text-copper-deep/50">
+                  {/* 36px counts as large text, so the bar is 3:1 rather than
+                      4.5:1 — but /50 over sand is 2.17:1 and misses even that.
+                      /75 is 3.48:1 and keeps the numeral recessive. */}
+                  <p className="font-display text-4xl text-copper-deep/75">
                     {String(i + 1).padStart(2, "0")}
                   </p>
                   <h3 className="font-display text-2xl text-ink mt-4">{t}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-ink/70">{b}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-ink/70">
+                    {b}
+                  </p>
                 </div>
               </Reveal>
             ))}
@@ -175,7 +197,9 @@ export default async function AboutPage() {
               {fleet.map((v, i) => (
                 <Reveal key={v.slug}>
                   <div className="grid gap-0 md:grid-cols-12 border border-ink/10 bg-white/50 overflow-hidden">
-                    <div className={`img-frame aspect-[16/10] md:aspect-auto md:min-h-[22rem] md:col-span-5 ${i % 2 ? "md:order-2" : ""}`}>
+                    <div
+                      className={`img-frame aspect-[16/10] md:aspect-auto md:min-h-[22rem] md:col-span-5 ${i % 2 ? "md:order-2" : ""}`}
+                    >
                       {/* Via <Img> so a retired or absent image degrades to the
                           gradient treatment instead of throwing on an empty src.
                           No verification gate: a vehicle makes no place claim. */}
@@ -192,20 +216,31 @@ export default async function AboutPage() {
                       </h3>
                       <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink/70">
                         <span className="inline-flex items-center gap-2">
-                          <Users size={15} className="text-copper-deep" /> Up to {v.passengers} guests
+                          <Users size={15} className="text-copper-deep" /> Up to{" "}
+                          {v.passengers} guests
                         </span>
                         <span className="inline-flex items-center gap-2">
-                          <Briefcase size={15} className="text-copper-deep" /> {v.luggage}
+                          <Briefcase size={15} className="text-copper-deep" />{" "}
+                          {v.luggage}
                         </span>
                       </div>
                       <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
                         {v.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2.5 text-sm text-ink/70">
-                            <Check size={15} className="mt-0.5 shrink-0 text-copper-deep" /> {f}
+                          <li
+                            key={f}
+                            className="flex items-start gap-2.5 text-sm text-ink/70"
+                          >
+                            <Check
+                              size={15}
+                              className="mt-0.5 shrink-0 text-copper-deep"
+                            />{" "}
+                            {f}
                           </li>
                         ))}
                       </ul>
-                      <p className="mt-5 text-sm text-ink/70 italic">{v.idealFor}</p>
+                      <p className="mt-5 text-sm text-ink/70 italic">
+                        {v.idealFor}
+                      </p>
                       <Link
                         href={`/book?service=${encodeURIComponent("Private Driver Hire")}&tour=${encodeURIComponent(v.name)}`}
                         className="mt-7 inline-block bg-ink text-sand px-7 py-3.5 text-[12px] uppercase tracking-[0.16em] hover:bg-copper-deep transition-colors"
@@ -261,7 +296,9 @@ export default async function AboutPage() {
             */
             <div className="mt-12 max-w-2xl">
               <Reveal>
-                <p className="eyebrow text-copper-deep">Nothing to show you yet</p>
+                <p className="eyebrow text-copper-deep">
+                  Nothing to show you yet
+                </p>
                 <h3 className="h-display mt-4 text-2xl md:text-3xl text-ink">
                   We would rather be honest than impressive
                 </h3>

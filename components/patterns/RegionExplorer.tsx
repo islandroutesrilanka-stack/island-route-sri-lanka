@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ChevronDown } from "lucide-react";
 import Img from "@/components/media/Img";
 import { destinationAsset } from "@/lib/media/registry";
 import { commonsPlaceAsset, type CommonsPlaceAsset } from "@/lib/media/commons";
@@ -29,6 +37,14 @@ import { placesForRegion } from "@/lib/region-places";
  *   • It is a real tab widget — roving tabindex, arrow/Home/End keys, proper
  *     roles and aria-controls. A div soup with click handlers would look
  *     identical and be unusable without a mouse.
+ *
+ *   • The tab rule slides, and it does so without an animation library. This
+ *     component and the navbar were the last two holders of framer-motion on
+ *     the public site, between them putting 107 kB of JavaScript on the
+ *     critical path of every page for two gestures. Both gestures survive: the
+ *     panel enters on a CSS keyframe, and the rule is measured against the
+ *     active tab and handed to a CSS transition — which is what a shared-layout
+ *     animation does under the hood.
  *
  *   • Only places with a published guide are linked. The rest are genuine stops
  *     with no page written yet, so their cards carry the copy and no link. A
@@ -73,27 +89,67 @@ export default function RegionExplorer({
   className?: string;
 }) {
   const uid = useId();
-  const reduce = useReducedMotion();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const initial = regions.some((r) => r.slug === defaultRegion)
     ? defaultRegion
     : regions[0].slug;
   const [active, setActive] = useState(initial);
 
+  /*
+    Whether the reader has changed tabs yet. The panel's entrance is keyed off
+    this so the first one — the one the server already rendered — is simply
+    there, rather than fading in from nothing while the page is still loading.
+    (It is the same thing `initial={false}` did for the AnimatePresence this
+    replaces, and it matters more now: a CSS entrance starts at the style sheet
+    rather than at hydration, so without the guard it would hold the page's
+    main content invisible for its first third of a second.)
+  */
+  const [changed, setChanged] = useState(false);
+  const select = useCallback((slug: string) => {
+    setChanged(true);
+    setActive(slug);
+  }, []);
+
+  /*
+    Deep links from the island map — /destinations?region=…#regions — are read
+    here, after mount, rather than from a server prop.
+
+    The prop still exists and still wins when a caller passes one; what changed
+    is that the page no longer reads `searchParams` to supply it. Touching
+    searchParams in a server component opts the whole route out of static
+    rendering: /destinations was marked ƒ, so `export const revalidate = 60`
+    never applied and every single visit paid for a fresh server render and a
+    database round trip, for a query string that only arrivals from the map
+    carry. Reading it on the client returns the route to ISR — prerendered,
+    served from cache, revalidated in the background.
+
+    The correction lands in the same tick as ScrollToAnchor's scroll, which
+    already exists for exactly this navigation and for exactly this reason: the
+    fragment is resolved client-side too. The visitor is being scrolled down to
+    this panel as the tab changes, and arrives with the right one open.
+  */
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("region");
+    if (slug && regions.some((r) => r.slug === slug)) setActive(slug);
+  }, []);
+
   const activeIndex = Math.max(
     0,
-    regions.findIndex((r) => r.slug === active)
+    regions.findIndex((r) => r.slug === active),
   );
   const region = regions[activeIndex];
 
   const bySlug = useMemo(
     () => new Map(destinations.map((d) => [d.slug, d])),
-    [destinations]
+    [destinations],
   );
 
   const places = useMemo(() => placesForRegion(region), [region]);
-  const published = places.filter((p) => p.destinationSlug && bySlug.has(p.destinationSlug));
+  const published = places.filter(
+    (p) => p.destinationSlug && bySlug.has(p.destinationSlug),
+  );
 
   /*
     Resolve each card's photograph once, here, rather than inline in the map.
@@ -110,7 +166,9 @@ export default function RegionExplorer({
       places.map((p) => {
         const d = p.destinationSlug ? bySlug.get(p.destinationSlug) : undefined;
         const owned = d ? destinationAsset(d) : null;
-        const commons = isLocationVerified(owned) ? null : commonsPlaceAsset(p.name);
+        const commons = isLocationVerified(owned)
+          ? null
+          : commonsPlaceAsset(p.name);
         return {
           place: p,
           href: d ? `/destinations/${d.slug}` : undefined,
@@ -118,7 +176,7 @@ export default function RegionExplorer({
           commons,
         };
       }),
-    [places, bySlug]
+    [places, bySlug],
   );
 
   /* CC BY, CC BY-SA and the Free Art Licence all require attribution. De-duped
@@ -152,11 +210,48 @@ export default function RegionExplorer({
             : e.key === "ArrowRight"
               ? (activeIndex + 1) % regions.length
               : (activeIndex - 1 + regions.length) % regions.length;
-      setActive(regions[next].slug);
+      select(regions[next].slug);
       tabRefs.current[next]?.focus();
     },
-    [activeIndex]
+    [activeIndex, select],
   );
+
+  /*
+    The sliding rule under the selected tab.
+
+    Measured rather than animated by a library: the active button's box is read
+    against the tab list and handed to a CSS transition on one shared element.
+    offsetTop is part of it because the list wraps — seven region names do not
+    fit on one line at every desktop width, and the rule has to travel between
+    rows as well as along them.
+
+    Rendered only once measured, which makes it the single part of this widget
+    that needs JavaScript. That is the right part to concede: the selected tab
+    is already announced by `aria-selected` and coloured in copper.
+  */
+  const [rule, setRule] = useState<{ x: number; y: number; w: number } | null>(
+    null,
+  );
+
+  const measure = useCallback(() => {
+    const list = listRef.current;
+    const el = tabRefs.current[activeIndex];
+    if (!list || !el || !el.offsetParent) return setRule(null);
+    setRule({
+      x: el.offsetLeft,
+      y: el.offsetTop + el.offsetHeight - 1,
+      w: el.offsetWidth,
+    });
+  }, [activeIndex]);
+
+  useLayoutEffect(measure, [measure]);
+
+  useEffect(() => {
+    window.addEventListener("resize", measure);
+    // Region names reflow when the display face swaps in.
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
 
   return (
     <div className={className}>
@@ -165,27 +260,51 @@ export default function RegionExplorer({
         <label htmlFor={`${uid}-select`} className="eyebrow text-copper-deep">
           Choose a region
         </label>
-        <select
-          id={`${uid}-select`}
-          value={active}
-          onChange={(e) => setActive(e.target.value)}
-          className="mt-3 w-full appearance-none border border-ink/20 bg-white/70 px-4 py-3.5 font-display text-lg text-ink outline-none transition-colors focus-visible:border-copper"
-        >
-          {regions.map((r) => (
-            <option key={r.slug} value={r.slug}>
-              {r.name}
-            </option>
-          ))}
-        </select>
+        {/* `appearance-none` strips the platform caret along with the platform
+            styling, and without one this reads as a box with a region name in
+            it rather than a control — on a phone the label is the only hint
+            that it opens. The chevron is drawn back in, pointer-events-none so
+            it never intercepts the tap, and the field carries right padding so
+            a long name ("West Coast & Colombo") stops short of it. */}
+        <div className="relative mt-3">
+          <select
+            id={`${uid}-select`}
+            value={active}
+            onChange={(e) => select(e.target.value)}
+            className="w-full appearance-none border border-ink/20 bg-white/70 py-3.5 pl-4 pr-12 font-display text-lg text-ink outline-none transition-colors focus-visible:border-copper"
+          >
+            {regions.map((r) => (
+              <option key={r.slug} value={r.slug}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={18}
+            aria-hidden
+            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-copper-deep"
+          />
+        </div>
       </div>
 
       {/* ------------------------------------------------------- desktop tabs */}
       <div
+        ref={listRef}
         role="tablist"
         aria-label="Regions of Sri Lanka"
         onKeyDown={onKeyDown}
-        className="hidden border-b border-ink/10 md:flex md:flex-wrap md:gap-x-8"
+        className="relative hidden border-b border-ink/10 md:flex md:flex-wrap md:gap-x-8"
       >
+        {rule && (
+          <span
+            aria-hidden
+            style={{
+              transform: `translate(${rule.x}px, ${rule.y}px)`,
+              width: rule.w,
+            }}
+            className="pointer-events-none absolute left-0 top-0 h-px bg-copper transition-[transform,width] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          />
+        )}
         {regions.map((r, i) => {
           const selected = r.slug === active;
           return (
@@ -200,22 +319,17 @@ export default function RegionExplorer({
               aria-selected={selected}
               aria-controls={`${uid}-panel`}
               tabIndex={selected ? 0 : -1}
-              onClick={() => setActive(r.slug)}
+              onClick={() => select(r.slug)}
+              /* ink/55 was 3.7:1 on this section's dune ground — a WCAG AA
+                 failure on a 12px uppercase label, which is the hardest kind of
+                 text to read at low contrast. ink/70 is 5.6:1 and still reads
+                 as clearly secondary to the copper of the selected tab, which
+                 is what the recession was there to do. */
               className={`relative -mb-px pb-4 pt-1 text-[12px] uppercase tracking-[0.16em] transition-colors ${
-                selected ? "text-copper-deep" : "text-ink/55 hover:text-ink"
+                selected ? "text-copper-deep" : "text-ink/70 hover:text-ink"
               }`}
             >
               {r.name}
-              {selected && (
-                <motion.span
-                  layoutId={`${uid}-underline`}
-                  aria-hidden
-                  className="absolute inset-x-0 -bottom-px h-px bg-copper"
-                  transition={
-                    reduce ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }
-                  }
-                />
-              )}
             </button>
           );
         })}
@@ -229,117 +343,153 @@ export default function RegionExplorer({
         tabIndex={0}
         className="mt-10 outline-none md:mt-12"
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={region.slug}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={{ duration: reduce ? 0.15 : 0.32, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <p className="max-w-xl font-display text-xl italic leading-snug text-ink/75 md:text-2xl">
-                {region.character}
-              </p>
-              {/* The Wild South and the Cultural Triangle each have exactly one
+        {/* `key` remounts the panel per region, which is what replays the
+            entrance — a CSS animation only runs on a new element. */}
+        <div
+          key={region.slug}
+          className={changed ? "rise-in" : undefined}
+          style={
+            changed
+              ? ({
+                  "--rise-from": "12px",
+                  "--rise-dur": "0.32s",
+                } as CSSProperties)
+              : undefined
+          }
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            {/* `font-display-italic`, not `font-display italic`: this is the
+                  only italic on the page and it now loads as a static Fraunces
+                  italic 400 rather than dragging in the 80 kB variable italic.
+                  See the family definition in tailwind.config.ts. */}
+            <p className="max-w-xl font-display-italic text-xl leading-snug text-ink/75 md:text-2xl">
+              {region.character}
+            </p>
+            {/* The Wild South and the Cultural Triangle each have exactly one
                   published guide, so "1 guides" was on screen for two of the
                   seven regions. Cheap to get right, and this line is now the
                   page's primary answer to "what's in this region?". */}
-              <p className="shrink-0 text-[12px] uppercase tracking-[0.16em] text-ink/45">
-                {places.length} {places.length === 1 ? "place" : "places"}
-                {published.length > 0 &&
-                  ` · ${published.length} ${published.length === 1 ? "guide" : "guides"}`}
-              </p>
-            </div>
+            <p className="shrink-0 text-[12px] uppercase tracking-[0.16em] text-ink/65">
+              {places.length} {places.length === 1 ? "place" : "places"}
+              {published.length > 0 &&
+                ` · ${published.length} ${published.length === 1 ? "guide" : "guides"}`}
+            </p>
+          </div>
 
-            <ul className="mt-9 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-              {cards.map(({ place: p, href, asset }, i) => {
-                const media = (
-                  <div className="img-frame aspect-[4/5]">
-                    {/* requireVerifiedLocation stays: these slots claim a named
+          <ul className="mt-9 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            {cards.map(({ place: p, href, asset }, i) => {
+              const media = (
+                <div className="img-frame aspect-[4/5]">
+                  {/* requireVerifiedLocation stays: these slots claim a named
                         place, so an unverified photograph is worse than none.
                         The gate is still on — what changed is that far more
                         places now clear it honestly. Anything still without a
                         located photograph takes the gradient, which is the
                         designed placeholder, not a gap. */}
-                    <Img
-                      asset={asset}
-                      requireVerifiedLocation
-                      fallbackTone={tones[i % tones.length]}
-                      fallbackPattern="contour"
-                      sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
-                      className={href ? "transition-transform duration-700 group-hover:scale-105" : ""}
-                    />
-                    {p.season && (
-                      <span className="absolute left-4 top-4 z-10 bg-sand/90 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-ink/70 backdrop-blur">
-                        {p.season}
+                  <Img
+                    asset={asset}
+                    requireVerifiedLocation
+                    fallbackTone={tones[i % tones.length]}
+                    fallbackPattern="contour"
+                    sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
+                    className={
+                      href
+                        ? "transition-transform duration-700 group-hover:scale-105"
+                        : ""
+                    }
+                  />
+                  {p.season && (
+                    /* The one label on this page sitting over a photograph.
+                         An automated checker cannot score it — it reports the
+                         image as indeterminate rather than failing it — so it
+                         is set by the same rule the rest of the page now
+                         follows: at 11px uppercase, take the ground to near
+                         opaque and the ink most of the way up. 95/85 is
+                         7.4:1 against the badge, and the badge is 95% sand
+                         whatever the frame behind it is doing. */
+                    <span className="absolute left-4 top-4 z-10 bg-sand/95 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-ink/85 backdrop-blur">
+                      {p.season}
+                    </span>
+                  )}
+                </div>
+              );
+
+              const body = (
+                <>
+                  <h3 className="h-display mt-5 text-2xl text-ink">{p.name}</h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-ink/65">
+                    {p.note}
+                  </p>
+                </>
+              );
+
+              return (
+                /*
+                    Was a motion.li. Up to eleven of them mount on every tab
+                    change and again on first load, each carrying a framer
+                    animation component for a 16px rise — the single largest
+                    contributor to this page's main-thread time. The CSS
+                    keyframe is the same curve, the same distance, the same
+                    stagger; it runs on the compositor and costs nothing to
+                    mount. `key` already forces a remount per region, so the
+                    entrance still replays on tab change exactly as before.
+
+                    Reduced motion is handled by the global media query in
+                    globals.css, which collapses every animation on the site to
+                    a single frame.
+                  */
+                <li
+                  key={p.name}
+                  className="rise-in"
+                  style={
+                    {
+                      "--rise-from": "16px",
+                      animationDelay: `${Math.min(i, 5) * 0.06}s`,
+                    } as CSSProperties
+                  }
+                >
+                  {href ? (
+                    <Link href={href} className="group block">
+                      {media}
+                      {body}
+                      <span className="mt-4 inline-flex items-center gap-1.5 text-[12px] uppercase tracking-[0.16em] text-copper-deep">
+                        Read the guide
+                        <ArrowUpRight
+                          size={14}
+                          aria-hidden
+                          className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        />
                       </span>
-                    )}
-                  </div>
-                );
+                    </Link>
+                  ) : (
+                    <div>
+                      {media}
+                      {body}
+                      <span className="mt-4 inline-block text-[12px] uppercase tracking-[0.16em] text-ink/65">
+                        Guide in progress
+                      </span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-                const body = (
-                  <>
-                    <h3 className="h-display mt-5 text-2xl text-ink">{p.name}</h3>
-                    <p className="mt-2.5 text-[15px] leading-relaxed text-ink/65">
-                      {p.note}
-                    </p>
-                  </>
-                );
+          <div className="mt-12 border-t border-ink/10 pt-8">
+            <Link
+              href="/book"
+              className="group inline-flex items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-copper-deep"
+            >
+              Plan a journey through {withArticle(region.name)}
+              <ArrowRight
+                size={15}
+                aria-hidden
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </Link>
+          </div>
 
-                return (
-                  <motion.li
-                    key={p.name}
-                    initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: reduce ? 0.15 : 0.45,
-                      delay: reduce ? 0 : Math.min(i, 5) * 0.06,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                  >
-                    {href ? (
-                      <Link href={href} className="group block">
-                        {media}
-                        {body}
-                        <span className="mt-4 inline-flex items-center gap-1.5 text-[12px] uppercase tracking-[0.16em] text-copper-deep">
-                          Read the guide
-                          <ArrowUpRight
-                            size={14}
-                            aria-hidden
-                            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                          />
-                        </span>
-                      </Link>
-                    ) : (
-                      <div>
-                        {media}
-                        {body}
-                        <span className="mt-4 inline-block text-[12px] uppercase tracking-[0.16em] text-ink/40">
-                          Guide in progress
-                        </span>
-                      </div>
-                    )}
-                  </motion.li>
-                );
-              })}
-            </ul>
-
-            <div className="mt-12 border-t border-ink/10 pt-8">
-              <Link
-                href="/book"
-                className="group inline-flex items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-copper-deep"
-              >
-                Plan a journey through {withArticle(region.name)}
-                <ArrowRight
-                  size={15}
-                  aria-hidden
-                  className="transition-transform group-hover:translate-x-1"
-                />
-              </Link>
-            </div>
-
-            {/*
+          {/*
               Attribution. Not optional and not decorative: every Commons image
               above is under CC BY, CC BY-SA or the Free Art Licence, all three
               of which require the photographer to be named and the licence
@@ -348,34 +498,43 @@ export default function RegionExplorer({
               it is one quiet line, and it is still in the page source, still
               readable, still linked to each file.
             */}
-            {credits.length > 0 && (
-              <details className="group mt-6 border-t border-ink/10 pt-5">
-                <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.16em] text-ink/40 transition-colors marker:content-none hover:text-ink/70">
-                  Photography credits
-                  <span aria-hidden className="ml-2 inline-block transition-transform group-open:rotate-90">
-                    ›
-                  </span>
-                </summary>
-                <ul className="mt-4 grid gap-2 text-[12px] leading-relaxed text-ink/45 sm:grid-cols-2 lg:grid-cols-3">
-                  {credits.map((c) => (
-                    <li key={c.src}>
-                      <span className="text-ink/60">{c.depicts ?? c.alt}</span> ·{" "}
-                      {c.author} ·{" "}
-                      <a
-                        href={c.provenance.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline decoration-ink/20 underline-offset-2 transition-colors hover:text-copper-deep"
-                      >
-                        {c.provenance.license}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </motion.div>
-        </AnimatePresence>
+          {credits.length > 0 && (
+            <details className="group mt-6 border-t border-ink/10 pt-5">
+              <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.16em] text-ink/65 transition-colors marker:content-none hover:text-ink">
+                Photography credits
+                <span
+                  aria-hidden
+                  className="ml-2 inline-block transition-transform group-open:rotate-90"
+                >
+                  ›
+                </span>
+              </summary>
+              {/* The credits were the densest cluster of failures on the page:
+                    ink/40 on the summary, ink/45 on the list, ink/60 on the
+                    subject name — 2.4:1, 2.8:1 and 4.3:1 against dune. These
+                    are a licence obligation, so they are the last text on the
+                    site that should be hard to read. Held at ink/65 with the
+                    subject at ink/85, which keeps the two-level hierarchy
+                    intact and puts both levels over 4.5:1. */}
+              <ul className="mt-4 grid gap-2 text-[12px] leading-relaxed text-ink/65 sm:grid-cols-2 lg:grid-cols-3">
+                {credits.map((c) => (
+                  <li key={c.src}>
+                    <span className="text-ink/85">{c.depicts ?? c.alt}</span> ·{" "}
+                    {c.author} ·{" "}
+                    <a
+                      href={c.provenance.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-ink/20 underline-offset-2 transition-colors hover:text-copper-deep"
+                    >
+                      {c.provenance.license}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
       </div>
     </div>
   );

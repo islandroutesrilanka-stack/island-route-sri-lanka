@@ -10,7 +10,12 @@ import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
 import { regions } from "@/lib/regions";
 import { formatPrice } from "@/utils/format";
-import { seasons, getSeason, currentSeasonKey, type SeasonPick } from "@/lib/seasons";
+import {
+  seasons,
+  getSeason,
+  currentSeasonKey,
+  type SeasonPick,
+} from "@/lib/seasons";
 import type { Tour } from "@/lib/tours";
 import {
   filterTours,
@@ -33,7 +38,11 @@ export const metadata: Metadata = {
 };
 
 const groups = [
-  { key: "Multi-Day", eyebrow: "Multi-day journeys", title: "The island, end to end" },
+  {
+    key: "Multi-Day",
+    eyebrow: "Multi-day journeys",
+    title: "The island, end to end",
+  },
   { key: "Day Tour", eyebrow: "Day tours", title: "One perfect day" },
   { key: "Safari", eyebrow: "Safaris", title: "Into the wild" },
 ] as const;
@@ -48,7 +57,8 @@ export default async function ToursPage({
   const active = hasActiveFilters(filters);
   const tours = active ? filterTours(all, filters) : all;
   const chips = describeFilters(filters, {
-    themeName: (slug) => experienceCategories.find((c) => c.slug === slug)?.name,
+    themeName: (slug) =>
+      experienceCategories.find((c) => c.slug === slug)?.name,
     destinationName: (slug) => destinations.find((d) => d.slug === slug)?.name,
   }).filter((c) => c.label !== "Travelling as"); // shown separately below
 
@@ -110,7 +120,11 @@ export default async function ToursPage({
               {seasons.map((s) => (
                 <li key={s.key}>
                   <Link
-                    href={s.key === currentSeasonKey() ? "/tours" : `/tours?season=${s.key}`}
+                    href={
+                      s.key === currentSeasonKey()
+                        ? "/tours"
+                        : `/tours?season=${s.key}`
+                    }
                     aria-current={s.key === season.key ? "true" : undefined}
                     className={`inline-flex min-h-[44px] flex-col justify-center border px-4 py-1.5 transition-colors ${
                       s.key === season.key
@@ -121,7 +135,7 @@ export default async function ToursPage({
                     <span className="text-[12px] uppercase tracking-[0.14em]">
                       {s.months}
                     </span>
-                    <span className="text-[11px] text-ink/55">{s.label}</span>
+                    <span className="text-[11px] text-ink/65">{s.label}</span>
                   </Link>
                 </li>
               ))}
@@ -139,7 +153,10 @@ export default async function ToursPage({
                       Seasonal favourite
                     </p>
                     <h4 className="font-display mt-2 text-2xl text-ink">
-                      <Link href={`/tours/${t.slug}`} className="hover:text-copper-deep">
+                      <Link
+                        href={`/tours/${t.slug}`}
+                        className="hover:text-copper-deep"
+                      >
                         {t.title}
                       </Link>
                     </h4>
@@ -174,14 +191,11 @@ export default async function ToursPage({
                     if (!t) return null;
                     return (
                       <li key={p.slug}>
-                        <Link
-                          href={`/tours/${t.slug}`}
-                          className="group block"
-                        >
+                        <Link href={`/tours/${t.slug}`} className="group block">
                           <span className="font-display text-lg text-ink transition-colors group-hover:text-copper-deep">
                             {t.title}
                           </span>
-                          <span className="mt-0.5 block text-[12px] uppercase tracking-[0.14em] text-ink/60">
+                          <span className="mt-0.5 block text-[12px] uppercase tracking-[0.14em] text-ink/65">
                             {t.duration}
                             {t.priceFrom > 0 &&
                               ` · From ${formatPrice(t.priceFrom)}`}
@@ -197,10 +211,10 @@ export default async function ToursPage({
               </>
             )}
 
-            <p className="mt-10 text-[13px] leading-relaxed text-ink/60">
+            <p className="mt-10 text-[13px] leading-relaxed text-ink/65">
               Conditions can vary from year to year — these are recommendations,
-              not guarantees. Tell us your dates and we&apos;ll say honestly what
-              to expect.
+              not guarantees. Tell us your dates and we&apos;ll say honestly
+              what to expect.
             </p>
           </div>
         </section>
@@ -345,11 +359,14 @@ export default async function ToursPage({
               {regions.map((r, ri) => {
                 const inRegion = all.filter((t) =>
                   (t.destinationSlugs ?? []).some((d) =>
-                    r.destinationSlugs.includes(d)
-                  )
+                    r.destinationSlugs.includes(d),
+                  ),
                 );
                 return (
-                  <div key={r.slug} className="grid gap-6 py-9 md:grid-cols-12 md:gap-10">
+                  <div
+                    key={r.slug}
+                    className="grid gap-6 py-9 md:grid-cols-12 md:gap-10"
+                  >
                     <div className="md:col-span-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-copper-deep">
                         {String(ri + 1).padStart(2, "0")}
@@ -363,7 +380,7 @@ export default async function ToursPage({
                       <p className="mt-4 text-[13px] leading-relaxed text-ink/65">
                         {r.places.map((p, pi) => {
                           const match = destinations.find(
-                            (d) => d.name.toLowerCase() === p.toLowerCase()
+                            (d) => d.name.toLowerCase() === p.toLowerCase(),
                           );
                           return (
                             <span key={p}>
@@ -390,7 +407,10 @@ export default async function ToursPage({
                            we cannot claim journeys we do not run. */
                         <p className="text-[15px] leading-relaxed text-ink/65">
                           No set journey covers this region yet.{" "}
-                          <Link href="/book" className="link-line text-copper-deep">
+                          <Link
+                            href="/book"
+                            className="link-line text-copper-deep"
+                          >
                             Ask us what&apos;s possible
                           </Link>
                           .

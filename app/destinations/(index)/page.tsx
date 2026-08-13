@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { PageHeader, DestinationCard, CTABand, SectionHeading } from "@/components/ui";
+import {
+  PageHeader,
+  DestinationCard,
+  CTABand,
+  SectionHeading,
+} from "@/components/ui";
 import EmptyState from "@/components/patterns/EmptyState";
 import RegionExplorer from "@/components/patterns/RegionExplorer";
 import ScrollToAnchor from "@/components/patterns/ScrollToAnchor";
@@ -27,56 +32,58 @@ export async function generateMetadata(): Promise<Metadata> {
   const list =
     names.length > 1
       ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`
-      : names[0] ?? "";
+      : (names[0] ?? "");
 
   return {
     title: "Sri Lanka Destinations",
     description: clampDesc(
-      `Explore Sri Lanka's finest destinations${list ? `: ${list}` : ""} — all with a private driver.`
+      `Explore Sri Lanka's finest destinations${list ? `: ${list}` : ""} — all with a private driver.`,
     ),
     alternates: { canonical: "/destinations" },
   };
 }
 
-export default async function DestinationsPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+/*
+  ?region= — one job: which explorer tab opens. It is read in RegionExplorer,
+  on the client, and this page does not touch it.
+
+  That last part is a performance decision, and a large one. Reading
+  `searchParams` in a server component opts the entire route out of static
+  rendering — Next marks it ƒ, `export const revalidate = 60` above becomes
+  dead code, and every visit pays for a fresh server render plus a Supabase
+  round trip before a single byte reaches the browser. For a query string that
+  only arrivals from the island map carry. Handing the read to the client
+  returns the route to ISR: prerendered at build, served from the edge cache,
+  revalidated in the background.
+
+  Nothing about the behaviour changes. The tab correction happens on mount, in
+  the same tick as ScrollToAnchor's scroll — which exists for exactly this
+  navigation, because the #regions fragment has to be resolved client-side too.
+  The visitor is being scrolled toward the panel as it switches.
+
+  The query string used to do two jobs, and that was the earlier problem.
+  Arriving from the island map filtered the guide grid *and* opened the explorer
+  tab, so a region click landed on a summary bar ("1 destination · Region: The
+  Wild South"), then a single lonely card, and only then — a full section
+  further down — the explorer panel that actually answers the question. Two
+  surfaces competing to be the answer to one click, the smaller and sparser of
+  them going first.
+
+  Both surfaces are still worth having, because they answer different questions:
+
+    • The explorer answers "what is this region like?" — all seven regions, all
+      thirty-one places, photographs and a line on each. Breadth. It is the
+      primary way to explore this page and so it goes first.
+
+    • The grid answers "what have you written up?" — the destinations with a
+      guide of their own. Depth. Always the complete set, never filtered.
+
+  An unrecognised slug degrades to the default view: RegionExplorer checks it
+  against lib/regions.ts and keeps the first region, so ?region=nonsense is a
+  normal page rather than an empty one.
+*/
+export default async function DestinationsPage() {
   const all = await getDestinations();
-
-  /*
-    ?region= — one job now: which explorer tab opens.
-
-    It used to do two, and that was the problem. Arriving from the island map
-    filtered the guide grid *and* opened the explorer tab, so a region click
-    landed on a summary bar ("1 destination · Region: The Wild South"), then a
-    single lonely card, and only then — a full section further down — the
-    explorer panel that actually answers the question. Two surfaces competing to
-    be the answer to one click, the smaller and sparser of them going first.
-
-    The two surfaces are still both worth having, because they are different
-    questions:
-
-      • The explorer answers "what is this region like?" — all seven regions,
-        all thirty-one places, photographs and a line on each. Breadth. It is
-        the primary way to explore this page and so it goes first.
-
-      • The grid answers "what have you written up?" — the destinations with a
-        guide of their own. Depth. Always the complete set, never filtered.
-
-    Filtering the grid by region only ever made it a worse version of the
-    explorer panel above it: a strict subset, minus the photographs, minus the
-    places with no guide yet. So the filter is gone rather than merely moved,
-    and the page no longer changes shape depending on the query string — the
-    one thing that made the transition feel disjointed.
-
-    An unrecognised slug still degrades to the default view: RegionExplorer
-    checks the slug against lib/regions.ts and falls back to the first region,
-    so ?region=nonsense is a normal page rather than an empty one.
-  */
-  const raw = searchParams.region;
-  const regionSlug = (Array.isArray(raw) ? raw[0] : raw)?.trim() || undefined;
 
   return (
     <>
@@ -122,7 +129,6 @@ export default async function DestinationsPage({
           />
           <RegionExplorer
             className="mt-12 md:mt-16"
-            defaultRegion={regionSlug}
             destinations={all.map((d) => ({
               slug: d.slug,
               name: d.name,

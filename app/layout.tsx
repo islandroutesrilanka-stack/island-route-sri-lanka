@@ -4,7 +4,6 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
-import { MotionProvider } from "@/components/motion";
 import { siteUrl, socialProfiles } from "@/lib/site";
 import { ogDefault } from "@/lib/images";
 import { getSettings } from "@/lib/data";
@@ -24,10 +23,33 @@ import { getSettings } from "@/lib/data";
  */
 const fraunces = Fraunces({
   subsets: ["latin"],
-  style: ["normal", "italic"],
   axes: ["opsz"],
   display: "swap",
   variable: "--font-display",
+  fallback: ["Georgia", "serif"],
+});
+
+/**
+ * The italic, deliberately split out of the call above.
+ *
+ * It used to ride along as `style: ["normal", "italic"]`, which gave it the
+ * same shape as the roman — variable across wght 100–900 with the optical-size
+ * axis — and that file is 80 kB, the largest single asset the site ships and
+ * bigger than the roman it partners. On /destinations it was downloaded to set
+ * one line of text.
+ *
+ * Nothing on the site asks for a second italic weight: every use is a display
+ * pull-line at 400. As a static 400 instance that is 22 kB, so this is a 58 kB
+ * saving with no rendered pixel changed. Reached through `font-display-italic`
+ * — see the note in tailwind.config.ts for why `font-display italic` is now
+ * the wrong way to write it.
+ */
+const frauncesItalic = Fraunces({
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  display: "swap",
+  variable: "--font-display-italic",
   fallback: ["Georgia", "serif"],
 });
 
@@ -117,7 +139,10 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="en" className={`${fraunces.variable} ${archivo.variable}`}>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${frauncesItalic.variable} ${archivo.variable}`}
+    >
       <head>
         <script
           type="application/ld+json"
@@ -128,12 +153,23 @@ export default async function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <MotionProvider>
-          <Navbar />
-          <main id="main">{children}</main>
-          <Footer />
-          <WhatsAppFloat />
-        </MotionProvider>
+        {/*
+          There is deliberately no animation-library provider here.
+
+          A `<MotionConfig>` in the root layout is a client component importing
+          framer-motion, which puts the library — 107 kB parsed — into the
+          shared chunk graph of every route on the site, including the ones that
+          have never animated anything. It now lives with the four surfaces that
+          actually use framer (the gallery lightbox, the booking form, the
+          journey builder, and the admin table), each of which declares its own
+          `reducedMotion="user"`. Everything else on the site animates in CSS,
+          where the global `prefers-reduced-motion` rule in globals.css already
+          governs it.
+        */}
+        <Navbar />
+        <main id="main">{children}</main>
+        <Footer />
+        <WhatsAppFloat />
       </body>
     </html>
   );

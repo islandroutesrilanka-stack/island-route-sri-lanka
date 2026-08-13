@@ -289,6 +289,17 @@ export function PageHeader({
             fill
             priority
             sizes="100vw"
+            /*
+              This is the largest contentful paint on every page that has one,
+              and it is also the least detailed thing on screen: 40% opacity
+              under a three-stop dark gradient, behind the headline. At the
+              default quality of 75 it was the biggest image request on the
+              page for a surface where JPEG artefacts are mathematically
+              invisible — they are multiplied by 0.4 and then buried under
+              50–70% of flat colour. 45 costs roughly half the bytes off the
+              critical path and cannot be told apart from 75 here.
+            */
+            quality={45}
             className="object-cover opacity-40"
             aria-hidden
           />
@@ -296,7 +307,11 @@ export function PageHeader({
         </>
       )}
       <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
-        <Reveal>
+        {/* `immediate`: this is the first heading on the page and it is always
+            above the fold. Inside a scroll-triggered Reveal it was painted at
+            opacity 0 and waited for hydration, which put first contentful paint
+            behind the JavaScript bundle on every route on the site. */}
+        <Reveal immediate>
           <p className="eyebrow text-copper-light">{eyebrow}</p>
           <h1 className="h-display mt-3 text-5xl md:text-7xl text-sand max-w-3xl">
             {title}

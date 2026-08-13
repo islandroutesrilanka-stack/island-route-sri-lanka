@@ -47,7 +47,14 @@ export default function TrustBand() {
           {PILLARS.map((p, i) => (
             <Reveal key={p.title} index={i}>
               <div className="border-t border-ink/15 pt-6">
-                <p className="font-display text-sm text-copper-deep/70">{p.index}</p>
+                {/* Full copper-deep, not /70. At 14px this is body-sized text
+                    and WCAG asks 4.5:1 of it; /70 composited over sand is
+                    3.15:1. The numeral still reads as a quiet index because it
+                    is small and set in the display face, not because it is
+                    faded. */}
+                <p className="font-display text-sm text-copper-deep">
+                  {p.index}
+                </p>
                 <h3 className="h-display mt-3 text-3xl text-ink md:text-[2.5rem]">
                   {p.title}
                 </h3>

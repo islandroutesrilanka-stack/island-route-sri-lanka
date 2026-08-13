@@ -70,7 +70,7 @@ export default function Error({
         </p>
 
         {error.digest && (
-          <p className="mt-4 text-[11px] uppercase tracking-[0.14em] text-sand/35">
+          <p className="mt-4 text-[11px] uppercase tracking-[0.14em] text-sand/55">
             Reference {error.digest}
           </p>
         )}

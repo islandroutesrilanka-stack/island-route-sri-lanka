@@ -29,14 +29,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const list =
     names.length > 1
       ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`
-      : names[0] ?? "";
+      : (names[0] ?? "");
 
   return {
     title: "Sri Lanka Experiences",
     description: clampDesc(
       `Travel Sri Lanka by what moves you${
         list ? `: ${list}` : ""
-      } — private, chauffeur-driven journeys built around it.`
+      } — private, chauffeur-driven journeys built around it.`,
     ),
     alternates: { canonical: "/experiences" },
     openGraph: {
@@ -45,7 +45,8 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "Island Route Sri Lanka",
       locale: "en_GB",
       title: "Sri Lanka Experiences",
-      description: "Ways to travel Sri Lanka — and the journeys that deliver them.",
+      description:
+        "Ways to travel Sri Lanka — and the journeys that deliver them.",
     },
   };
 }
@@ -62,8 +63,9 @@ export default async function ExperiencesPage() {
     catalogue as roughly twice its real size. The distinct-slug set is the only
     honest way to state this.
   */
-  const journeyCount = new Set(published.flatMap((e) => e.tours.map((t) => t.slug)))
-    .size;
+  const journeyCount = new Set(
+    published.flatMap((e) => e.tours.map((t) => t.slug)),
+  ).size;
 
   /*
     Attribution for the Commons photography on the tiles. Required by CC BY and
@@ -135,9 +137,13 @@ export default async function ExperiencesPage() {
               <p className="text-[12px] uppercase tracking-[0.16em] text-ink/65">
                 {published.length} ways to travel
               </p>
-              <span aria-hidden className="hidden h-4 w-px bg-ink/15 sm:block" />
+              <span
+                aria-hidden
+                className="hidden h-4 w-px bg-ink/15 sm:block"
+              />
               <p className="text-[12px] uppercase tracking-[0.16em] text-ink/65">
-                {journeyCount} {journeyCount === 1 ? "journey" : "journeys"} across them
+                {journeyCount} {journeyCount === 1 ? "journey" : "journeys"}{" "}
+                across them
               </p>
               <Link
                 href="/tours"
@@ -175,7 +181,7 @@ export default async function ExperiencesPage() {
                   region explorer, for the same legal reason. */}
               {credits.length > 0 && (
                 <details className="group mt-10 border-t border-ink/10 pt-5">
-                  <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.16em] text-ink/40 transition-colors marker:content-none hover:text-ink/70">
+                  <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.16em] text-ink/65 transition-colors marker:content-none hover:text-ink">
                     Photography credits
                     <span
                       aria-hidden
@@ -184,10 +190,14 @@ export default async function ExperiencesPage() {
                       ›
                     </span>
                   </summary>
-                  <ul className="mt-4 grid gap-2 text-[12px] leading-relaxed text-ink/45 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* /65 is the lowest ink opacity that clears 4.5:1 on this
+                      ground (5.02:1); /45 was 2.8:1 and took the licence links
+                      down with it, since they inherit their colour from here. */}
+                  <ul className="mt-4 grid gap-2 text-[12px] leading-relaxed text-ink/65 sm:grid-cols-2 lg:grid-cols-3">
                     {credits.map((c) => (
                       <li key={c.src}>
-                        <span className="text-ink/60">{c.label}</span> · {c.author} ·{" "}
+                        <span className="text-ink/85">{c.label}</span> ·{" "}
+                        {c.author} ·{" "}
                         <a
                           href={c.url}
                           target="_blank"
@@ -214,9 +224,10 @@ export default async function ExperiencesPage() {
                   The private ones rarely make the catalogue
                 </h2>
                 <p className="mt-5 text-[15px] leading-relaxed text-ink/70">
-                  Cooking with a family in Galle, an Ayurveda week that isn&apos;t a
-                  spa menu, a walk nobody sells tickets for — these get arranged
-                  by conversation, not by browsing. Tell us what you had in mind.
+                  Cooking with a family in Galle, an Ayurveda week that
+                  isn&apos;t a spa menu, a walk nobody sells tickets for — these
+                  get arranged by conversation, not by browsing. Tell us what
+                  you had in mind.
                 </p>
                 <Link
                   href="/book"
