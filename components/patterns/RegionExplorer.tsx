@@ -18,6 +18,7 @@ import { commonsPlaceAsset, type CommonsPlaceAsset } from "@/lib/media/commons";
 import { isLocationVerified } from "@/lib/media/types";
 import { regions } from "@/lib/regions";
 import { placesForRegion } from "@/lib/region-places";
+import { splitIfLong } from "@/lib/copy";
 
 /**
  * The region explorer.
@@ -174,10 +175,23 @@ export default function RegionExplorer({
           href: d ? `/destinations/${d.slug}` : undefined,
           asset: commons ?? owned,
           commons,
+          /* Every place note is written the same way: what the place is,
+             then what we'd tell you about going. The card shows the first
+             part; the second is the reward for the toggle below. Split at
+             render — lib/region-places.ts keeps both sentences intact. A note
+             that is already short comes back whole and gets no tip. */
+          note: splitIfLong(p.note),
         };
       }),
     [places, bySlug],
   );
+
+  /* One switch for the whole panel, not eleven. The tips are a single kind of
+     content and the reader's question about them is singular — "is there more
+     to know here?" — so it gets a single answer. Off by default: the panel's
+     job at rest is eleven photographs and eleven place names. */
+  const [notes, setNotes] = useState(false);
+  const hasTips = cards.some((c) => c.note.rest);
 
   /* CC BY, CC BY-SA and the Free Art Licence all require attribution. De-duped
      by src because one file could legitimately serve two places. */
@@ -341,7 +355,7 @@ export default function RegionExplorer({
         id={`${uid}-panel`}
         aria-labelledby={`${uid}-tab-${region.slug}`}
         tabIndex={0}
-        className="mt-10 outline-none md:mt-12"
+        className="mt-12 outline-none md:mt-16"
       >
         {/* `key` remounts the panel per region, which is what replays the
             entrance — a CSS animation only runs on a new element. */}
@@ -365,19 +379,41 @@ export default function RegionExplorer({
             <p className="max-w-xl font-display-italic text-xl leading-snug text-ink/75 md:text-2xl">
               {region.character}
             </p>
-            {/* The Wild South and the Cultural Triangle each have exactly one
-                  published guide, so "1 guides" was on screen for two of the
-                  seven regions. Cheap to get right, and this line is now the
-                  page's primary answer to "what's in this region?". */}
-            <p className="shrink-0 text-[12px] uppercase tracking-[0.16em] text-ink/65">
-              {places.length} {places.length === 1 ? "place" : "places"}
-              {published.length > 0 &&
-                ` · ${published.length} ${published.length === 1 ? "guide" : "guides"}`}
-            </p>
+            <div className="flex shrink-0 items-center gap-5">
+              {/* The Wild South and the Cultural Triangle each have exactly one
+                    published guide, so "1 guides" was on screen for two of the
+                    seven regions. Cheap to get right, and this line is now the
+                    page's primary answer to "what's in this region?". */}
+              <p className="text-[12px] uppercase tracking-[0.16em] text-ink/65">
+                {places.length} {places.length === 1 ? "place" : "places"}
+                {published.length > 0 &&
+                  ` · ${published.length} ${published.length === 1 ? "guide" : "guides"}`}
+              </p>
+              {hasTips && (
+                <button
+                  type="button"
+                  onClick={() => setNotes((v) => !v)}
+                  aria-expanded={notes}
+                  className="inline-flex items-center gap-1.5 border-l border-ink/15 pl-5 text-[12px] uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-copper-deep"
+                >
+                  Planner&apos;s notes
+                  <ChevronDown
+                    size={14}
+                    aria-hidden
+                    className={`transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      notes ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
           </div>
 
-          <ul className="mt-9 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-            {cards.map(({ place: p, href, asset }, i) => {
+          <ul
+            data-notes={notes ? "open" : "closed"}
+            className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 md:mt-14 lg:grid-cols-3 lg:gap-x-10 lg:gap-y-16"
+          >
+            {cards.map(({ place: p, href, asset, note }, i) => {
               const media = (
                 <div className="img-frame aspect-[4/5]">
                   {/* requireVerifiedLocation stays: these slots claim a named
@@ -416,10 +452,28 @@ export default function RegionExplorer({
 
               const body = (
                 <>
-                  <h3 className="h-display mt-5 text-2xl text-ink">{p.name}</h3>
-                  <p className="mt-2.5 text-[15px] leading-relaxed text-ink/65">
-                    {p.note}
+                  <h3 className="h-display mt-6 text-2xl text-ink">{p.name}</h3>
+                  <p className="mt-3 text-[15px] leading-relaxed text-ink/70">
+                    {note.lede}
                   </p>
+                  {/*
+                      Collapsed, not removed. The sentence is in the served HTML
+                      whatever the toggle is doing — it is real writing about a
+                      real place and it should be indexed as such. `aria-hidden`
+                      tracks the visual state so a screen reader is never read a
+                      paragraph the sighted reader can't see; there is nothing
+                      focusable inside, so nothing can be tabbed into while it
+                      is closed.
+                    */}
+                  {note.rest && (
+                    <div className="tip" aria-hidden={!notes}>
+                      <div>
+                        <p className="border-l border-copper/40 pl-4 text-[14px] leading-relaxed text-ink/65">
+                          {note.rest}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </>
               );
 
@@ -475,7 +529,7 @@ export default function RegionExplorer({
             })}
           </ul>
 
-          <div className="mt-12 border-t border-ink/10 pt-8">
+          <div className="mt-16 border-t border-ink/10 pt-10 md:mt-20">
             <Link
               href="/book"
               className="group inline-flex items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-copper-deep"

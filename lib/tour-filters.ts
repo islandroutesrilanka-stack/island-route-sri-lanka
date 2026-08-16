@@ -10,8 +10,22 @@
  * `components/patterns/ExperienceRail.tsx`), so every link that exists today
  * keeps working and its URL is unchanged.
  */
-import type { Tour } from "./tours";
 import { getRegion } from "./regions";
+
+/**
+ * The only three fields filtering reads.
+ *
+ * Stated structurally rather than as `Tour` because the tours page now filters
+ * in the browser, and `lib/tours.ts` must not follow it there — that module
+ * pulls in the media registry and the whole Commons provenance table, tens of
+ * kilobytes of licence metadata that no filter has ever looked at. A `Tour`
+ * still satisfies this, so every existing server-side caller is unaffected.
+ */
+export type FilterableTour = {
+  duration?: string;
+  themeSlugs?: string[];
+  destinationSlugs?: string[];
+};
 
 export type TourFilters = {
   /** Experience category slug, e.g. "wildlife" — from ExperienceRail + planner. */
@@ -39,7 +53,7 @@ export type TourFilters = {
 /** The duration buckets the UI offers, as inclusive day ranges. */
 const DURATION_BUCKETS: Record<string, [number, number]> = {
   "half-day": [0, 0],
-  "day": [1, 1],
+  day: [1, 1],
   "3-4": [3, 4],
   "5-7": [5, 7],
   "8-10": [8, 10],
@@ -62,7 +76,7 @@ const DURATION_BUCKETS: Record<string, [number, number]> = {
  * Returns null when nothing sensible can be read, and an unreadable duration
  * is excluded from duration filtering rather than guessed at.
  */
-export function tourDurationDays(tour: Tour): number | null {
+export function tourDurationDays(tour: FilterableTour): number | null {
   const d = (tour.duration ?? "").toLowerCase();
   if (!d) return null;
 
@@ -75,7 +89,7 @@ export function tourDurationDays(tour: Tour): number | null {
   return null;
 }
 
-function matchesDuration(tour: Tour, bucketKey: string): boolean {
+function matchesDuration(tour: FilterableTour, bucketKey: string): boolean {
   const bucket = DURATION_BUCKETS[bucketKey];
   if (!bucket) return true; // unknown bucket → don't silently hide everything
   const days = tourDurationDays(tour);
@@ -93,10 +107,14 @@ function matchesDuration(tour: Tour, bucketKey: string): boolean {
  * real trips. It is carried through the URL and into the enquiry instead, where
  * it is genuinely useful, rather than silently dropped.
  */
-export function filterTours(tours: Tour[], f: TourFilters): Tour[] {
+export function filterTours<T extends FilterableTour>(
+  tours: T[],
+  f: TourFilters,
+): T[] {
   return tours.filter((t) => {
     if (f.theme && !t.themeSlugs?.includes(f.theme)) return false;
-    if (f.destination && !t.destinationSlugs?.includes(f.destination)) return false;
+    if (f.destination && !t.destinationSlugs?.includes(f.destination))
+      return false;
     if (f.region) {
       // Unknown slug → no filter, matching how /destinations already degrades.
       const r = getRegion(f.region);
@@ -115,7 +133,7 @@ export function hasActiveFilters(f: TourFilters): boolean {
 
 /** Read filters off Next's searchParams, ignoring repeated/array values. */
 export function parseTourFilters(
-  sp: Record<string, string | string[] | undefined>
+  sp: Record<string, string | string[] | undefined>,
 ): TourFilters {
   const one = (v: string | string[] | undefined) =>
     (Array.isArray(v) ? v[0] : v)?.trim() || undefined;
@@ -125,6 +143,30 @@ export function parseTourFilters(
     destination: one(sp.destination),
     party: one(sp.party),
     region: one(sp.region),
+  };
+}
+
+/**
+ * The same read, from the browser's own `URLSearchParams`.
+ *
+ * /tours and /book are statically rendered, so the query string reaches them
+ * as a live `URLSearchParams` rather than as Next's server-side searchParams
+ * object. `get()` returns the first value for a repeated key, which is exactly
+ * what `parseTourFilters` does with an array — the two cannot disagree.
+ *
+ * A null argument means the query has not been read yet, on the server or on
+ * the first client render, and yields no filters.
+ */
+export function parseTourFiltersFromQuery(
+  p: URLSearchParams | null,
+): TourFilters {
+  const one = (k: string) => p?.get(k)?.trim() || undefined;
+  return {
+    theme: one("theme"),
+    duration: one("duration"),
+    destination: one("destination"),
+    party: one("party"),
+    region: one("region"),
   };
 }
 
@@ -173,14 +215,20 @@ export function describeFilters(
     themeName?: (slug: string) => string | undefined;
     destinationName?: (slug: string) => string | undefined;
     regionName?: (slug: string) => string | undefined;
-  } = {}
+  } = {},
 ): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
   if (f.theme) {
-    out.push({ label: "Interest", value: lookups.themeName?.(f.theme) ?? f.theme });
+    out.push({
+      label: "Interest",
+      value: lookups.themeName?.(f.theme) ?? f.theme,
+    });
   }
   if (f.duration) {
-    out.push({ label: "Length", value: DURATION_LABELS[f.duration] ?? f.duration });
+    out.push({
+      label: "Length",
+      value: DURATION_LABELS[f.duration] ?? f.duration,
+    });
   }
   if (f.destination) {
     out.push({
@@ -191,11 +239,15 @@ export function describeFilters(
   if (f.region) {
     out.push({
       label: "Region",
-      value: lookups.regionName?.(f.region) ?? getRegion(f.region)?.name ?? f.region,
+      value:
+        lookups.regionName?.(f.region) ?? getRegion(f.region)?.name ?? f.region,
     });
   }
   if (f.party) {
-    out.push({ label: "Travelling as", value: PARTY_LABELS[f.party] ?? f.party });
+    out.push({
+      label: "Travelling as",
+      value: PARTY_LABELS[f.party] ?? f.party,
+    });
   }
   return out;
 }

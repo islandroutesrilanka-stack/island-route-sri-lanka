@@ -90,13 +90,17 @@ export default async function DestinationsPage() {
       {/*
         "Nine islands in one" is authored copy, deliberately not derived from
         array length — it is a metaphor, not a count, and should change only by
-        editorial decision. The intro line is flagged for factual verification
-        (a global comparative) and is left exactly as written.
+        editorial decision.
+
+        The intro is shorter than it was, and the cut took the unverifiable half
+        with it: it opened "Few places on Earth pack this much variety…", a
+        global comparative nobody could stand behind. What is left is the part
+        that is both true and specific — four landscapes, one week's driving.
       */}
       <PageHeader
         eyebrow="Destinations"
         title="Nine islands in one"
-        intro="Few places on Earth pack this much variety into a drivable week — golden coasts, cloud forests, ancient citadels and big-cat country."
+        intro="Golden coasts, cloud forest, ancient citadels and big-cat country — inside a drivable week."
         image={media.elephantRockSandbar.src}
       />
 
@@ -119,16 +123,16 @@ export default async function DestinationsPage() {
       <section
         id="regions"
         aria-label="Explore by region"
-        className="scroll-mt-20 bg-dune/50 py-16 md:py-24"
+        className="section scroll-mt-20 bg-dune/50"
       >
         <div className="mx-auto max-w-wrap px-5 md:px-8">
           <SectionHeading
             eyebrow="Explore by region"
             title="Seven regions, one island"
-            intro="Sri Lanka changes character roughly every two hours of driving. This is how we group it — and what we'd take you to see in each."
+            intro="Sri Lanka changes character roughly every two hours of driving."
           />
           <RegionExplorer
-            className="mt-12 md:mt-16"
+            className="section-body"
             destinations={all.map((d) => ({
               slug: d.slug,
               name: d.name,
@@ -139,7 +143,7 @@ export default async function DestinationsPage() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24" aria-label="Destination guides">
+      <section className="section" aria-label="Destination guides">
         <div className="mx-auto max-w-wrap px-5 md:px-8">
           {all.length === 0 ? (
             /*
@@ -160,7 +164,7 @@ export default async function DestinationsPage() {
               <SectionHeading
                 eyebrow="Destination guides"
                 title="Read before you go"
-                intro="The regions above cover the whole island. These are the places we've written up properly — what to see, when to come, and how long to give them."
+                intro="The places we've written up properly — what to see, when to come, how long to give them."
               />
               {/*
                 data-qa scopes the QA harness's destination-card selector to
@@ -169,7 +173,7 @@ export default async function DestinationsPage() {
               */}
               <div
                 data-qa="destination-grid"
-                className="mt-12 grid grid-cols-2 gap-4 md:mt-16 md:grid-cols-3 md:gap-6"
+                className="section-body grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6"
               >
                 {all.map((d, i) => (
                   <DestinationCard key={d.slug} d={d} index={i % 3} />
@@ -182,7 +186,7 @@ export default async function DestinationsPage() {
 
       <CTABand
         title="Can't choose? You don't have to."
-        body="Most of our routes link four or five of these destinations in a single seamless journey. Tell us what excites you most and we'll thread the rest."
+        body="Tell us what excites you most and we'll thread four or five of these into one route."
       />
     </>
   );

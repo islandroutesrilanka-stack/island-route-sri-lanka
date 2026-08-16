@@ -4,28 +4,39 @@ import { PageHeader, TourCard, CTABand, SectionHeading } from "@/components/ui";
 import EmptyState from "@/components/patterns/EmptyState";
 import IslandMap from "@/components/patterns/IslandMap";
 import JourneyBuilder from "@/components/patterns/JourneyBuilder";
+import ReadMore from "@/components/patterns/ReadMore";
+import Img from "@/components/media/Img";
+import SeasonSwitch from "@/components/tours/SeasonSwitch";
+import FilteredCatalogue, {
+  type CatalogueTour,
+  type TourGroup,
+} from "@/components/tours/FilteredCatalogue";
 import { getTours } from "@/lib/data";
 import { commonsPlaces } from "@/lib/media/commons";
 import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
 import { regions } from "@/lib/regions";
 import { formatPrice } from "@/utils/format";
+import { splitIfLong } from "@/lib/copy";
 import {
   seasons,
-  getSeason,
   currentSeasonKey,
+  type Season,
   type SeasonPick,
 } from "@/lib/seasons";
 import type { Tour } from "@/lib/tours";
-import {
-  filterTours,
-  hasActiveFilters,
-  parseTourFilters,
-  filtersToQuery,
-  describeFilters,
-  PARTY_LABELS,
-} from "@/lib/tour-filters";
 
+/*
+  Static, and it stays static.
+
+  This page used to take `searchParams`, which is all it takes to turn a route
+  into `ƒ` (Dynamic) in the App Router. Every visitor then paid for a server
+  render and a Supabase round trip before the first byte, and the `revalidate`
+  below was quietly doing nothing — there was no cached render to revalidate.
+  The query string now reaches the two sections that care about it in the
+  browser (see components/query-watcher.tsx), so the HTML is built once and
+  served from the edge, and this line means what it says again.
+*/
 export const revalidate = 60;
 
 export const metadata: Metadata = {
@@ -37,7 +48,7 @@ export const metadata: Metadata = {
   // them out of the index without making the links themselves nofollow.
 };
 
-const groups = [
+const groups: TourGroup[] = [
   {
     key: "Multi-Day",
     eyebrow: "Multi-day journeys",
@@ -45,31 +56,23 @@ const groups = [
   },
   { key: "Day Tour", eyebrow: "Day tours", title: "One perfect day" },
   { key: "Safari", eyebrow: "Safaris", title: "Into the wild" },
-] as const;
+];
 
-export default async function ToursPage({
-  searchParams,
+/* ───────────────────────────── Seasonal panel ─────────────────────────────
+   One season's worth of the rail. All four are rendered here, on the server,
+   and handed to SeasonSwitch as children — see the note in that component for
+   why the switching happens in the browser but the rendering does not. */
+function SeasonPanel({
+  season,
+  tours,
+  nowKey,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  season: Season;
+  tours: Tour[];
+  nowKey: string;
 }) {
-  const all = await getTours();
-  const filters = parseTourFilters(searchParams);
-  const active = hasActiveFilters(filters);
-  const tours = active ? filterTours(all, filters) : all;
-  const chips = describeFilters(filters, {
-    themeName: (slug) =>
-      experienceCategories.find((c) => c.slug === slug)?.name,
-    destinationName: (slug) => destinations.find((d) => d.slug === slug)?.name,
-  }).filter((c) => c.label !== "Travelling as"); // shown separately below
-
-  /* Seasonal curation. `?season=` joins the existing query vocabulary; an
-     unknown or absent value falls back to the real season in Asia/Colombo. */
-  const seasonKey = Array.isArray(searchParams.season)
-    ? searchParams.season[0]
-    : searchParams.season;
-  const season = getSeason(seasonKey);
-  const isNow = season.key === currentSeasonKey();
-  const bySlug = (slug: string) => all.find((t) => t.slug === slug);
+  const isNow = season.key === nowKey;
+  const bySlug = (slug: string) => tours.find((t) => t.slug === slug);
 
   /* `season.lead` is an ordered preference list, not a fixed pair: take the
      first two picks that resolve to a live tour. A pick that isn't in the
@@ -87,22 +90,69 @@ export default async function ToursPage({
   const leadSlugs = new Set(leads.map((x) => x.pick.slug));
   const more = season.more.filter((p) => !leadSlugs.has(p.slug));
 
-  return (
-    <>
-      <PageHeader
-        eyebrow="Tours & packages"
-        title="Journeys crafted, never copied"
-        intro="Every tour below is a starting point — we adapt routes, hotels and pacing to you. Prices are indicative per person and confirmed in your personal quote."
-        image={commonsPlaces.Trincomalee.src}
-      />
+  const blurb = splitIfLong(season.blurb);
 
-      {/* ═══════════ Season selector + curated journeys ═══════════
-          Shown on the unfiltered page only; a filtered view has already
-          answered the visitor's question. Server-rendered from the month, so
-          the right season is correct on first paint with no client JS. */}
-      {!active && (
-        <section className="py-16 md:py-20">
-          <div className="mx-auto max-w-wrap px-5 md:px-8">
+  /* CC BY and CC BY-SA require the photographer to be named and the licence
+     stated wherever the photograph appears. Only the Commons assets carry an
+     `author`, and only the "stock" provenance carries a licence and a link, so
+     both have to hold before there is a credit to render. The registry's own
+     assets — the owner's photography and the Unsplash frames — need none. */
+  const credit =
+    season.image.author && season.image.provenance.kind === "stock"
+      ? {
+          author: season.image.author,
+          license: season.image.provenance.license,
+          url: season.image.provenance.url,
+        }
+      : null;
+
+  return (
+    <section className="section-tight">
+      <div className="mx-auto max-w-wrap px-5 md:px-8">
+        <div className="grid gap-10 md:grid-cols-12 md:items-center md:gap-14 lg:gap-20">
+          {/* The photograph leads, and on a phone it leads literally.
+
+              This section was the last place on the site where a visitor met
+              type before they met the island: heading, paragraph and eight tab
+              labels, all before the first image. Putting the picture first in
+              the DOM fixes that at 375px without a single media query, and
+              `md:order-2` moves it back to the right-hand column on a wide
+              screen, where heading-then-prose is the correct reading order.
+
+              Full-bleed below md — the negative margin cancels the container's
+              px-5 exactly — because a photograph that reaches both edges is
+              what separates a phone that feels like a magazine from one that
+              feels like a form. */}
+          <figure className="md:order-2 md:col-span-6 lg:col-span-7">
+            <div className="img-frame -mx-5 aspect-[3/2] md:mx-0 md:aspect-[4/3] lg:aspect-[3/2]">
+              {/* The gate stays on. Each of these frames is captioned with the
+                  place it shows, and a season is itself a claim about where
+                  the island is worth being — so an unverified photograph here
+                  would be a worse lie than a gradient. */}
+              <Img
+                asset={season.image}
+                requireVerifiedLocation
+                fallbackTone="dune"
+                fallbackPattern="contour"
+                sizes="(max-width:768px) 100vw, (max-width:1024px) 50vw, 58vw"
+              />
+            </div>
+            {credit && (
+              <figcaption className="mt-3 text-[11px] leading-relaxed text-ink/65">
+                {season.image.depicts ?? season.image.alt} · {credit.author} ·{" "}
+                <a
+                  href={credit.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-ink/20 underline-offset-2 transition-colors hover:text-copper-deep"
+                >
+                  {credit.license}
+                </a>
+              </figcaption>
+            )}
+          </figure>
+
+          <div className="md:order-1 md:col-span-6 lg:col-span-5">
             <p className="text-[11px] uppercase tracking-[0.18em] text-copper-deep">
               {isNow ? "Now in Sri Lanka" : "Planning ahead"}
             </p>
@@ -112,208 +162,218 @@ export default async function ToursPage({
             <p className="mt-1 text-[12px] uppercase tracking-[0.16em] text-ink/65">
               {season.months}
             </p>
-            <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-ink/75">
-              {season.blurb}
+            <p className="mt-6 text-[17px] leading-relaxed text-ink/75">
+              {blurb.lede}
             </p>
+            {blurb.rest && (
+              <ReadMore label="What that means" className="mt-4">
+                {blurb.rest}
+              </ReadMore>
+            )}
+          </div>
+        </div>
 
-            <ul className="mt-7 flex flex-wrap gap-2">
-              {seasons.map((s) => (
-                <li key={s.key}>
+        {/* Out of the two-column block and back to full width. The rail is
+            navigation between the four panels, not part of any one of them. */}
+        <ul className="mt-12 flex flex-wrap gap-2 md:mt-14">
+          {seasons.map((s) => (
+            <li key={s.key}>
+              <Link
+                href={s.key === nowKey ? "/tours" : `/tours?season=${s.key}`}
+                aria-current={s.key === season.key ? "true" : undefined}
+                className={`inline-flex min-h-[44px] flex-col justify-center border px-4 py-1.5 transition-colors ${
+                  s.key === season.key
+                    ? "border-copper bg-copper/10 text-copper-deep"
+                    : "border-ink/20 text-ink/70 hover:border-copper hover:text-copper-deep"
+                }`}
+              >
+                <span className="text-[12px] uppercase tracking-[0.14em]">
+                  {s.months}
+                </span>
+                <span className="text-[11px] text-ink/65">{s.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* Best journeys for this season */}
+        <h3 className="mt-16 font-display text-2xl text-ink md:mt-20">
+          Best journeys for {season.months}
+        </h3>
+        <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-12">
+          {leads.map(({ pick: p, tour: t }) => {
+            const why = splitIfLong(p.why);
+            return (
+              <article key={p.slug} className="border-t border-ink/10 pt-6">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-copper-deep">
+                  Seasonal favourite
+                </p>
+                <h4 className="font-display mt-2 text-2xl text-ink">
                   <Link
-                    href={
-                      s.key === currentSeasonKey()
-                        ? "/tours"
-                        : `/tours?season=${s.key}`
-                    }
-                    aria-current={s.key === season.key ? "true" : undefined}
-                    className={`inline-flex min-h-[44px] flex-col justify-center border px-4 py-1.5 transition-colors ${
-                      s.key === season.key
-                        ? "border-copper bg-copper/10 text-copper-deep"
-                        : "border-ink/20 text-ink/70 hover:border-copper hover:text-copper-deep"
-                    }`}
+                    href={`/tours/${t.slug}`}
+                    className="hover:text-copper-deep"
                   >
-                    <span className="text-[12px] uppercase tracking-[0.14em]">
-                      {s.months}
-                    </span>
-                    <span className="text-[11px] text-ink/65">{s.label}</span>
+                    {t.title}
                   </Link>
-                </li>
-              ))}
-            </ul>
+                </h4>
+                <p className="mt-2 text-[12px] uppercase tracking-[0.14em] text-ink/65">
+                  {t.duration}
+                  {t.priceFrom > 0 &&
+                    ` · From ${formatPrice(t.priceFrom)} per person`}
+                </p>
+                <p className="mt-4 text-[15px] leading-relaxed text-ink/75">
+                  {why.lede}
+                </p>
+                {/* The reasoning behind a seasonal pick is often the most useful
+                  paragraph on this page and also the longest. It stays — one
+                  line down. */}
+                {why.rest && (
+                  <ReadMore label="Why we say so" className="mt-3">
+                    {why.rest}
+                  </ReadMore>
+                )}
+                <Link
+                  href={`/tours/${t.slug}`}
+                  className="link-line mt-6 inline-block text-[12px] uppercase tracking-[0.16em] text-copper-deep"
+                >
+                  View journey
+                </Link>
+              </article>
+            );
+          })}
+        </div>
 
-            {/* Best journeys for this season */}
-            <h3 className="mt-14 font-display text-2xl text-ink">
-              Best journeys for {season.months}
+        {/* More ways to travel this season */}
+        {more.length > 0 && (
+          <>
+            <h3 className="mt-16 font-display text-xl text-ink md:mt-20">
+              More ways to travel this season
             </h3>
-            <div className="mt-8 grid gap-8 md:grid-cols-2">
-              {leads.map(({ pick: p, tour: t }) => {
+            <ul className="mt-8 grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              {more.map((p) => {
+                const t = bySlug(p.slug);
+                if (!t) return null;
                 return (
-                  <article key={p.slug} className="border-t border-ink/10 pt-6">
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-copper-deep">
-                      Seasonal favourite
-                    </p>
-                    <h4 className="font-display mt-2 text-2xl text-ink">
-                      <Link
-                        href={`/tours/${t.slug}`}
-                        className="hover:text-copper-deep"
-                      >
+                  <li key={p.slug}>
+                    <Link href={`/tours/${t.slug}`} className="group block">
+                      <span className="font-display text-lg text-ink transition-colors group-hover:text-copper-deep">
                         {t.title}
-                      </Link>
-                    </h4>
-                    <p className="mt-2 text-[12px] uppercase tracking-[0.14em] text-ink/65">
-                      {t.duration}
-                      {t.priceFrom > 0 &&
-                        ` · From ${formatPrice(t.priceFrom)} per person`}
-                    </p>
-                    <p className="mt-4 text-[15px] leading-relaxed text-ink/75">
+                      </span>
+                      <span className="mt-0.5 block text-[12px] uppercase tracking-[0.14em] text-ink/65">
+                        {t.duration}
+                        {t.priceFrom > 0 &&
+                          ` · From ${formatPrice(t.priceFrom)}`}
+                      </span>
+                    </Link>
+                    <p className="mt-1 text-[13px] leading-relaxed text-ink/65">
                       {p.why}
                     </p>
-                    <Link
-                      href={`/tours/${t.slug}`}
-                      className="link-line mt-5 inline-block text-[12px] uppercase tracking-[0.16em] text-copper-deep"
-                    >
-                      View journey
-                    </Link>
-                  </article>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
+          </>
+        )}
 
-            {/* More ways to travel this season */}
-            {more.length > 0 && (
-              <>
-                <h3 className="mt-14 font-display text-xl text-ink">
-                  More ways to travel this season
-                </h3>
-                <ul className="mt-6 grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {more.map((p) => {
-                    const t = bySlug(p.slug);
-                    if (!t) return null;
-                    return (
-                      <li key={p.slug}>
-                        <Link href={`/tours/${t.slug}`} className="group block">
-                          <span className="font-display text-lg text-ink transition-colors group-hover:text-copper-deep">
-                            {t.title}
-                          </span>
-                          <span className="mt-0.5 block text-[12px] uppercase tracking-[0.14em] text-ink/65">
-                            {t.duration}
-                            {t.priceFrom > 0 &&
-                              ` · From ${formatPrice(t.priceFrom)}`}
-                          </span>
-                        </Link>
-                        <p className="mt-1 text-[13px] leading-relaxed text-ink/65">
-                          {p.why}
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
+        <p className="mt-12 text-[13px] leading-relaxed text-ink/65">
+          Conditions vary from year to year — these are recommendations, not
+          guarantees.
+        </p>
+      </div>
+    </section>
+  );
+}
 
-            <p className="mt-10 text-[13px] leading-relaxed text-ink/65">
-              Conditions can vary from year to year — these are recommendations,
-              not guarantees. Tell us your dates and we&apos;ll say honestly
-              what to expect.
-            </p>
-          </div>
-        </section>
-      )}
+export default async function ToursPage() {
+  const all = await getTours();
+  const nowKey = currentSeasonKey();
 
-      {/* ═══════════ Journeys by region — map + region index ═══════════
-          Additive: inserted above the existing filter bar and groups, which are
-          untouched. IslandMap is reused rather than cloned, with basePath
-          pointing at this page, so a region click lands on /tours?region=… and
-          is handled by the filter added in stage 1. The coastline, hotspots,
-          keyboard behaviour and always-present region list all come along.
+  /* What crosses to the browser: the fields a filter and a card read, and two
+     slug→name maps for the chips. Everything else the page shows — itineraries,
+     highlights, inclusions, the media provenance behind every photograph —
+     stays on this side of the wire. */
+  const catalogue: CatalogueTour[] = all.map((t) => ({
+    slug: t.slug,
+    title: t.title,
+    category: t.category,
+    duration: t.duration,
+    priceFrom: t.priceFrom,
+    image: t.image,
+    themeSlugs: t.themeSlugs,
+    destinationSlugs: t.destinationSlugs,
+  }));
+  const themeNames = Object.fromEntries(
+    experienceCategories.map((c) => [c.slug, c.name]),
+  );
+  const destinationNames = Object.fromEntries(
+    destinations.map((d) => [d.slug, d.name]),
+  );
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Tours & packages"
+        title="Journeys crafted, never copied"
+        intro="Every route, hotel and hour of pacing is reshaped around you."
+        note="Prices are indicative, per person, and confirmed in your personal quote."
+        image={commonsPlaces.Trincomalee.src}
+      />
+
+      {/* ═══════════ Season selector + curated journeys ═══════════
+          Hidden once the catalogue is filtered; a filtered view has already
+          answered the visitor's question. */}
+      <SeasonSwitch
+        nowKey={nowKey}
+        panels={seasons.map((s) => ({
+          key: s.key,
+          node: <SeasonPanel season={s} tours={all} nowKey={nowKey} />,
+        }))}
+      />
+
+      {/* ═══════════ Journeys by region — map ═══════════
+          IslandMap is reused rather than cloned, with basePath pointing at this
+          page, so a region click lands on /tours?region=… and is picked up by
+          the filter below. The coastline, hotspots, keyboard behaviour and
+          always-present region list all come along.
 
           Region membership is derived from each tour's own destinationSlugs —
           no `region` field was added to the tour model. */}
-      <section className="grain relative overflow-hidden bg-deep py-20 md:py-28">
+      <section className="section grain relative overflow-hidden bg-deep">
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <SectionHeading
             dark
             eyebrow="Journeys across Sri Lanka"
             title="Start with a region"
-            intro="Two monsoons and a mountain range mean the island is never doing one thing at once. Choose a region to see the journeys that go there — or keep scrolling for the full collection."
+            intro="Choose a region to see the journeys that go there."
           />
-          <div className="mt-12">
+          <div className="section-body">
             <IslandMap basePath="/tours" />
           </div>
         </div>
       </section>
 
-      {/* Active filter summary. Only appears when something is filtering, so
-          the unfiltered page is visually unchanged. */}
-      {active && (
-        <section className="border-b border-ink/10 py-6">
-          <div className="mx-auto flex max-w-wrap flex-wrap items-center gap-x-5 gap-y-3 px-5 md:px-8">
-            <p className="text-[12px] uppercase tracking-[0.16em] text-ink/65">
-              {tours.length} {tours.length === 1 ? "journey" : "journeys"}
-            </p>
-            <ul className="flex flex-wrap gap-2">
-              {chips.map((c) => (
-                <li
-                  key={c.label}
-                  className="border border-copper/30 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-copper-deep"
-                >
-                  {c.label}: {c.value}
-                </li>
-              ))}
-            </ul>
-            {filters.party && (
-              <p className="text-[12px] text-ink/65">
-                Travelling as {PARTY_LABELS[filters.party] ?? filters.party}
-              </p>
-            )}
-            <Link
-              href="/tours"
-              className="link-line ml-auto text-[12px] uppercase tracking-[0.16em] text-copper-deep"
-            >
-              Clear filters
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {active && tours.length === 0 ? (
-        <section className="py-16 md:py-24">
-          <div className="mx-auto max-w-wrap px-5 md:px-8">
-            <EmptyState
-              eyebrow="Nothing off the shelf"
-              title="No set journey matches that combination"
-              /* Neutral: describes what happens next rather than making a
-                 claim about how many trips are built to order. */
-              body="Nothing listed matches every filter. Tell us what you had in mind and we'll put a route together around it."
-              action={{
-                label: "Plan your journey",
-                href: `/book${filtersToQuery(filters)}`,
-              }}
-            >
-              <p className="mt-6 text-[13px] text-ink/65">
-                Or{" "}
-                <Link href="/tours" className="link-line text-copper-deep">
-                  browse every journey
-                </Link>
-                .
-              </p>
-            </EmptyState>
-          </div>
-        </section>
-      ) : (
-        groups.map((g, gi) => {
-          const list = tours.filter((t) => t.category === g.key);
-          // With filters on, an empty category is simply omitted rather than
-          // printing a heading over nothing.
+      {/* ═══════════ The catalogue ═══════════
+          Everything below is the unfiltered catalogue, rendered here and handed
+          to FilteredCatalogue as children. It is what ships in the HTML and
+          what a crawler sees; the browser replaces it only when the URL
+          actually carries a filter. */}
+      <FilteredCatalogue
+        tours={catalogue}
+        groups={groups}
+        themeNames={themeNames}
+        destinationNames={destinationNames}
+      >
+        {groups.map((g, gi) => {
+          const list = all.filter((t) => t.category === g.key);
           if (list.length === 0) return null;
           return (
             <section
               key={g.key}
-              className={`py-16 md:py-24 ${gi % 2 ? "bg-dune/60" : ""}`}
+              className={`section ${gi % 2 ? "bg-dune/60" : ""}`}
             >
               <div className="mx-auto max-w-wrap px-5 md:px-8">
                 <SectionHeading eyebrow={g.eyebrow} title={g.title} />
-                <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="section-body grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
                   {list.map((t, i) => (
                     <TourCard key={t.slug} tour={t} index={i} />
                   ))}
@@ -321,41 +381,38 @@ export default async function ToursPage({
               </div>
             </section>
           );
-        })
-      )}
+        })}
 
-      {/* Catalogue genuinely empty (no data at all), distinct from "no match". */}
-      {!active && all.length === 0 && (
-        <section className="py-16 md:py-24">
-          <div className="mx-auto max-w-wrap px-5 md:px-8">
-            <EmptyState
-              eyebrow="Journeys"
-              title="Our journeys are being updated"
-              body="Nothing is listed here just now. Tell us your dates and interests and we'll put a route together for you."
-              action={{ label: "Plan your journey", href: "/book" }}
-            />
-          </div>
-        </section>
-      )}
+        {/* Catalogue genuinely empty (no data at all), distinct from "no match",
+            which FilteredCatalogue owns. */}
+        {all.length === 0 && (
+          <section className="section">
+            <div className="mx-auto max-w-wrap px-5 md:px-8">
+              <EmptyState
+                eyebrow="Journeys"
+                title="Our journeys are being updated"
+                body="Nothing is listed here just now. Tell us your dates and interests and we'll put a route together for you."
+                action={{ label: "Plan your journey", href: "/book" }}
+              />
+            </div>
+          </section>
+        )}
 
-      {/* ═══════════ Journeys by region ═══════════
-          Rendered only on the unfiltered page: a filtered view already answers
-          "what goes here?", and repeating the whole index beneath it would
-          bury the answer. Region membership is derived by intersecting each
-          tour's own destinationSlugs with the region's — no `region` field was
-          added to the tour model.
+        {/* ═══════════ Journeys by region ═══════════
+            Part of the unfiltered catalogue only: a filtered view already
+            answers "what goes here?", and repeating the whole index beneath it
+            would bury the answer.
 
-          `region.places` is editorial copy naming towns we cover; most have no
-          destination page. Only the ones backed by a real route are linked, so
-          this index cannot produce a 404. */}
-      {!active && (
-        <section className="py-16 md:py-24">
+            `region.places` is editorial copy naming towns we cover; most have no
+            destination page. Only the ones backed by a real route are linked, so
+            this index cannot produce a 404. */}
+        <section className="section-tight">
           <div className="mx-auto max-w-wrap px-5 md:px-8">
             <SectionHeading
               eyebrow="By region"
               title="Where each journey goes"
             />
-            <div className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
+            <div className="section-body divide-y divide-ink/10 border-y border-ink/10">
               {regions.map((r, ri) => {
                 const inRegion = all.filter((t) =>
                   (t.destinationSlugs ?? []).some((d) =>
@@ -365,7 +422,7 @@ export default async function ToursPage({
                 return (
                   <div
                     key={r.slug}
-                    className="grid gap-6 py-9 md:grid-cols-12 md:gap-10"
+                    className="grid gap-6 py-10 md:grid-cols-12 md:gap-10 md:py-12"
                   >
                     <div className="md:col-span-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-copper-deep">
@@ -416,7 +473,19 @@ export default async function ToursPage({
                           .
                         </p>
                       ) : (
-                        <ul className="space-y-5">
+                        /*
+                          A directory, not a second catalogue.
+
+                          Each row used to carry three highlights under the
+                          title — seven regions, seventeen journeys, fifty-one
+                          fragments of copy the reader had already met on the
+                          cards above and would meet again on the journey page
+                          itself. It was the longest wall of type on the site
+                          and it earned nothing: nobody chooses a route from
+                          this section, they use it to find out whether we go
+                          somewhere. Title, length, price. Then a link.
+                        */
+                        <ul className="space-y-4">
                           {inRegion.map((t) => (
                             <li key={t.slug}>
                               <Link
@@ -432,11 +501,6 @@ export default async function ToursPage({
                                     ` · From ${formatPrice(t.priceFrom)} per person`}
                                 </span>
                               </Link>
-                              {t.highlights.length > 0 && (
-                                <p className="mt-1 text-[13px] leading-relaxed text-ink/65">
-                                  {t.highlights.slice(0, 3).join(" · ")}
-                                </p>
-                              )}
                             </li>
                           ))}
                         </ul>
@@ -456,20 +520,20 @@ export default async function ToursPage({
             </div>
           </div>
         </section>
-      )}
+      </FilteredCatalogue>
 
       {/* ═══════════ Build your own journey ═══════════
           Client-side selections only. No reservation, no new table — the CTA
           hands off to /book through the existing query/context system. */}
-      <section className="grain relative overflow-hidden bg-deep py-20 md:py-28">
+      <section className="section grain relative overflow-hidden bg-deep">
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <SectionHeading
             dark
             eyebrow="Build your own journey"
             title="Or start from a blank page"
-            intro="Five short questions — all of them optional — and we'll route the trip around your answers. Nothing below is a booking; it simply gives your enquiry a head start."
+            intro="Five short questions, all optional. Nothing here is a booking."
           />
-          <div className="mt-12">
+          <div className="section-body">
             <JourneyBuilder />
           </div>
         </div>
@@ -477,7 +541,7 @@ export default async function ToursPage({
 
       <CTABand
         title="Don't see your perfect trip?"
-        body="Most of our journeys are tailor-made from scratch. Tell us your dates and interests and we'll design a route that's yours alone."
+        body="Tell us your dates and interests and we'll design a route that's yours alone."
       />
     </>
   );

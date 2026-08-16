@@ -224,3 +224,123 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ---------------------------------------------------------------------------
+   Structural rhythm.
+
+   Section padding was written inline, section by section, and had drifted into
+   three different scales — py-16/24 on /destinations, py-24/36 on the homepage,
+   py-20/28 on /tours. Naming the rhythm here does two things: it makes the whole
+   site breathe on one measure, and it means the next adjustment is one number
+   rather than forty edits.
+
+   The values are deliberately generous. Whitespace is the cheapest luxury
+   signal there is and the one this site was shortest on: the photography was
+   arriving pressed up against the type above it.
+   --------------------------------------------------------------------------- */
+.section {
+  @apply py-28 md:py-40 lg:py-48;
+}
+/* For bands that sit directly against another band of the same colour, where
+   the full measure would read as a gap rather than as breathing room. */
+.section-tight {
+  @apply py-20 md:py-28 lg:py-32;
+}
+/* The gap between a section's heading block and its content. */
+.section-body {
+  @apply mt-14 md:mt-20;
+}
+
+/* ---------------------------------------------------------------------------
+   Progressive disclosure.
+
+   Built on native <details>. That is not a fallback choice — it is the only
+   option that keeps the full text in the served HTML (so it is indexed, and so
+   ctrl-F finds it) while costing zero JavaScript and arriving with keyboard
+   support and correct ARIA already attached.
+   --------------------------------------------------------------------------- */
+.disclose > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.disclose > summary::-webkit-details-marker {
+  display: none;
+}
+/* The chevron rotates to point at the state the panel is in, not the state a
+   click would produce — the convention users read fastest. */
+.disclose > summary .disclose-caret {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.disclose[open] > summary .disclose-caret {
+  transform: rotate(180deg);
+}
+
+/* Animated open, where the browser can do it. `interpolate-size` is what makes
+   a transition to `auto` height legal; without it this whole block is skipped
+   and the panel simply appears, which is a perfectly good outcome. */
+@supports (interpolate-size: allow-keywords) {
+  .disclose {
+    interpolate-size: allow-keywords;
+  }
+  /* The collapsed state hangs off :not([open]) rather than being applied to
+     every panel and then overridden when one opens. The animation is identical
+     — a transition interpolates from whatever was computed a moment ago — but
+     the failure mode changes. If anything stops the transition from running,
+     an open panel is never left clipped to nothing: the worst case is that it
+     appears without animating, instead of reporting itself open while showing
+     an empty box. */
+  .disclose:not([open])::details-content {
+    block-size: 0;
+    opacity: 0;
+  }
+  .disclose::details-content {
+    overflow: hidden;
+    transition:
+      block-size 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      content-visibility 0.5s allow-discrete,
+      opacity 0.35s ease;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The region cards' second sentence.
+
+   Every place note on /destinations is a claim followed by an insider tip. The
+   card shows the claim; one toggle at the top of the panel reveals every tip at
+   once. Eleven separate disclosures would have been eleven decisions to make on
+   a page whose whole problem was that it asked too much of the reader.
+
+   Collapsed height is done with grid-template-rows: 0fr → 1fr rather than
+   max-height, because it animates to the element's real height instead of to a
+   guess, and because the text stays in the DOM either way — which is the point.
+   --------------------------------------------------------------------------- */
+.tip {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-top 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease;
+}
+.tip > * {
+  overflow: hidden;
+  min-height: 0;
+}
+[data-notes="open"] .tip {
+  grid-template-rows: 1fr;
+  margin-top: 0.625rem;
+  opacity: 1;
+}
+
+/* The reduce-motion guard at the top of this file selects `*, ::before,
+   ::after`, which does not reach `::details-content` — a pseudo-element that
+   universal selectors have never matched. Both disclosures are named here so
+   they snap open rather than animating for anyone who asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .disclose::details-content,
+  .tip {
+    transition-duration: 0.01ms !important;
+  }
+}

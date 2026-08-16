@@ -393,6 +393,45 @@ export default function BookingForm({
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
+  /*
+    Re-seed once, if the arrival context turns up late.
+
+    Every `default*` prop above is an *initial* value, which is the right
+    contract for a form — once someone is typing, nothing from outside may
+    overwrite what they wrote. But /book is a statically rendered page now, and
+    the query string carrying the context (`?tour=`, `?service=`, the planner's
+    filters) is only readable in the browser, so it lands one render after the
+    first paint.
+
+    Remounting on a changed `key` would apply it and would also replay the
+    form's entrance animation on a page the visitor is already looking at. So
+    the seed is applied in place, with React's documented "adjust state when a
+    prop changes" pattern: compare against the seed the current state came
+    from, reset only what that seed decides, and let the render that is already
+    in progress be discarded. In practice this fires at most once, before
+    anyone has had time to type — `seed` never changes again afterwards, and on
+    a plain /book visit it never changes at all.
+  */
+  const seed = JSON.stringify([
+    selectedJourney?.slug ?? null,
+    customJourneyLabel ?? null,
+    defaultService ?? null,
+    defaultMessage ?? null,
+  ]);
+  const [seeded, setSeeded] = useState(seed);
+  if (seed !== seeded) {
+    setSeeded(seed);
+    setMode(initialMode);
+    setJourney(selectedJourney);
+    setPicking(!selectedJourney);
+    setTransfer(
+      defaultService && transferOptions.includes(defaultService)
+        ? defaultService
+        : "",
+    );
+    setForm((f) => ({ ...f, message: defaultMessage ?? "" }));
+  }
+
   const set =
     (k: keyof typeof form) =>
     (

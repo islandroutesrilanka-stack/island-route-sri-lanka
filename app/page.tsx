@@ -63,7 +63,7 @@ export default async function HomePage() {
     reviews,
     // Fills the two smaller frames of the triptych when Settings hasn't —
     // photographs of the places this journey actually visits. See JourneyStory.
-    destinations
+    destinations,
   );
 
   /* FAQPage structured data, matching what is actually on the page. */
@@ -161,16 +161,16 @@ export default async function HomePage() {
       {/* ══════════════════ 02 — EXPLORE SRI LANKA ══════════════════ */}
       <section
         id="explore"
-        className="grain relative scroll-mt-20 overflow-hidden bg-deep py-24 md:py-36"
+        className="grain relative scroll-mt-20 overflow-hidden bg-deep section"
       >
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <SectionHeading
             dark
             eyebrow="Explore Sri Lanka"
             title="One island, seven very different countries"
-            intro="Two opposing monsoons and a central mountain range mean the island is never doing only one thing at once. Choose a region and see what it does best."
+            intro="Two opposing monsoons and a mountain range down the middle: it is never doing only one thing at once."
           />
-          <div className="mt-14">
+          <div className="section-body">
             {/* #regions is the region explorer on /destinations — that page now
                 leads with it, so a click here lands on the matching tab instead
                 of on the hero above it. */}
@@ -180,13 +180,13 @@ export default async function HomePage() {
       </section>
 
       {/* ══════════════════ 03 — DESTINATIONS ══════════════════ */}
-      <section className="py-24 md:py-36">
+      <section className="section">
         <div className="mx-auto max-w-wrap px-5 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading
               eyebrow="Destinations"
               title="Places worth the drive"
-              intro="Ancient capitals, tea terraces, leopard country and the long southern coast — often within a single week."
+              intro="Ancient capitals, tea terraces, leopard country, the long southern coast — often in one week."
             />
             <Reveal>
               <Link
@@ -198,14 +198,14 @@ export default async function HomePage() {
             </Reveal>
           </div>
 
-          <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+          <div className="section-body grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {destinations.slice(0, 8).map((d, i) => (
               <DestinationCard key={d.slug} d={d} index={i} />
             ))}
           </div>
 
           {/* Regions as an editorial index beneath the places */}
-          <div className="mt-14 border-t border-ink/10 pt-10">
+          <div className="mt-16 border-t border-ink/10 pt-12 md:mt-20">
             <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
               {regions.map((r) => (
                 <li key={r.slug}>
@@ -228,13 +228,13 @@ export default async function HomePage() {
       </section>
 
       {/* ══════════════════ 04 — EXPERIENCES ══════════════════ */}
-      <section id="experiences" className="scroll-mt-20 bg-dune/50 py-24 md:py-36">
+      <section id="experiences" className="scroll-mt-20 bg-dune/50 section">
         <div className="mx-auto max-w-wrap px-5 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading
               eyebrow="Experiences"
               title="Travel by what moves you"
-              intro="Wildlife at dawn, a working tea estate, a swell that only arrives in July. Start with the feeling and we'll build the route around it."
+              intro="Wildlife at dawn, a working tea estate, a swell that only arrives in July."
             />
           </div>
           <ExperienceRail />
@@ -242,14 +242,14 @@ export default async function HomePage() {
       </section>
 
       {/* ══════════════════ 05 — SIGNATURE TOURS (+ fleet strip) ══════════════════ */}
-      <section className="grain relative overflow-hidden bg-deep py-24 md:py-36">
+      <section className="grain relative overflow-hidden bg-deep section">
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading
               dark
               eyebrow="Signature journeys"
               title="Routes we've refined over years"
-              intro="Starting points, not fixed departures. Every one of these is reshaped around your dates, pace and interests."
+              intro="Starting points, not fixed departures — every one is reshaped around you."
             />
             <Reveal>
               <Link
@@ -268,11 +268,16 @@ export default async function HomePage() {
               three-to-one mismatch at desktop width. */}
           {featuredTours.length > 0 && (
             <>
-              <div className="mt-14 md:mt-16">
-                <TourCard tour={featuredTours[0]} index={0} variant="feature" dark />
+              <div className="section-body">
+                <TourCard
+                  tour={featuredTours[0]}
+                  index={0}
+                  variant="feature"
+                  dark
+                />
               </div>
               {featuredTours.length > 1 && (
-                <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+                <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
                   {featuredTours.slice(1, 4).map((t, i) => (
                     <TourCard key={t.slug} tour={t} index={i + 1} dark />
                   ))}
@@ -286,7 +291,7 @@ export default async function HomePage() {
       </section>
 
       {/* ══════════════════ 06 — WHY ISLAND ROUTE (+ guide) ══════════════════ */}
-      <section className="py-24 md:py-36">
+      <section className="section">
         <div className="mx-auto max-w-wrap px-5 md:px-8">
           <GuideFeature guide={guide} />
         </div>
@@ -294,7 +299,7 @@ export default async function HomePage() {
 
       {/* ══════════════════ 07 — FEATURED JOURNEY ══════════════════ */}
       {featuredJourney && (
-        <section className="bg-dune/50 py-24 md:py-36">
+        <section className="bg-dune/50 section">
           <div className="mx-auto max-w-wrap px-5 md:px-8">
             <JourneyStory feature={featuredJourney} />
           </div>
@@ -303,7 +308,7 @@ export default async function HomePage() {
 
       {/* ══════════════════ 08 — JOURNAL ══════════════════ */}
       {posts.length > 0 && (
-        <section className="py-24 md:py-36">
+        <section className="section">
           <div className="mx-auto max-w-wrap px-5 md:px-8">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <SectionHeading
@@ -320,7 +325,7 @@ export default async function HomePage() {
               </Reveal>
             </div>
 
-            <div className="mt-12 grid gap-8 md:grid-cols-3">
+            <div className="section-body grid gap-10 md:grid-cols-3">
               {posts.slice(0, 3).map((p, i) => {
                 const cover = fromCmsUrl(p.image, p.title);
                 return (
@@ -334,17 +339,28 @@ export default async function HomePage() {
                             className="transition-transform duration-[1.4s] group-hover:scale-105"
                           />
                         ) : (
-                          <GradientPanel tone="dune" className="h-full w-full" />
+                          <GradientPanel
+                            tone="dune"
+                            className="h-full w-full"
+                          />
                         )}
                       </div>
                       <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-ink/65">
-                        <time dateTime={toIsoDate(p.date)}>{formatDate(p.date)}</time>
+                        <time dateTime={toIsoDate(p.date)}>
+                          {formatDate(p.date)}
+                        </time>
                         {p.readTime && ` · ${p.readTime}`}
                       </p>
                       <h3 className="mt-2 font-display text-2xl leading-snug text-ink transition-colors group-hover:text-copper-deep">
                         {p.title}
                       </h3>
-                      <p className="mt-2 text-sm leading-relaxed text-ink/70">
+                      {/* Clamped rather than cut: the excerpt is authored per
+                          post and its length is not ours to police, but three
+                          of these side by side were setting the height of the
+                          whole row off whichever post rambled most. Two lines
+                          each, and the row stays a row. The full text is one
+                          click away on the post itself. */}
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/70">
                         {p.excerpt}
                       </p>
                     </Link>
@@ -357,7 +373,7 @@ export default async function HomePage() {
       )}
 
       {/* ══════════════════ 09 — PLAN YOUR JOURNEY (+ FAQ) ══════════════════ */}
-      <section className="grain relative overflow-hidden bg-deep py-24 md:py-36">
+      <section className="grain relative overflow-hidden bg-deep section">
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <PlannerEntry tours={tours} />
           <FaqPreview />

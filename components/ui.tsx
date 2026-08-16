@@ -1,156 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Star, ArrowRight } from "lucide-react";
+import { Star } from "lucide-react";
 import { Reveal } from "./motion";
 import Img from "./media/Img";
-import GradientPanel from "./media/GradientPanel";
 import { destinationAsset } from "@/lib/media/registry";
-import type { Tour } from "@/lib/tours";
 import type { Destination } from "@/lib/destinations";
 import type { Review } from "@/lib/content";
 
-/* ------------------------------ Section heading ------------------------------ */
-
-export function SectionHeading({
-  eyebrow,
-  title,
-  intro,
-  align = "left",
-  dark = false,
-}: {
-  eyebrow: string;
-  title: string;
-  intro?: string;
-  align?: "left" | "center";
-  dark?: boolean;
-}) {
-  return (
-    <Reveal
-      className={`max-w-2xl ${align === "center" ? "mx-auto text-center" : ""}`}
-    >
-      <p className={`eyebrow ${dark ? "text-copper-light" : "text-copper-deep"}`}>
-        {eyebrow}
-      </p>
-      <h2
-        className={`h-display mt-3 text-4xl md:text-5xl ${
-          dark ? "text-sand" : "text-ink"
-        }`}
-      >
-        {title}
-      </h2>
-      {intro && (
-        <p
-          className={`mt-5 text-[15px] leading-relaxed ${
-            dark ? "text-sand/60" : "text-ink/70"
-          }`}
-        >
-          {intro}
-        </p>
-      )}
-    </Reveal>
-  );
-}
-
-/* --------------------------------- Tour card --------------------------------- */
-
-/**
- * Tour card.
- *
- * `variant="feature"` is the same component at editorial scale — a wider crop,
- * larger type and the excerpt shown. It exists so a tour grid can have a
- * hierarchy (one lead journey, several supporting) instead of four identical
- * tiles, without a second component to keep in sync.
- */
-export function TourCard({
-  tour,
-  index = 0,
-  variant = "default",
-  dark = false,
-}: {
-  tour: Tour;
-  index?: number;
-  variant?: "default" | "feature";
-  /** Set on dark-ground sections — the caption below the card sits on the
-   *  section background, not the image, so it needs the inverse colour. */
-  dark?: boolean;
-}) {
-  const feature = variant === "feature";
-
-  return (
-    <Reveal index={index}>
-      <Link href={`/tours/${tour.slug}`} className="group block">
-        <div
-          className={`img-frame ${
-            feature ? "aspect-[4/5] md:aspect-[16/11]" : "aspect-[4/5]"
-          }`}
-        >
-          {/*
-            A journey can legitimately have no photograph. "Palmyra & Pearl"
-            ships that way — nobody had a verified image of the north when it
-            was written, and the project's rule is a gradient over a guess.
-            Passing that empty string to next/image is not a no-op: React logs
-            `Image is missing required "src" property` and the browser renders
-            an <img> with no source, so the card loses its ground and the
-            caption sits on bare paper. The treatment is the designed state for
-            an empty slot, so use it.
-          */}
-          {tour.image ? (
-            <Image
-              src={tour.image}
-              alt={tour.title}
-              fill
-              sizes={
-                feature
-                  ? "(max-width: 768px) 100vw, 58vw"
-                  : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              }
-              className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-105"
-            />
-          ) : (
-            <GradientPanel
-              tone={index % 2 === 0 ? "deep" : "moss"}
-              pattern="contour"
-              className="h-full w-full"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/45 to-transparent" />
-          <span className="absolute left-4 top-4 bg-sand/90 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-ink">
-            {tour.category}
-          </span>
-          <div className={`absolute inset-x-0 bottom-0 ${feature ? "p-6 md:p-9" : "p-5"}`}>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-sand/80">
-              {tour.duration}
-            </p>
-            <h3
-              className={`font-display text-sand mt-1 leading-snug ${
-                feature ? "text-3xl md:text-5xl" : "text-2xl"
-              }`}
-            >
-              {tour.title}
-            </h3>
-            {feature && (
-              <p className="mt-4 hidden max-w-lg text-[15px] leading-relaxed text-sand/75 md:block">
-                {tour.excerpt}
-              </p>
-            )}
-            <p className={`text-sand/80 ${feature ? "mt-4 text-[15px]" : "mt-2 text-sm"}`}>
-              From <span className="text-copper-light font-semibold">${tour.priceFrom}</span> per person
-            </p>
-          </div>
-        </div>
-        <p
-          className={`mt-3 flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] transition-colors ${
-            dark
-              ? "text-sand/70 group-hover:text-copper-light"
-              : "text-ink/70 group-hover:text-copper-deep"
-          }`}
-        >
-          View journey <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-        </p>
-      </Link>
-    </Reveal>
-  );
-}
+/*
+  SectionHeading and TourCard live in ./ui-client and are re-exported here.
+  They are also rendered in the browser now (the tours catalogue filters
+  client-side), and this module imports the media registry — which reaches the
+  entire Commons provenance table. Importing this file from a client component
+  would ship all of it. Server callers keep importing from "@/components/ui" as
+  they always have; client callers must import from "@/components/ui-client".
+*/
+export { SectionHeading, TourCard } from "./ui-client";
+export type { TourCardTour } from "./ui-client";
 
 /* ------------------------------ Destination card ------------------------------ */
 
@@ -195,7 +61,15 @@ export function DestinationCard({
 
 /* -------------------------------- Review card -------------------------------- */
 
-export function ReviewCard({ r, index = 0, dark = false }: { r: Review; index?: number; dark?: boolean }) {
+export function ReviewCard({
+  r,
+  index = 0,
+  dark = false,
+}: {
+  r: Review;
+  index?: number;
+  dark?: boolean;
+}) {
   return (
     <Reveal index={index}>
       <figure
@@ -203,7 +77,10 @@ export function ReviewCard({ r, index = 0, dark = false }: { r: Review; index?: 
           dark ? "border-sand/15 bg-palm/40" : "border-ink/10 bg-white/50"
         }`}
       >
-        <div className="flex gap-1 text-copper-deep" aria-label={`${r.rating} star review`}>
+        <div
+          className="flex gap-1 text-copper-deep"
+          aria-label={`${r.rating} star review`}
+        >
           {Array.from({ length: r.rating }).map((_, i) => (
             <Star key={i} size={14} fill="currentColor" />
           ))}
@@ -216,10 +93,14 @@ export function ReviewCard({ r, index = 0, dark = false }: { r: Review; index?: 
           “{r.text}”
         </blockquote>
         <figcaption className="mt-5">
-          <p className={`text-sm font-semibold ${dark ? "text-sand" : "text-ink"}`}>
+          <p
+            className={`text-sm font-semibold ${dark ? "text-sand" : "text-ink"}`}
+          >
             {r.name} · {r.country}
           </p>
-          <p className={`text-xs mt-0.5 ${dark ? "text-sand/65" : "text-ink/65"}`}>
+          <p
+            className={`text-xs mt-0.5 ${dark ? "text-sand/65" : "text-ink/65"}`}
+          >
             {r.trip}
           </p>
         </figcaption>
@@ -243,7 +124,9 @@ export function CTABand({
         <div className="max-w-2xl">
           <Reveal>
             <p className="eyebrow text-copper-light">Begin the journey</p>
-            <h2 className="h-display mt-3 text-4xl md:text-6xl text-sand">{title}</h2>
+            <h2 className="h-display mt-3 text-4xl md:text-6xl text-sand">
+              {title}
+            </h2>
             <p className="mt-6 text-sand/60 leading-relaxed">{body}</p>
             <div className="mt-9 flex flex-col sm:flex-row gap-4">
               <Link
@@ -272,11 +155,22 @@ export function PageHeader({
   eyebrow,
   title,
   intro,
+  note,
   image,
 }: {
   eyebrow: string;
   title: string;
   intro?: string;
+  /*
+    Fine print, set as fine print.
+
+    /tours had its pricing caveat welded onto the end of the intro, so the
+    first paragraph of the highest-intent page on the site read half as a
+    promise and half as a disclaimer. The caveat is not optional — indicative
+    prices have to say so — but it does not belong at deck size next to the
+    headline. Same information, one step down in the hierarchy.
+  */
+  note?: string;
   image?: string;
 }) {
   return (
@@ -317,7 +211,14 @@ export function PageHeader({
             {title}
           </h1>
           {intro && (
-            <p className="mt-6 max-w-2xl text-sand/70 leading-relaxed">{intro}</p>
+            <p className="mt-6 max-w-2xl text-sand/70 leading-relaxed">
+              {intro}
+            </p>
+          )}
+          {note && (
+            <p className="mt-5 max-w-xl text-[13px] leading-relaxed text-sand/60">
+              {note}
+            </p>
           )}
         </Reveal>
       </div>

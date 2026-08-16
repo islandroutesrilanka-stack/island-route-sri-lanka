@@ -59,8 +59,31 @@
  *    tidy a relationship would be worse than the gap.
  */
 
+import { commonsPlaces } from "./media/commons";
+import { media } from "./media/registry";
+import type { MediaAsset } from "./media/types";
+
 /** A journey in a season, with the reason it earns its place there. */
 export type SeasonPick = { slug: string; why: string };
+
+/**
+ * The photograph that opens a season's panel.
+ *
+ * Sourced to the same rule as every placement in this file: it must show a
+ * place this season's own copy names. A season is a claim about where the
+ * island is good right now, so an image is part of the claim — a generic palm
+ * beach over "East Coast Season" would be the same failure as recommending a
+ * journey the data contradicts, just harder to notice.
+ *
+ * All four are already in the media registry, already location-verified, and
+ * already served from our own origin, so this adds no new asset, no new fetch
+ * to a third party and no new licence obligation beyond the one below.
+ *
+ * `author` is present only on the Wikimedia Commons assets, where CC BY and
+ * CC BY-SA require the photographer to be named wherever the photograph
+ * appears. The panel renders it; do not use a Commons asset here without it.
+ */
+export type SeasonImage = MediaAsset & { author?: string };
 
 export type SeasonKey = "dec-feb" | "mar-apr" | "may-sep" | "oct-nov";
 
@@ -71,6 +94,7 @@ export type Season = {
   /** Kept visible alongside the label, never hidden behind it. */
   months: string;
   blurb: string;
+  image: SeasonImage;
   lead: SeasonPick[];
   more: SeasonPick[];
 };
@@ -82,6 +106,10 @@ export const seasons: Season[] = [
     months: "December – February",
     blurb:
       "The southern and western coasts are at their most settled, and the cultural heartland is comfortable to travel. Best suited to beaches, forts and a first circuit of the island.",
+    /* Mirissa — named in this season's own lead reasoning, and the whales are
+       off it in these months. The south coast at its most settled, which is
+       exactly what the blurb above promises. */
+    image: media.mirissaCoconutHill,
     lead: [
       {
         slug: "sun-kissed-horizons-southern-escape",
@@ -114,11 +142,23 @@ export const seasons: Season[] = [
         slug: "luxe-serenity-in-the-hills",
         why: "From February, once Nuwara Eliya opens its own Feb–May window.",
       },
-      { slug: "galle-south-coast-day-tour", why: "The fort and the coast road at their best." },
+      {
+        slug: "galle-south-coast-day-tour",
+        why: "The fort and the coast road at their best.",
+      },
       { slug: "kandy-cultural-day-tour", why: "Recommended during Dec–Apr." },
-      { slug: "hill-country-tea-trails-5-days", why: "Clear highland days from January." },
-      { slug: "sigiriya-dambulla-day-tour", why: "Dry-zone weather holds through the season." },
-      { slug: "ella-nine-arch-day-tour", why: "Hill country opens up from January." },
+      {
+        slug: "hill-country-tea-trails-5-days",
+        why: "Clear highland days from January.",
+      },
+      {
+        slug: "sigiriya-dambulla-day-tour",
+        why: "Dry-zone weather holds through the season.",
+      },
+      {
+        slug: "ella-nine-arch-day-tour",
+        why: "Hill country opens up from January.",
+      },
     ],
   },
   {
@@ -127,6 +167,13 @@ export const seasons: Season[] = [
     months: "March – April",
     blurb:
       "The island changes hands between monsoons. No coast is guaranteed, which makes this a strong window for the highlands, the Cultural Triangle and mixed routes that can flex.",
+    /* The highlands, which is where this season sends people — and Ella, one of
+       the three hill destinations whose overlapping windows the lead pick is
+       built on. Deliberately not `highlandTrainDoor`, which is the more obvious
+       hill-country frame and is the one asset in the registry marked
+       `verifiedLocation: false`; it names no place and must not be used where
+       a place is being claimed. */
+    image: media.nineArchBridge,
     lead: [
       {
         slug: "luxe-serenity-in-the-hills",
@@ -163,12 +210,21 @@ export const seasons: Season[] = [
         slug: "sun-kissed-horizons-southern-escape",
         why: "The south coast window tapers through April — worth the earlier half.",
       },
-      { slug: "yala-leopard-safari", why: "Yala is open and at its best Feb–Jul." },
-      { slug: "wild-coast-safari-beaches-10-days", why: "Safari and south coast still align." },
+      {
+        slug: "yala-leopard-safari",
+        why: "Yala is open and at its best Feb–Jul.",
+      },
+      {
+        slug: "wild-coast-safari-beaches-10-days",
+        why: "Safari and south coast still align.",
+      },
       { slug: "sigiriya-dambulla-day-tour", why: "Reliable in the dry zone." },
       { slug: "kandy-cultural-day-tour", why: "Inside its Dec–Apr window." },
       { slug: "ella-nine-arch-day-tour", why: "Highland days are clear." },
-      { slug: "galle-south-coast-day-tour", why: "The south coast window tapers through April." },
+      {
+        slug: "galle-south-coast-day-tour",
+        why: "The south coast window tapers through April.",
+      },
     ],
   },
   {
@@ -177,6 +233,10 @@ export const seasons: Season[] = [
     months: "May – September",
     blurb:
       "The southwest monsoon crosses the island and the east comes into its own. Warm eastern water, surf, and the dry zone at its driest — while the south and west coasts sit this one out.",
+    /* The owner's own drone frame of Arugam Bay at dusk. This is the season the
+       bay's May–Sep window defines, so the photograph and the placement rest on
+       the same fact. */
+    image: media.arugamBay,
     lead: [
       {
         slug: "salt-and-season-east-coast",
@@ -213,11 +273,26 @@ export const seasons: Season[] = [
         slug: "leopard-light-safari-journey",
         why: "Suited to the earlier part of this window, to July, before Yala's Sep–Oct closure.",
       },
-      { slug: "sigiriya-dambulla-day-tour", why: "The dry zone is at its driest Jan–Sep." },
-      { slug: "ella-nine-arch-day-tour", why: "Hill country holds until September." },
-      { slug: "udawalawe-elephant-safari", why: "Elephants here are reliable through the year." },
-      { slug: "kandy-cultural-day-tour", why: "Esala Perahera falls in July or August." },
-      { slug: "yala-leopard-safari", why: "Best suited to the earlier part of this window, to July." },
+      {
+        slug: "sigiriya-dambulla-day-tour",
+        why: "The dry zone is at its driest Jan–Sep.",
+      },
+      {
+        slug: "ella-nine-arch-day-tour",
+        why: "Hill country holds until September.",
+      },
+      {
+        slug: "udawalawe-elephant-safari",
+        why: "Elephants here are reliable through the year.",
+      },
+      {
+        slug: "kandy-cultural-day-tour",
+        why: "Esala Perahera falls in July or August.",
+      },
+      {
+        slug: "yala-leopard-safari",
+        why: "Best suited to the earlier part of this window, to July.",
+      },
     ],
   },
   {
@@ -226,6 +301,13 @@ export const seasons: Season[] = [
     months: "October – November",
     blurb:
       "The second changeover. Inland and wildlife journeys travel well; coastal conditions are the least predictable of the year, so we plan these routes with room to move.",
+    /* An elephant at Hurulu Eco Park, Habarana — the same dry-zone elephant
+       country as Minneriya, whose gathering peaks August to October and is this
+       season's lead pick and its strongest single reason to travel. The one
+       Commons asset of the four, so it is also the one that renders a credit.
+       Every coastal frame was wrong here on this season's own terms: the blurb
+       says coastal conditions are the least predictable of the year. */
+    image: commonsPlaces.Habarana,
     lead: [
       {
         slug: "minneriya-elephant-gathering",
@@ -246,10 +328,22 @@ export const seasons: Season[] = [
         slug: "sigiriya-dambulla-day-tour",
         why: "Inland and flexible, with no dependence on a coast.",
       },
-      { slug: "udawalawe-elephant-safari", why: "Dependable elephants whatever the weather does." },
-      { slug: "grand-island-circuit-14-days", why: "Comes back into its own from November." },
-      { slug: "galle-south-coast-day-tour", why: "The south coast window reopens in November." },
-      { slug: "hill-country-tea-trails-5-days", why: "A settled inland alternative to the coast." },
+      {
+        slug: "udawalawe-elephant-safari",
+        why: "Dependable elephants whatever the weather does.",
+      },
+      {
+        slug: "grand-island-circuit-14-days",
+        why: "Comes back into its own from November.",
+      },
+      {
+        slug: "galle-south-coast-day-tour",
+        why: "The south coast window reopens in November.",
+      },
+      {
+        slug: "hill-country-tea-trails-5-days",
+        why: "A settled inland alternative to the coast.",
+      },
     ],
     /* Deliberately absent, both safaris at Yala — `yala-leopard-safari` and
        `leopard-light-safari-journey`. The destination record says the park may
@@ -276,7 +370,7 @@ export function currentSeasonKey(now: Date = new Date()): SeasonKey {
     new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Colombo",
       month: "numeric",
-    }).format(now)
+    }).format(now),
   );
   if (month === 12 || month <= 2) return "dec-feb";
   if (month <= 4) return "mar-apr";

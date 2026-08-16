@@ -3,14 +3,26 @@ import Link from "next/link";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui";
 import { Reveal } from "@/components/motion";
-import BookingForm, { type JourneyOption } from "@/components/BookingForm";
+import { type JourneyOption } from "@/components/BookingForm";
+import BookingFormWithContext from "@/components/BookingFormWithContext";
 import { media } from "@/lib/media/registry";
 import { getTours } from "@/lib/data";
 import { journeys } from "@/lib/journeys";
-import { describeFilters, parseTourFilters } from "@/lib/tour-filters";
 import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
 import { site, waLink, defaultWaMessage } from "@/lib/site";
+
+/*
+  Static, and it stays static.
+
+  This page took `searchParams` only to decide which field of the form starts
+  filled in — and that alone made the route `ƒ` (Dynamic), so the header, the
+  four-step explainer and the contact card were all re-rendered per request and
+  the catalogue re-fetched from Supabase every time. The query string is read
+  in the browser now (components/BookingFormWithContext.tsx); the document is
+  built once and revalidated on a timer, as this line always claimed.
+*/
+export const revalidate = 60;
 
 /*
   /contact was merged into this page and now 301s here (see next.config.mjs).
@@ -74,36 +86,6 @@ const contactChannels: {
   },
 ];
 
-/**
- * Inbound `?service=` values, mapped to the vocabulary the form speaks.
- *
- * Several pages link here with their own spelling — /services uses the plural
- * card titles ("Airport Transfers", "Custom Travel Itineraries"), the tour
- * pages use the singular category. Anything not in this table is dropped rather
- * than passed through, so a hand-edited or stale URL can't inject an arbitrary
- * string into the service column.
- */
-const normalize: Record<string, string> = {
-  "Day Tour": "Day Tour",
-  "Multi-Day": "Multi-Day Tour",
-  "Multi-Day Tour": "Multi-Day Tour",
-  Safari: "Safari Tour",
-  "Safari Tour": "Safari Tour",
-  "Airport Transfer": "Airport Transfer",
-  "Airport Transfers": "Airport Transfer",
-  "Private Driver Hire": "Private Driver Hire",
-  "Taxi Services": "Taxi / Point-to-Point",
-  "Surf Transfers": "Surf Transfer",
-  "Surf Transfer": "Surf Transfer",
-  "Hotel Transfers": "Hotel Transfer",
-  "Hotel Transfer": "Hotel Transfer",
-  "Custom Travel Itineraries": "Custom Itinerary",
-  "Custom Itinerary": "Custom Itinerary",
-  "Day Tours": "Day Tour",
-  "Multi-Day Tours": "Multi-Day Tour",
-  "Safari Tours": "Safari Tour",
-};
-
 /** Everything the form needs about a journey, and nothing else — itineraries,
  *  highlights and inclusions would otherwise be serialised into the client
  *  payload for all eighteen tours. */
@@ -123,19 +105,7 @@ const toOption = (t: {
   image: t.image,
 });
 
-export default async function BookPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
-  const one = (v: string | string[] | undefined) =>
-    (Array.isArray(v) ? v[0] : v)?.trim() || undefined;
-
-  const service = one(searchParams.service);
-  const tour = one(searchParams.tour);
-
-  const defaultService = service ? (normalize[service] ?? "") : "";
-
+export default async function BookPage() {
   /*
     The catalogue, split the way the form asks about it.
 
@@ -150,51 +120,16 @@ export default async function BookPage({
   const signature = all.filter((t) => signatureSlugs.has(t.slug)).map(toOption);
   const rest = all.filter((t) => !signatureSlugs.has(t.slug)).map(toOption);
 
-  /*
-    A journey arrived at from a tour page.
-
-    Matched on slug first, then on an exact case-insensitive title, because both
-    shapes are in the wild: /tours/[slug] links with `?tour=<title>`, while the
-    journey builder sends a composed line like "Custom journey: Galle → Ella".
-    That second kind will never match, and shouldn't — it is passed through as
-    the visitor's own outline instead of being quietly discarded.
-  */
-  const matched = tour
-    ? all.find(
-        (t) => t.slug === tour || t.title.toLowerCase() === tour.toLowerCase(),
-      )
-    : undefined;
-
-  /*
-    Planner context.
-
-    /tours forwards the filters a visitor chose (theme, duration, destination,
-    party) when it can't match a set journey. They were previously carried in
-    the URL and then dropped — the visitor arrived at a blank form having just
-    told us exactly what they wanted.
-
-    Rather than adding fields, the choices are written into the existing message
-    textarea as a readable line the visitor can edit or delete. `party` is
-    included here because it is genuinely useful context for a quote even though
-    it cannot filter the catalogue.
-  */
-  const context = describeFilters(parseTourFilters(searchParams), {
-    themeName: (slug) =>
-      experienceCategories.find((c) => c.slug === slug)?.name,
-    destinationName: (slug) => destinations.find((d) => d.slug === slug)?.name,
-  });
-
-  /*
-    The tour name used to be prepended here as "I'm interested in: …". It isn't
-    any more: the form now shows the selected journey as a card with its own
-    photograph and price, so repeating it in the message box would be the same
-    fact twice — once in a field the visitor might reasonably delete.
-  */
-  const defaultMessage = context.length
-    ? `Looking for: ${context
-        .map((c) => `${c.label.toLowerCase()} — ${c.value}`)
-        .join("; ")}`
-    : "";
+  /* Slug → name, for the "Looking for: interest — Wildlife" line the planner
+     context writes into the message box. Passed as plain maps because the
+     modules they come from reach the media registry, and the form's payload is
+     meant to be the form. */
+  const themeNames = Object.fromEntries(
+    experienceCategories.map((c) => [c.slug, c.name]),
+  );
+  const destinationNames = Object.fromEntries(
+    destinations.map((d) => [d.slug, d.name]),
+  );
 
   return (
     <>
@@ -212,14 +147,11 @@ export default async function BookPage({
               single mobile track and pushed the whole page sideways at 320px. */}
           <div className="min-w-0 lg:col-span-7">
             <Reveal>
-              <BookingForm
+              <BookingFormWithContext
                 signature={signature}
                 dayTrips={rest}
-                selectedJourney={matched ? toOption(matched) : null}
-                customJourneyLabel={tour && !matched ? tour : undefined}
-                defaultService={defaultService}
-                defaultMessage={defaultMessage}
-                defaultTourTitle={tour}
+                themeNames={themeNames}
+                destinationNames={destinationNames}
               />
             </Reveal>
           </div>
