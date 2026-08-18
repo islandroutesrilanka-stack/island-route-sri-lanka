@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import GradientPanel from "@/components/media/GradientPanel";
 import { site } from "@/lib/site";
+import { HOTEL_ASSIST_LINE } from "@/lib/pricing";
+import { RateCards, InclusionList } from "@/components/patterns/TransportRates";
 import { submitBooking, submitInquiry } from "@/lib/actions";
 
 /**
@@ -388,6 +390,18 @@ export default function BookingForm({
     message: defaultMessage ?? "",
     company: "", // honeypot — real people never fill this in
   });
+  /*
+    The one optional add-on.
+
+    Hotels are deliberately not bundled (see lib/pricing.ts), so this is opt-in
+    and starts unticked — a default-on checkbox would be exactly the quiet
+    upsell the policy exists to avoid. It is not a database column: it is
+    appended to the enquiry as a fixed, greppable line, which reaches the
+    stored message, the notification email and the admin view at once without
+    a migration. If it ever needs to be filtered on, promote it to a column
+    then — the line stays as the historical record for enquiries taken before.
+  */
+  const [hotelHelp, setHotelHelp] = useState(false);
   const [state, setState] = useState<"idle" | "saved" | "error">("idle");
   const today = new Date().toISOString().slice(0, 10);
   const [error, setError] = useState("");
@@ -486,6 +500,22 @@ export default function BookingForm({
     defaultTourTitle,
   ]);
 
+  /*
+    The message as it will actually be stored.
+
+    The add-on is folded in here rather than at the call site so that every
+    consumer — the database insert, the notification email and the mailto
+    fallback — carries the identical text. A booking that says "hotel help
+    requested" in the email but not in the record would be worse than one that
+    says it nowhere.
+  */
+  const outgoingMessage = useMemo(() => {
+    if (kind !== "booking" || !hotelHelp) return form.message;
+    return form.message.trim()
+      ? `${form.message.trim()}\n\n${HOTEL_ASSIST_LINE}`
+      : HOTEL_ASSIST_LINE;
+  }, [form.message, hotelHelp, kind]);
+
   const composed = useMemo(() => {
     const lines = [
       kind === "booking"
@@ -498,10 +528,10 @@ export default function BookingForm({
       tourTitle && `Journey: ${tourTitle}`,
       form.date && `Travel date: ${form.date}`,
       form.travellers && `Travellers: ${form.travellers}`,
-      form.message && `Details: ${form.message}`,
+      outgoingMessage && `Details: ${outgoingMessage}`,
     ].filter(Boolean);
     return lines.join("\n");
-  }, [form, kind, service, tourTitle]);
+  }, [form, kind, service, tourTitle, outgoingMessage]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -519,7 +549,7 @@ export default function BookingForm({
                 defaultMessage?.replace(/^I'm interested in: /, ""),
               travelDate: form.date || undefined,
               travellers: form.travellers,
-              message: form.message,
+              message: outgoingMessage,
               company: form.company,
             })
           : await submitInquiry({
@@ -812,6 +842,30 @@ export default function BookingForm({
                         Add pick-up and drop-off points, flight numbers and
                         times further down and we&apos;ll quote the exact run.
                       </p>
+
+                      {/* The published day rates, shown where the money
+                          question is actually being asked.
+
+                          Explicitly headed "by the day", because most of the
+                          options above are single runs: someone picking
+                          "Airport Transfer" must not read US$80 as their fare
+                          to Colombo. A one-way transfer is quoted on distance,
+                          and says so. */}
+                      <div className="mt-6 border border-ink/15 bg-white/50 p-5 md:p-6">
+                        <p className="eyebrow text-copper-deep">
+                          Hiring a car and driver by the day
+                        </p>
+                        <RateCards className="mt-5" />
+                        <p className="eyebrow mt-7 text-ink/65">
+                          Every day rate includes
+                        </p>
+                        <InclusionList className="mt-4" columns={2} />
+                        <p className="mt-5 text-[13px] leading-relaxed text-ink/65">
+                          Single airport runs and point-to-point transfers are
+                          quoted on the route rather than by the day — tell us
+                          the two ends below and we&apos;ll price it exactly.
+                        </p>
+                      </div>
                     </div>
                   )}
 
@@ -956,6 +1010,53 @@ export default function BookingForm({
               onChange={set("message")}
             />
           </div>
+
+          {/* ─────────────────── The one optional add-on ───────────────────
+
+              Unticked by default and stated as a choice, not a package. What
+              we sell is the vehicle, the chauffeur and the route; hotels are
+              left with the guest so their booking, their points and their
+              cancellation terms stay with the hotel that took the money. This
+              offers the legwork to anyone who would rather not do it, without
+              quietly making us the counterparty. */}
+          {kind === "booking" && (
+            <label
+              className={`mt-6 flex cursor-pointer gap-4 border p-5 transition-colors ${
+                hotelHelp
+                  ? "border-copper bg-copper/[0.06]"
+                  : "border-ink/15 bg-white/50 hover:border-copper/50"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={hotelHelp}
+                onChange={(e) => setHotelHelp(e.target.checked)}
+                className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-copper"
+              />
+              <span>
+                <span
+                  className={`block text-[15px] ${
+                    hotelHelp ? "text-copper-deep" : "text-ink"
+                  }`}
+                >
+                  I&apos;d also like help booking hotels
+                  <span className="ml-2 text-[12px] uppercase tracking-[0.14em] text-ink/65">
+                    Optional
+                  </span>
+                </span>
+                {/* Worded as "not part of our transport rates" rather than "we
+                    never bundle hotels": six of the seven signature journeys do
+                    include accommodation, and someone who has just selected one
+                    above must not be told otherwise here. */}
+                <span className="mt-1.5 block text-[13px] leading-relaxed text-ink/65">
+                  Accommodation isn&apos;t part of our transport rates — you
+                  keep full freedom to choose where you stay. Tick this and a
+                  planner will shortlist stays along your route to suit your
+                  taste and budget, and handle the reservations.
+                </span>
+              </span>
+            </label>
+          )}
         </Section>
 
         {/* Honeypot: hidden from people, irresistible to bots */}

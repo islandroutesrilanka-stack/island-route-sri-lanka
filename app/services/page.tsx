@@ -20,6 +20,12 @@ import Img from "@/components/media/Img";
 import { fromCmsUrl } from "@/lib/media/registry";
 import { PageHeader, CTABand, SectionHeading } from "@/components/ui";
 import EmptyState from "@/components/patterns/EmptyState";
+
+import {
+  RateCards,
+  InclusionList,
+  ScopeNote,
+} from "@/components/patterns/TransportRates";
 import { Reveal } from "@/components/motion";
 import { getServices } from "@/lib/data";
 import type { Service } from "@/lib/content";
@@ -65,9 +71,21 @@ const icons: Record<Service["icon"], typeof Plane> = {
    promise on /about, the chauffeur and vehicle standards on /about#fleet, the
    24/7 hours on /book. Nothing new is asserted. */
 const standards = [
-  [BadgeCheck, "One fixed price", "Agreed before you travel — fuel, parking and driver costs included."],
-  [Languages, "English-speaking chauffeur", "A professional host at the wheel, not just a driver."],
-  [ShieldCheck, "Insured, air-conditioned vehicle", "Late-model and maintained, matched to your group and luggage."],
+  [
+    BadgeCheck,
+    "One fixed price",
+    "Agreed before you travel, and all-inclusive — see the day rates below.",
+  ],
+  [
+    Languages,
+    "English-speaking chauffeur",
+    "A professional host at the wheel, not just a driver.",
+  ],
+  [
+    ShieldCheck,
+    "Insured, air-conditioned vehicle",
+    "Late-model and maintained, matched to your group and luggage.",
+  ],
   [Clock, "Any hour, any day", "Flights land at all hours. So do we."],
 ] as const;
 
@@ -107,6 +125,14 @@ export default async function ServicesPage() {
             className="hidden border-b border-ink/10 bg-sand/80 backdrop-blur md:block"
           >
             <div className="mx-auto flex max-w-wrap flex-wrap gap-x-7 gap-y-2 px-5 py-4 md:px-8">
+              {/* Rates lead the index: it is the question this page is most
+                  often opened to answer. */}
+              <a
+                href="#rates"
+                className="shrink-0 text-[12px] uppercase tracking-[0.14em] text-copper-deep transition-colors hover:text-ink"
+              >
+                Day rates
+              </a>
               {services.map((s) => (
                 <a
                   key={s.slug}
@@ -144,6 +170,54 @@ export default async function ServicesPage() {
             </div>
           </section>
 
+          {/* ══════════════ Day rates, inclusions and scope ══════════════
+
+              The commercial model in one place, ahead of the individual
+              services: what a day costs, what that covers, and what we
+              deliberately leave to the guest. Everything here reads from
+              lib/pricing.ts — see the note there on why a published rate is
+              not CMS content. */}
+          <section id="rates" className="scroll-mt-28 py-16 md:py-24">
+            <div className="mx-auto max-w-wrap px-5 md:px-8">
+              <SectionHeading
+                eyebrow="Transparent pricing"
+                title="One daily rate. Everything in it."
+                intro="Hire a vehicle and chauffeur by the day and the number you are quoted is the number you pay — fuel, tolls, parking and your driver's own costs are already inside it."
+              />
+
+              <Reveal className="mt-12">
+                <RateCards />
+              </Reveal>
+
+              <div className="mt-14 grid gap-12 md:grid-cols-12 md:gap-16">
+                <Reveal className="md:col-span-6">
+                  <p className="eyebrow text-copper-deep">
+                    What&apos;s included
+                  </p>
+                  <InclusionList className="mt-6" />
+                </Reveal>
+
+                <Reveal index={1} className="md:col-span-6">
+                  <p className="eyebrow text-copper-deep">
+                    What we do — and what we leave to you
+                  </p>
+                  <div className="mt-6 space-y-6">
+                    {/* The three scope statements stack here rather than sitting
+                        three-across: in this column they are read in order, and
+                        the hotels note only makes sense after the core one. */}
+                    <ScopeNote className="!grid-cols-1 !gap-6" />
+                    <Link
+                      href="/book"
+                      className="link-line inline-block text-[13px] uppercase tracking-[0.16em] text-copper-deep"
+                    >
+                      Ask for hotel assistance when you enquire
+                    </Link>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+          </section>
+
           <section className="py-16 md:py-24">
             <div className="mx-auto max-w-wrap px-5 md:px-8 space-y-16 md:space-y-24">
               {services.map((s, i) => {
@@ -154,7 +228,9 @@ export default async function ServicesPage() {
                     id={s.slug}
                     className="grid scroll-mt-28 gap-8 md:grid-cols-12 md:items-center"
                   >
-                    <Reveal className={`md:col-span-6 ${i % 2 ? "md:order-2" : ""}`}>
+                    <Reveal
+                      className={`md:col-span-6 ${i % 2 ? "md:order-2" : ""}`}
+                    >
                       <div className="img-frame aspect-[16/11]">
                         {/* Via <Img> so a retired or absent image degrades to the
                             gradient treatment instead of throwing on an empty src.
@@ -193,7 +269,9 @@ export default async function ServicesPage() {
                             Get a quote
                           </Link>
                           <a
-                            href={waLink(`Hello Island Route! I'd like to ask about: ${s.name}`)}
+                            href={waLink(
+                              `Hello Island Route! I'd like to ask about: ${s.name}`,
+                            )}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="border border-ink/20 px-7 py-3.5 text-[12px] uppercase tracking-[0.16em] text-ink transition-colors hover:border-copper hover:text-copper-deep"
@@ -220,8 +298,16 @@ export default async function ServicesPage() {
               />
               <div className="mt-10 grid gap-5 sm:grid-cols-2">
                 {[
-                  ["Browse all journeys", "Set routes from one day to a fortnight, each with its itinerary and price.", "/tours"],
-                  ["Travel by experience", "Start from what moves you — wildlife, surf, tea country — and we build the route.", "/experiences"],
+                  [
+                    "Browse all journeys",
+                    "Set routes from one day to a fortnight, each with its itinerary and price.",
+                    "/tours",
+                  ],
+                  [
+                    "Travel by experience",
+                    "Start from what moves you — wildlife, surf, tea country — and we build the route.",
+                    "/experiences",
+                  ],
                 ].map(([title, body, href], i) => (
                   <Reveal key={href} index={i}>
                     <Link

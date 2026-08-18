@@ -12,6 +12,8 @@ import Img from "@/components/media/Img";
 import EmptyState from "@/components/patterns/EmptyState";
 import { Reveal } from "@/components/motion";
 import { getFleet, getReviews } from "@/lib/data";
+import { rateForVehicle } from "@/lib/pricing";
+import { RateBadge, InclusionList } from "@/components/patterns/TransportRates";
 import { fromCmsUrl, media } from "@/lib/media/registry";
 import { commonsPlaces } from "@/lib/media/commons";
 import { waLink, defaultWaMessage, site } from "@/lib/site";
@@ -120,9 +122,9 @@ export default async function AboutPage() {
                 className="object-cover"
               />
             </Reveal>
+          </div>
         </div>
-    </div>
-    </section>
+      </section>
 
       {/* ══════════════════ Promises ══════════════════ */}
       <section id="promises" className="scroll-mt-24 bg-dune/60 py-16 md:py-24">
@@ -182,6 +184,23 @@ export default async function AboutPage() {
             intro="Every vehicle is late-model, well maintained, insured and driven by a professional English-speaking chauffeur. Choose your ride — or let us match one to your route."
           />
 
+          {/* The inclusions sit above the vehicles rather than being repeated on
+              each card: they are true of every rate below, and saying them five
+              times would read as five separate promises. */}
+          <Reveal className="mt-10 border border-ink/10 bg-white/50 p-7 md:p-8">
+            <p className="eyebrow text-copper-deep">Every day rate includes</p>
+            <InclusionList className="mt-6" columns={2} />
+            <p className="mt-6 text-[13px] leading-relaxed text-ink/65">
+              Day rates cover the vehicle and the road, not your room — you keep
+              full freedom to choose your own hotels. Ask when you enquire and
+              we&apos;ll gladly help you find and book them.{" "}
+              <Link href="/services#rates" className="link-line text-ink">
+                See the full pricing model
+              </Link>
+              .
+            </p>
+          </Reveal>
+
           {fleet.length === 0 ? (
             <div className="mt-12">
               <EmptyState
@@ -240,6 +259,16 @@ export default async function AboutPage() {
                       <p className="mt-5 text-sm text-ink/70 italic">
                         {v.idealFor}
                       </p>
+                      {/* The day rate is joined on by slug rather than read off
+                          the vehicle: it is a published commercial promise, not
+                          CMS content, and it has to match /services and the
+                          homepage exactly. A slug with no published tier shows
+                          "quoted per route" — never an invented number. */}
+                      <div className="mt-6 border-t border-ink/10 pt-5">
+                        <RateBadge
+                          usdPerDay={rateForVehicle(v.slug)?.usdPerDay ?? null}
+                        />
+                      </div>
                       <Link
                         href={`/book?service=${encodeURIComponent("Private Driver Hire")}&tour=${encodeURIComponent(v.name)}`}
                         className="mt-7 inline-block bg-ink text-sand px-7 py-3.5 text-[12px] uppercase tracking-[0.16em] hover:bg-copper-deep transition-colors"

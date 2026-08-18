@@ -6,6 +6,8 @@ import { Reveal } from "@/components/motion";
 import { type JourneyOption } from "@/components/BookingForm";
 import BookingFormWithContext from "@/components/BookingFormWithContext";
 import { media } from "@/lib/media/registry";
+import { serviceScope } from "@/lib/pricing";
+import { RateCards, InclusionList } from "@/components/patterns/TransportRates";
 import { getTours } from "@/lib/data";
 import { journeys } from "@/lib/journeys";
 import { experienceCategories } from "@/lib/experiences";
@@ -192,8 +194,36 @@ export default async function BookPage() {
               </ol>
             </Reveal>
 
+            {/* What the money buys, beside the form that asks for it.
+
+                This sits above the contact card deliberately: "what is included
+                and what isn't" is the question that stops someone completing an
+                enquiry, and it should be answered before they go looking for a
+                phone number to ask it. */}
             <Reveal
               index={1}
+              className="mt-6 border border-ink/10 bg-white/60 p-7 md:p-9"
+            >
+              <p className="eyebrow text-copper-deep">
+                What your rate includes
+              </p>
+              {/* Stacked: this rail is ~380px wide however wide the window is. */}
+              <RateCards className="mt-6" layout="stack" />
+              <InclusionList className="mt-7" />
+              <div className="mt-7 border-t border-ink/10 pt-6">
+                <p className="font-semibold text-ink">
+                  {serviceScope.hotels.title}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-ink/70">
+                  {serviceScope.hotels.body} Want the legwork done? Tick the
+                  hotel assistance box in the form and we&apos;ll take it from
+                  there.
+                </p>
+              </div>
+            </Reveal>
+
+            <Reveal
+              index={2}
               id="contact"
               className="mt-6 scroll-mt-24 border border-ink/10 bg-white/60 p-7 md:p-9"
             >
@@ -235,7 +265,7 @@ export default async function BookPage() {
             {/* A quiet way out for the browsing half of the audience: someone
                 who opened this page before deciding shouldn't have to reach for
                 the back button. */}
-            <Reveal index={2} className="mt-6 text-sm text-ink/65">
+            <Reveal index={3} className="mt-6 text-sm text-ink/65">
               Still deciding?{" "}
               <Link href="/tours" className="link-line text-ink">
                 Read the signature journeys
