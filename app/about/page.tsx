@@ -99,31 +99,30 @@ export default async function AboutPage() {
           </div>
           <div className="md:col-span-6 grid grid-cols-2 gap-4 md:gap-6">
             {/* Both were hotlinked Unsplash stock with no verified location —
-                "A Buddhist temple" and "A road following a coastline", neither
-                of them necessarily Sri Lanka. Replaced with self-hosted,
-                location-verified photographs, and the alt text now describes
-                what is actually in the frame. */}
+ {/* පින්තූරය 01 - Driver */}
             <Reveal index={1} className="img-frame aspect-[3/4]">
               <Image
-                src={media.kandyTempleMoat.src}
-                alt={media.kandyTempleMoat.alt}
+                src="/commons/About-1.jfif"
+                alt="Island Route chauffeur with vehicle"
                 fill
                 sizes="(max-width:768px) 50vw, 25vw"
                 className="object-cover"
               />
             </Reveal>
+            
+            {/* පින්තූරය 02 - Tea Estate */}
             <Reveal index={2} className="img-frame aspect-[3/4] mt-10">
               <Image
-                src={media.elephantRock.src}
-                alt={media.elephantRock.alt}
+                src="/commons/About-2.jfif"
+                alt="Beautiful tea estate and scenic road in Sri Lanka"
                 fill
                 sizes="(max-width:768px) 50vw, 25vw"
                 className="object-cover"
               />
             </Reveal>
-          </div>
         </div>
-      </section>
+    </div>
+    </section>
 
       {/* ══════════════════ Promises ══════════════════ */}
       <section id="promises" className="scroll-mt-24 bg-dune/60 py-16 md:py-24">
