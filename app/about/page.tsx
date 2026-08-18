@@ -102,18 +102,18 @@ export default async function AboutPage() {
  {/* පින්තූරය 01 - Driver */}
             <Reveal index={1} className="img-frame aspect-[3/4]">
               <Image
-                src="/commons/About-1.jpg"
+                src="/commons/about-1.jpg"
                 alt="Island Route chauffeur with vehicle"
                 fill
                 sizes="(max-width:768px) 50vw, 25vw"
                 className="object-cover"
               />
             </Reveal>
-            
+
             {/* පින්තූරය 02 - Tea Estate */}
             <Reveal index={2} className="img-frame aspect-[3/4] mt-10">
               <Image
-                src="/commons/About-2.jpg"
+                src="/commons/about-2.jpg"
                 alt="Beautiful tea estate and scenic road in Sri Lanka"
                 fill
                 sizes="(max-width:768px) 50vw, 25vw"
