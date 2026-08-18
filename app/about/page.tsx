@@ -13,6 +13,7 @@ import EmptyState from "@/components/patterns/EmptyState";
 import { Reveal } from "@/components/motion";
 import { getFleet, getReviews } from "@/lib/data";
 import { rateForVehicle } from "@/lib/pricing";
+import { seating } from "@/lib/content";
 import { RateBadge, InclusionList } from "@/components/patterns/TransportRates";
 import { fromCmsUrl, media } from "@/lib/media/registry";
 import { commonsPlaces } from "@/lib/media/commons";
@@ -234,8 +235,8 @@ export default async function AboutPage() {
                       </h3>
                       <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink/70">
                         <span className="inline-flex items-center gap-2">
-                          <Users size={15} className="text-copper-deep" /> Up to{" "}
-                          {v.passengers} guests
+                          <Users size={15} className="text-copper-deep" />{" "}
+                          {seating(v)}
                         </span>
                         <span className="inline-flex items-center gap-2">
                           <Briefcase size={15} className="text-copper-deep" />{" "}

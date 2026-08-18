@@ -12,5 +12,5 @@ select id, created_at, name, email, service, message
 from public.bookings
 where email = 'harness@example.invalid';
 
--- delete from public.bookings
--- where email = 'harness@example.invalid';
+delete from public.bookings
+where email = 'harness@example.invalid';

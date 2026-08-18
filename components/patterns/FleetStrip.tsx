@@ -12,7 +12,7 @@
  */
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { Vehicle } from "@/lib/content";
+import { seating, type Vehicle } from "@/lib/content";
 import { lowestDayRate, money, rateForVehicle } from "@/lib/pricing";
 
 export default function FleetStrip({ fleet }: { fleet: Vehicle[] }) {
@@ -43,16 +43,20 @@ export default function FleetStrip({ fleet }: { fleet: Vehicle[] }) {
 
       <ul className="mt-8 grid grid-cols-1 gap-px border-y border-sand/10 bg-sand/10 sm:grid-cols-3">
         {shown.map((v) => (
-          <li key={v.slug} className="bg-deep px-5 py-6">
+          /* Flex column with the rate pushed to the bottom: the capacity lines
+             are not the same length — the sedan's runs to two lines because
+             three seats needs a sentence, not a number — and without this the
+             three rates sit at three different heights. */
+          <li key={v.slug} className="flex h-full flex-col bg-deep px-5 py-6">
             <p className="font-display text-xl text-sand">{v.name}</p>
             <p className="mt-1.5 text-[12px] uppercase tracking-[0.14em] text-sand/55">
-              {v.passengers} guests{v.luggage ? ` · ${v.luggage}` : ""}
+              {seating(v)}{v.luggage ? ` · ${v.luggage}` : ""}
             </p>
             {/* Only the two published tiers carry a number here. A vehicle
                 quoted per route says so, rather than showing nothing — an
                 absent price on a card beside two priced ones reads as an
                 oversight. */}
-            <p className="mt-2 text-[13px] text-copper-light">
+            <p className="mt-auto pt-2 text-[13px] text-copper-light">
               {rateForVehicle(v.slug)
                 ? `${money(rateForVehicle(v.slug)!.usdPerDay)} / day`
                 : "Quoted per route"}

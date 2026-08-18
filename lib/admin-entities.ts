@@ -109,7 +109,7 @@ export const entities: Record<string, EntityConfig> = {
     fields: [
       { key: "name", label: "Name", type: "text", required: true },
       { key: "slug", label: "URL slug", type: "text", required: true },
-      { key: "category", label: "Category line", type: "text", help: "e.g. Comfort · up to 3 guests" },
+      { key: "category", label: "Category line", type: "text", help: "e.g. Comfort · 3 adults, or a family with children" },
       { key: "passengers", label: "Max passengers", type: "number" },
       { key: "luggage", label: "Luggage", type: "text" },
       { key: "features", label: "Features (one per line)", type: "lines" },

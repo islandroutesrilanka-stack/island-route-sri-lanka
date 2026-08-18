@@ -4,7 +4,7 @@ import { commonsPlaces } from "./media/commons";
 /**
  * The premium journey collection.
  *
- * Six signature routes written to sit alongside the existing catalogue rather
+ * Seven signature routes written to sit alongside the existing catalogue rather
  * than replace it overnight. They satisfy the same `Tour` contract, so every
  * surface already built — /tours, /tours/[slug], /experiences/[slug], the
  * homepage rails, the planner's filters — renders them without a single change.
@@ -18,7 +18,7 @@ import { commonsPlaces } from "./media/commons";
  *                        real stops with no guide yet, so they live in the
  *                        itinerary only — a link to a 404 is worse than no link.
  *
- * Between them these six cover all twelve experience categories, which is the
+ * Between them these seven cover all twelve experience categories, which is the
  * point: `publishedExperiences()` derives /experiences from `themeSlugs`, so
  * adopting this collection publishes the five categories currently sitting
  * empty (food, wellness, adventure, local-life, luxury).
@@ -44,7 +44,110 @@ import { commonsPlaces } from "./media/commons";
  * coast week in January is how a good operator loses a review.
  */
 export const journeys: Tour[] = [
-  /* ------------------------------------------------------------------ 01 --- */
+  /* ------------------------------------------------------------------ 01 ---
+     The one most first-time visitors are describing when they write to us.
+     It leads the collection deliberately: /tours renders in array order and
+     the homepage takes featuredTours[0] as its hero, so position here is the
+     whole of the decision. Five beds in nine days, each stop earning its
+     nights — the Cultural Triangle, the last kingdom, the tea, a park, and
+     the sea. Nothing on this route is a detour from it. */
+  {
+    slug: "classic-all-island-route",
+    title: "The Classic All-Island Route",
+    category: "Multi-Day",
+    duration: "9 days · 8 nights",
+    image: "/photography/nine-arch-bridge-demodara.jpg",
+    featured: true,
+    destinationSlugs: ["sigiriya", "kandy", "ella", "mirissa", "galle"],
+    /* Days 2 and 6 — two real stops with no guide page to link to yet. */
+    storyImages: [commonsPlaces.Dambulla.src, commonsPlaces.Udawalawe.src],
+    themeSlugs: [
+      "culture-heritage",
+      "tea-country",
+      "wildlife",
+      "beaches",
+      "surf-ocean",
+    ],
+    excerpt:
+      "The island as most people first picture it, in the order that actually drives well: a palace on a granite plug, a temple that keeps a relic, the ridge road through working tea, elephants at dusk in Udawalawe, and two nights where the road finally runs out at the sea. Five beds, nine days, nothing doubled back on.",
+    highlights: [
+      "Sigiriya at opening, on the stairs before the rock face warms",
+      "Dambulla's five painted caves in the low light of late afternoon",
+      "Evening puja at the Temple of the Sacred Tooth Relic, when the drums open the shrine",
+      "The climb to Ella through working tea, with a factory floor on the way",
+      "Little Adam's Peak at first light, and Nine Arch Bridge from the tea path",
+      "A private jeep at Udawalawe for the last two hours of light",
+      "Hiriketiya's horseshoe bay, and Galle Fort's ramparts an hour up the coast",
+    ],
+    includes: [
+      "Private A/C vehicle & chauffeur-guide throughout",
+      "All fuel, tolls, parking and the driver's own costs",
+      "Private 4x4 jeep and tracker for the Udawalawe game drive",
+      "Udawalawe national park entry and permits",
+      "Sigiriya and Dambulla site tickets, and temple donations",
+      "A shortlist of stays at each of the five stops, on request",
+      "Airport pickup & drop-off, bottled water daily",
+      "24/7 WhatsApp support",
+    ],
+    itinerary: [
+      {
+        day: "Day 1",
+        title: "Airport → Sigiriya",
+        detail:
+          "Met in the arrivals hall and north-east through coconut country and paddy — three and a half hours on good road, which puts you at the foot of the rock with the evening still in hand. Nothing is asked of you tonight.",
+      },
+      {
+        day: "Day 2",
+        title: "Sigiriya & Dambulla",
+        detail:
+          "At the gate for opening, up past the frescoed maidens and the mirror wall to a palace built on the summit of a granite plug. Pidurangala across the valley instead, if you would rather photograph Sigiriya than stand on it. Dambulla's five cave temples later, when the light comes in low and the murals do what they were painted to do.",
+      },
+      {
+        day: "Day 3",
+        title: "Sigiriya → Kandy",
+        detail:
+          "South through Matale, where the spice gardens are a genuine stop rather than a shopping one. Into the last kingdom to fall by mid-afternoon, and at the Temple of the Sacred Tooth Relic for the evening puja — the reason to be in Kandy at half past six rather than any other hour.",
+      },
+      {
+        day: "Day 4",
+        title: "Kandy → Ella",
+        detail:
+          "The great climb: the Ramboda road gaining a thousand metres in ninety minutes, waterfalls, and then tea in every direction. A working factory floor on the way — withering loft, roller, tasting table. Take the Nanu Oya–Ella train in observation class for the last stretch if you would rather, and your driver runs the luggage ahead by road.",
+      },
+      {
+        day: "Day 5",
+        title: "Ella",
+        detail:
+          "Little Adam's Peak at first light — forty minutes up, and the ridge to yourself before anyone else is on it. Nine Arch Bridge from the tea path rather than the tripods, Ravana Falls on the way back, and the rest of the day at whatever pace the altitude suggests.",
+      },
+      {
+        day: "Day 6",
+        title: "Ella → Udawalawe",
+        detail:
+          "Down through Ella Gap and Wellawaya, with Diyaluma's cascade an easy detour if you want it. At the park's edge by early afternoon, and a private jeep at the gate for the last two hours of light — which is when the elephants come down to the water. They are here in numbers in any month, which is why this park and not another.",
+      },
+      {
+        day: "Day 7",
+        title: "Udawalawe → the south coast",
+        detail:
+          "The Elephant Transit Home's morning feed, where orphans are reared for release rather than display, then two hours south to where the road runs out at the sea. Hiriketiya is a horseshoe of sand with a forgiving right in one corner and very little asked of you in the other.",
+      },
+      {
+        day: "Day 8",
+        title: "Hiriketiya, Mirissa & Galle",
+        detail:
+          "A full day on the coast, taken in whatever order suits: the bay in the morning, Mirissa's headland and Coconut Tree Hill before the queue forms, or an hour up to Galle to walk the fort ramparts as the light goes. Blue whales pass beyond the shelf off Mirissa between November and April, if you would rather start with a dawn boat.",
+      },
+      {
+        day: "Day 9",
+        title: "South coast → Airport",
+        detail:
+          "The southern expressway north — roughly three hours from Galle, four from Hiriketiya, and the only morning of the trip with a clock on it. Add a Negombo night if your flight is late.",
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ 02 --- */
   {
     slug: "cultural-odyssey",
     title: "The Cultural Odyssey",
@@ -132,7 +235,7 @@ export const journeys: Tour[] = [
     ],
   },
 
-  /* ------------------------------------------------------------------ 02 --- */
+  /* ------------------------------------------------------------------ 03 --- */
   {
     slug: "sun-kissed-horizons-southern-escape",
     title: "Sun-Kissed Horizons: The Southern Escape",
@@ -228,7 +331,7 @@ export const journeys: Tour[] = [
     ],
   },
 
-  /* ------------------------------------------------------------------ 03 --- */
+  /* ------------------------------------------------------------------ 04 --- */
   {
     slug: "luxe-serenity-in-the-hills",
     title: "Luxe Serenity in the Hills",
@@ -308,7 +411,7 @@ export const journeys: Tour[] = [
     ],
   },
 
-  /* ------------------------------------------------------------------ 04 --- */
+  /* ------------------------------------------------------------------ 05 --- */
   {
     slug: "leopard-light-safari-journey",
     title: "Leopard Light: A Safari Journey",
@@ -398,7 +501,7 @@ export const journeys: Tour[] = [
     ],
   },
 
-  /* ------------------------------------------------------------------ 05 --- */
+  /* ------------------------------------------------------------------ 06 --- */
   {
     slug: "salt-and-season-east-coast",
     title: "Salt & Season: The East Coast Awakening",
@@ -485,7 +588,7 @@ export const journeys: Tour[] = [
     ],
   },
 
-  /* ------------------------------------------------------------------ 06 --- */
+  /* ------------------------------------------------------------------ 07 --- */
   {
     slug: "palmyra-and-pearl-northern-passage",
     title: "Palmyra & Pearl: The Northern Passage",

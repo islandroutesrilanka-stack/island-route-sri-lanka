@@ -50,7 +50,8 @@ export const dayRates: DayRate[] = [
     id: "car",
     label: "Car / Sedan",
     usdPerDay: 80,
-    suits: "Couples and solo travellers, up to 3 guests with luggage.",
+    suits:
+      "Couples, solo travellers and young families — up to 3 adults, or 2 adults with up to 3 children, with luggage.",
     vehicleSlugs: ["executive-sedan"],
   },
   {

@@ -121,6 +121,26 @@ export const services: Service[] = [
 
 /* ----------------------------------- Fleet ------------------------------------ */
 
+/**
+ * How many people a vehicle takes, in words rather than a number.
+ *
+ * `passengers` is an integer and stays one: it sorts, it seeds the CMS field,
+ * and the admin form edits it. What it cannot express is that three seats is
+ * three adults *or* two adults and three children — the same bench, a very
+ * different trip, and the question every family asks before anything else.
+ *
+ * Keyed by slug and resolved in code, so a vehicle says the same thing whether
+ * it came from the seed below or from the `vehicles` table. Adding a column
+ * would mean a migration and two places to keep in step; this needs neither.
+ * Anything absent falls back to the plain count.
+ */
+const seatingNotes: Record<string, string> = {
+  "executive-sedan": "Up to 3 adults, or 2 adults with up to 3 children",
+};
+
+export const seating = (v: Pick<Vehicle, "slug" | "passengers">): string =>
+  seatingNotes[v.slug] ?? `Up to ${v.passengers} guests`;
+
 export type Vehicle = {
   slug: string;
   name: string;
@@ -136,7 +156,7 @@ export const fleet: Vehicle[] = [
   {
     slug: "executive-sedan",
     name: "Executive Sedan",
-    category: "Comfort · up to 3 guests",
+    category: "Comfort · 3 adults, or a family with children",
     passengers: 3,
     luggage: "2 large + 2 cabin",
     features: [
@@ -145,7 +165,8 @@ export const fleet: Vehicle[] = [
       "USB charging & Wi-Fi hotspot",
       "Complimentary bottled water",
     ],
-    idealFor: "Couples, business travellers and airport transfers.",
+    idealFor:
+      "Couples, business travellers, and families travelling with young children.",
     image: media.colomboLotusTower.src,
   },
   {

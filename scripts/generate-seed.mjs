@@ -34,10 +34,15 @@ const { site } = await load("lib/site.ts");
 
 let sql = `-- Generated starter content. Run after schema.sql.\n\n`;
 
+// `price_from` is deliberately not written. Pricing is the transport day rate
+// in lib/pricing.ts — per vehicle, per day — and `Tour` has carried no
+// priceFrom since that refactor. The column still exists and is nullable, so
+// leaving it out of the column list is the correct way to say "no fixed price"
+// rather than writing `undefined` into it, which is what this line used to do.
 sql += tours
   .map(
     (t, i) =>
-      `insert into public.tours (slug,title,category,duration,price_from,image,excerpt,highlights,includes,itinerary,featured,sort) values (${q(t.slug)},${q(t.title)},${q(t.category)},${q(t.duration)},${t.priceFrom},${q(t.image)},${q(t.excerpt)},${j(t.highlights)},${j(t.includes)},${t.itinerary ? j(t.itinerary) : "null"},${!!t.featured},${i}) on conflict (slug) do nothing;`
+      `insert into public.tours (slug,title,category,duration,image,excerpt,highlights,includes,itinerary,featured,sort) values (${q(t.slug)},${q(t.title)},${q(t.category)},${q(t.duration)},${q(t.image)},${q(t.excerpt)},${j(t.highlights)},${j(t.includes)},${t.itinerary ? j(t.itinerary) : "null"},${!!t.featured},${i}) on conflict (slug) do nothing;`
   )
   .join("\n");
 

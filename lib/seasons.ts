@@ -28,7 +28,7 @@
  * a stronger signal of knowing the island than selling everything year-round.
  *
  * `lead` IS AN ORDERED PREFERENCE LIST, NOT A FIXED PAIR
- * The page renders the first two picks that resolve to a live tour. The six
+ * The page renders the first two picks that resolve to a live tour. The seven
  * signature journeys lead each list and the catalogue tours that used to hold
  * those slots sit behind them as a tail. That matters twice: the journeys are
  * absent from the `tours` table until `insert-premium-journeys.sql` runs, and
@@ -50,7 +50,7 @@
  *  · Oct–Nov leads with only one signature journey. Every other one is
  *    contradicted by its own destinations in that window — the hill trio, Yala
  *    and Arugam Bay are all outside their seasons, and Kandy's Dec–Apr window
- *    rules out the Cultural Odyssey. Only the southern escape qualifies, and
+ *    rules out both the Cultural Odyssey and the all-island route. Only the southern escape qualifies, and
  *    only from November. Leaving the slot to a catalogue tour is the honest
  *    outcome, not a placeholder.
  *  · `udawalawe-elephant-safari` has no destinationSlugs because no Udawalawe
@@ -111,6 +111,10 @@ export const seasons: Season[] = [
        exactly what the blurb above promises. */
     image: media.mirissaCoconutHill,
     lead: [
+      {
+        slug: "classic-all-island-route",
+        why: "Kandy, Galle and Mirissa are all inside their windows and the south is at its most settled. Ella's own window opens in January, so this runs at its very best from the new year.",
+      },
       {
         slug: "sun-kissed-horizons-southern-escape",
         why: "Galle and Mirissa are both inside their Nov–Apr window, and the whales are off Mirissa. There is no better time to be on the south coast.",
@@ -175,6 +179,10 @@ export const seasons: Season[] = [
        a place is being claimed. */
     image: media.nineArchBridge,
     lead: [
+      {
+        slug: "classic-all-island-route",
+        why: "The one window in which every stop on it is inside its own season — Sigiriya, Kandy, Ella, Galle and Mirissa all overlap in March and April. A route that crosses the island wants exactly that.",
+      },
       {
         slug: "luxe-serenity-in-the-hills",
         why: "Kandy, Nuwara Eliya and Ella keep different windows — Dec–Apr, Feb–May, Jan–Sep — and these are the weeks all three overlap. The highlands are the surest ground in a month that guarantees no coast.",
@@ -294,6 +302,12 @@ export const seasons: Season[] = [
         why: "Best suited to the earlier part of this window, to July.",
       },
     ],
+    /* Deliberately absent: `classic-all-island-route`. Its inland half is
+       fine here — Sigiriya is in its driest months and Ella holds to
+       September — but it finishes with two nights at Mirissa and Galle, both
+       Nov–Apr, under the southwest monsoon. A route is only as seasonal as
+       its worst night, and recommending this one in July would put a guest on
+       the wrong coast at the end of their trip. */
   },
   {
     key: "oct-nov",
@@ -351,9 +365,11 @@ export const seasons: Season[] = [
        `palmyra-and-pearl-northern-passage` (northeast monsoon over the North,
        and Wilpattu's Feb–Oct window closing), `luxe-serenity-in-the-hills`
        (all three hill destinations outside their windows), `cultural-odyssey`
-       (Kandy is Dec–Apr) and `salt-and-season-east-coast` (Arugam Bay is
-       May–Sep). Five of the six signature journeys are withheld here on their
-       own data — that is the file working, not a shortfall to fill. */
+       and `classic-all-island-route` (both held by Kandy's Dec–Apr window,
+       and the latter reaches the south coast before Mirissa and Galle open in
+       November) and `salt-and-season-east-coast` (Arugam Bay is May–Sep). Six
+       of the seven signature journeys are withheld here on their own data —
+       that is the file working, not a shortfall to fill. */
   },
 ];
 
