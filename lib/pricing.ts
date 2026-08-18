@@ -27,7 +27,14 @@
 
 /* ------------------------------- Day rates -------------------------------- */
 
+export type RateId = "car" | "van";
+
 export type DayRate = {
+  /**
+   * Stable key held in booking-form state and written into enquiries. Not the
+   * label — the label is copy and may be reworded; this must not change.
+   */
+  id: RateId;
   /** Vehicle class as a guest would say it, not as the fleet page titles it. */
   label: string;
   /** US dollars, per vehicle, per day — never per person. See `rateBasis`. */
@@ -40,12 +47,14 @@ export type DayRate = {
 
 export const dayRates: DayRate[] = [
   {
+    id: "car",
     label: "Car / Sedan",
     usdPerDay: 80,
     suits: "Couples and solo travellers, up to 3 guests with luggage.",
     vehicleSlugs: ["executive-sedan"],
   },
   {
+    id: "van",
     label: "Van / KDH",
     usdPerDay: 120,
     suits: "Families and small groups, up to 8 guests with room for boards.",
@@ -71,6 +80,73 @@ export const rateForVehicle = (slug: string): DayRate | null =>
 export const lowestDayRate = Math.min(...dayRates.map((r) => r.usdPerDay));
 
 export const money = (n: number) => `US$${n.toLocaleString("en-US")}`;
+
+/* ------------------------------ The quote --------------------------------- */
+
+/**
+ * Days × rate. That is the whole commercial model, and it is deliberately the
+ * whole of this function too.
+ *
+ * There used to be a second, incompatible model on the same site: signature
+ * journeys carried a fixed per-person price that bundled accommodation. Those
+ * prices could not survive contact with reality — hotel rates move by season,
+ * by availability and by how far ahead a guest books, so a shelf price is
+ * either padded enough to be uncompetitive or thin enough to be loss-making,
+ * and it has to be renegotiated every time a property changes its tariff.
+ *
+ * A per-vehicle day rate has none of that exposure. It is the one number we
+ * genuinely control, it is honest at the moment it is quoted, and it stays true
+ * whether the guest sleeps in a tea bungalow or with family in Kandy. So the
+ * catalogue no longer prices trips; it inspires them, and the price is composed
+ * here from two inputs the guest chooses.
+ */
+export type Quote = {
+  rate: DayRate;
+  days: number;
+  /** US dollars for the whole trip's transport. Never per person. */
+  total: number;
+};
+
+export const rateById = (id: RateId): DayRate =>
+  dayRates.find((r) => r.id === id) ?? dayRates[0];
+
+/**
+ * `days` is clamped rather than validated: this feeds a live figure under a
+ * form control, and a guest mid-keystroke ("" or "0" or a pasted "999") should
+ * see a sane number, not NaN and not an error. The enquiry is a request for a
+ * quote, so the bound is generous — it exists to stop the display breaking, not
+ * to refuse the booking.
+ */
+export const MIN_DAYS = 1;
+export const MAX_DAYS = 60;
+
+export const clampDays = (n: number): number =>
+  !Number.isFinite(n) ? MIN_DAYS : Math.min(MAX_DAYS, Math.max(MIN_DAYS, Math.round(n)));
+
+export function transportQuote(id: RateId, days: number): Quote {
+  const rate = rateById(id);
+  const d = clampDays(days);
+  return { rate, days: d, total: rate.usdPerDay * d };
+}
+
+/**
+ * How many chargeable days a catalogue duration implies, for the "transport
+ * from US$X" line on a journey card.
+ *
+ * Parsed from the existing `duration` string rather than stored as a new field,
+ * because `duration` is the CMS column an admin already fills in and a second
+ * number would be one more thing to keep in step with it. Two shapes exist in
+ * the catalogue — "8 days · 7 nights" and "Full day · from Colombo" — and both
+ * are handled. Anything else returns null, and the caller shows the day rate
+ * without a total, which is the correct thing to show when the length is
+ * genuinely unknown.
+ */
+export function tripDays(duration: string): number | null {
+  const n = duration.match(/(\d+)\s*days?\b/i);
+  if (n) return clampDays(Number(n[1]));
+  if (/\b(half|full)\s+day\b/i.test(duration)) return 1;
+  return null;
+}
 
 /* ----------------------------- What's included ---------------------------- */
 
@@ -105,19 +181,12 @@ export const transportInclusions = [
  * than as a package. We will do the legwork when asked; we will not quietly
  * become the counterparty on someone else's room.
  *
- * ── The carve-out this copy has to respect ────────────────────────────────
- *
- * Six of the seven signature journeys in lib/journeys.ts still list
- * accommodation in their `includes` — "Boutique and heritage accommodation,
- * breakfast daily" and similar — and their per-person prices are built on it.
- * A blanket "we never bundle hotels" would contradict the catalogue and
- * misprice it.
- *
- * So every statement below is scoped to the transport service: the day rate,
- * what it covers, and what it leaves to the guest. If the packaged journeys are
- * meant to move to accommodation-free pricing too, that is a repricing exercise
- * in lib/journeys.ts, not a copy change here — and this note should come out
- * once it happens.
+ * This used to need a carve-out: the signature journeys carried fixed
+ * per-person prices that bundled accommodation, so a blanket "we never bundle
+ * hotels" contradicted the catalogue. That is no longer true. The journeys are
+ * now inspiration — a route, a length and a reason to go — and every price on
+ * the site is composed from the day rate. The copy below can therefore say
+ * plainly what the business does, with nothing to except.
  */
 export const serviceScope = {
   core: {
@@ -143,4 +212,31 @@ export const serviceScope = {
  * Change it and old enquiries stop matching, so treat it as a stored value.
  */
 export const HOTEL_ASSIST_LINE =
-  "Hotel booking assistance requested (optional add-on).";
+  "CUSTOM TOUR PLAN REQUESTED — the guest would like hotel recommendations along the route, with pricing, included in the quote.";
+
+/**
+ * The transport figure the guest was shown, restated in their own enquiry.
+ *
+ * Written out in full — vehicle, days, rate, total — rather than as a bare
+ * number, so the quote a planner replies with can be checked against exactly
+ * what the calculator displayed. If the two ever disagree, the enquiry itself
+ * says which one the guest saw.
+ */
+export const quoteLine = (q: Quote): string =>
+  `Transport estimate: ${q.rate.label} × ${q.days} ${q.days === 1 ? "day" : "days"} at ${money(q.rate.usdPerDay)}/day = ${money(q.total)} total (${rateBasis}).`;
+
+/* ------------------------- The catalogue's new job ------------------------ */
+
+/**
+ * What a signature journey is now, said in the guest's language.
+ *
+ * Used on /tours and /tours/[slug] in place of the old price block. The tone
+ * matters: a route without a price can read as evasive, so these lines have to
+ * make the absence feel like a deliberate, better offer — which it is.
+ */
+export const packageStance = {
+  eyebrow: "Curated route, not a fixed package",
+  title: "A route to steal, priced the honest way",
+  body: "Every journey here is a real, drivable itinerary we would happily run tomorrow — take it exactly as written, stretch it, or lift two days out of it. What we don't do is sell it at a shelf price, because the biggest number in any package is the hotels, and those move by season and by how far ahead you book. So you pay for the one thing we control: the vehicle and the chauffeur, by the day, all in.",
+  cta: "Price this as a private trip",
+} as const;

@@ -22,7 +22,7 @@ import type { MediaAsset } from "@/lib/media/types";
 import type { Tour } from "@/lib/tours";
 import type { Destination } from "@/lib/destinations";
 import type { Review } from "@/lib/content";
-import { formatPrice } from "@/utils/format";
+import { lowestDayRate, money, tripDays } from "@/lib/pricing";
 
 export type FeaturedJourney = {
   tour: Tour;
@@ -176,7 +176,12 @@ export default function JourneyStory({ feature }: { feature: FeaturedJourney }) 
           </h2>
           <p className="mt-4 text-[12px] uppercase tracking-[0.16em] text-ink/65">
             {tour.duration}
-            {tour.priceFrom > 0 && ` · from ${formatPrice(tour.priceFrom)} per person`}
+            {(() => {
+              const d = tripDays(tour.duration);
+              return d
+                ? ` · transport from ${money(lowestDayRate * d)}, all-inclusive`
+                : ` · transport from ${money(lowestDayRate)} a day`;
+            })()}
           </p>
           <p className="mt-6 text-[16px] leading-relaxed text-ink/75">
             {tour.excerpt}

@@ -12,11 +12,26 @@ import {
   Car,
   PenLine,
   ChevronDown,
+  Minus,
+  Plus,
 } from "lucide-react";
 import GradientPanel from "@/components/media/GradientPanel";
 import { site } from "@/lib/site";
-import { HOTEL_ASSIST_LINE } from "@/lib/pricing";
-import { RateCards, InclusionList } from "@/components/patterns/TransportRates";
+import {
+  HOTEL_ASSIST_LINE,
+  MAX_DAYS,
+  MIN_DAYS,
+  clampDays,
+  dayRates,
+  lowestDayRate,
+  money,
+  quoteLine,
+  rateBasis,
+  transportQuote,
+  tripDays,
+  type RateId,
+} from "@/lib/pricing";
+import { InclusionList } from "@/components/patterns/TransportRates";
 import { submitBooking, submitInquiry } from "@/lib/actions";
 
 /**
@@ -70,7 +85,6 @@ export type JourneyOption = {
   title: string;
   category: string;
   duration: string;
-  priceFrom: number;
   image: string;
 };
 
@@ -131,7 +145,6 @@ const serviceForCategory: Record<string, string> = {
 const inputCls =
   "w-full border border-ink/25 bg-white/70 px-4 py-3.5 text-[15px] text-ink placeholder:text-ink/65 focus:border-copper transition-colors";
 
-const money = (n: number) => `US$${n.toLocaleString("en-US")}`;
 
 /* ─────────────────────────── Section scaffolding ─────────────────────────── */
 
@@ -223,8 +236,20 @@ function JourneyTile({
           {journey.duration}
         </p>
         <p className="mt-0.5 text-[13px] text-ink/70">
-          from <span className="text-ink">{money(journey.priceFrom)}</span> per
-          person
+          {(() => {
+            const d = tripDays(journey.duration);
+            return d ? (
+              <>
+                transport from{" "}
+                <span className="text-ink">{money(lowestDayRate * d)}</span>
+              </>
+            ) : (
+              <>
+                transport from{" "}
+                <span className="text-ink">{money(lowestDayRate)}</span> a day
+              </>
+            );
+          })()}
         </p>
       </div>
       {checked && (
@@ -241,7 +266,8 @@ function JourneyTile({
  *
  * This is the whole point of the redesign: someone arriving from
  * /tours/cultural-odyssey has already chosen. Showing them the journey they
- * came from — with its photograph, its length and its price — confirms the
+ * came from — with its photograph, its length and what it costs to drive —
+ * confirms the
  * form knows what they clicked, and turns the first question from "what do you
  * want?" into "is this right?".
  */
@@ -286,8 +312,22 @@ function SelectedJourneyCard({
             {journey.duration}
           </p>
           <p className="mt-1 text-[15px] text-ink/75">
-            from <span className="text-ink">{money(journey.priceFrom)}</span>{" "}
-            per person
+            {/* A route, not a package: what it costs to drive, not to buy. */}
+            {(() => {
+              const d = tripDays(journey.duration);
+              return d ? (
+                <>
+                  transport from{" "}
+                  <span className="text-ink">{money(lowestDayRate * d)}</span>,
+                  all-inclusive
+                </>
+              ) : (
+                <>
+                  transport from{" "}
+                  <span className="text-ink">{money(lowestDayRate)}</span> a day
+                </>
+              );
+            })()}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             <button
@@ -402,6 +442,39 @@ export default function BookingForm({
     then — the line stays as the historical record for enquiries taken before.
   */
   const [hotelHelp, setHotelHelp] = useState(false);
+
+  /*
+    The transport quote — the only number this business actually sets.
+
+    Held as text rather than a number so the field can be empty mid-edit:
+    clamping on every keystroke turns "delete, then type 12" into a stubborn
+    "1". `days` is the clamped reading of it, so the total is always a real
+    figure even while the box is briefly blank, and blur normalises the text
+    back to whatever was charged for.
+  */
+  const [rateId, setRateId] = useState<RateId>("car");
+  const [daysText, setDaysText] = useState(() =>
+    String(tripDays(selectedJourney?.duration ?? "") ?? 3),
+  );
+  const days = clampDays(Number(daysText));
+  const quote = useMemo(() => transportQuote(rateId, days), [rateId, days]);
+
+  /*
+    A chosen journey sets the day count, because it already states one — "8
+    Days, 7 Nights" is not something anyone should have to retype. Same
+    adjust-during-render pattern as the seed block below, keyed on the duration
+    string, so both a late `?tour=` and an in-form pick run through one path.
+    It stays editable afterwards: the route is the suggestion, not the booking.
+  */
+  const durationSeed = journey?.duration ?? dayTripTour?.duration ?? "";
+  const [daysSeeded, setDaysSeeded] = useState(durationSeed);
+  if (durationSeed !== daysSeeded) {
+    setDaysSeeded(durationSeed);
+    const d = tripDays(durationSeed);
+    if (d) setDaysText(String(d));
+  }
+
+  const nudgeDays = (by: number) => setDaysText(String(clampDays(days + by)));
   const [state, setState] = useState<"idle" | "saved" | "error">("idle");
   const today = new Date().toISOString().slice(0, 10);
   const [error, setError] = useState("");
@@ -503,18 +576,28 @@ export default function BookingForm({
   /*
     The message as it will actually be stored.
 
-    The add-on is folded in here rather than at the call site so that every
-    consumer — the database insert, the notification email and the mailto
-    fallback — carries the identical text. A booking that says "hotel help
-    requested" in the email but not in the record would be worse than one that
-    says it nowhere.
+    Both machine-written lines are folded in here rather than at the call site
+    so that every consumer — the database insert, the notification email and
+    the mailto fallback — carries the identical text. A booking that says
+    "hotel help requested" in the email but not in the record would be worse
+    than one that says it nowhere.
+
+    The quote line goes on every booking, not only when someone touches the
+    stepper: whatever the calculator was showing is the figure the visitor had
+    in front of them when they pressed send, and the reply has to start from
+    the same one. It is explicitly an estimate — the day count is the guest's
+    own guess, and the finished itinerary may move it.
   */
   const outgoingMessage = useMemo(() => {
-    if (kind !== "booking" || !hotelHelp) return form.message;
-    return form.message.trim()
-      ? `${form.message.trim()}\n\n${HOTEL_ASSIST_LINE}`
-      : HOTEL_ASSIST_LINE;
-  }, [form.message, hotelHelp, kind]);
+    if (kind !== "booking") return form.message;
+    return [
+      form.message.trim(),
+      quoteLine(quote),
+      hotelHelp ? HOTEL_ASSIST_LINE : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }, [form.message, hotelHelp, kind, quote]);
 
   const composed = useMemo(() => {
     const lines = [
@@ -682,10 +765,6 @@ export default function BookingForm({
               })}
             </div>
 
-            {/* min-h keeps the fields below from jumping as the modes swap. The
-              value is the tallest revealed block (the two-column picker at sm),
-              measured rather than guessed; re-check it if a mode gains a
-              control. */}
             <div className="mt-6">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -843,27 +922,22 @@ export default function BookingForm({
                         times further down and we&apos;ll quote the exact run.
                       </p>
 
-                      {/* The published day rates, shown where the money
-                          question is actually being asked.
-
-                          Explicitly headed "by the day", because most of the
-                          options above are single runs: someone picking
-                          "Airport Transfer" must not read US$80 as their fare
-                          to Colombo. A one-way transfer is quoted on distance,
-                          and says so. */}
+                      {/* The rates themselves have moved to the calculator in
+                          step 02, which every mode now sees. What stays here is
+                          the caveat only this mode needs: most of the options
+                          above are single runs, and someone picking "Airport
+                          Transfer" must not read US$80 as their fare to
+                          Colombo. */}
                       <div className="mt-6 border border-ink/15 bg-white/50 p-5 md:p-6">
                         <p className="eyebrow text-copper-deep">
-                          Hiring a car and driver by the day
+                          A single run isn&apos;t a day rate
                         </p>
-                        <RateCards className="mt-5" />
-                        <p className="eyebrow mt-7 text-ink/65">
-                          Every day rate includes
-                        </p>
-                        <InclusionList className="mt-4" columns={2} />
-                        <p className="mt-5 text-[13px] leading-relaxed text-ink/65">
-                          Single airport runs and point-to-point transfers are
-                          quoted on the route rather than by the day — tell us
-                          the two ends below and we&apos;ll price it exactly.
+                        <p className="mt-3 text-[15px] leading-relaxed text-ink/75">
+                          Airport runs and point-to-point transfers are priced
+                          on the route, not by the day — so the estimate below
+                          is your number only if you&apos;re keeping the car and
+                          chauffeur for whole days. Give us the two ends further
+                          down and we&apos;ll price the run exactly.
                         </p>
                       </div>
                     </div>
@@ -883,8 +957,160 @@ export default function BookingForm({
           </Section>
         )}
 
+        {/* ─────────────────────── The day-rate calculator ───────────────────
+
+            The commercial model, made operable. There is no package price to
+            show any more, because the biggest line in one — the hotels — moves
+            by season and by how early you book, and a shelf price that has to
+            be walked back on first contact is worse than no price at all.
+
+            What is left is the part we control completely and can therefore
+            state to the dollar: the vehicle and the chauffeur, by the day, all
+            in. So it gets its own step rather than a footnote, it appears
+            whichever mode is chosen, and the total moves as the visitor does —
+            nobody should have to send an enquiry to find out what we charge. */}
+        {kind === "booking" && (
+          <Section step={2} title="Your transport, priced by the day">
+            <p className="max-w-2xl text-[15px] leading-relaxed text-ink/75">
+              One rate, the whole vehicle, the whole day. Fuel, tolls, parking
+              and the chauffeur&apos;s own costs are already inside it — what
+              you see here is what you pay us.
+            </p>
+
+            <div
+              role="radiogroup"
+              aria-label="Vehicle type"
+              className="mt-6 grid gap-3 sm:grid-cols-2"
+            >
+              {dayRates.map((r) => {
+                const active = rateId === r.id;
+                return (
+                  <label
+                    key={r.id}
+                    className={`relative flex cursor-pointer flex-col border p-5 transition-colors ${
+                      active
+                        ? "border-copper bg-copper/[0.06]"
+                        : "border-ink/15 bg-white/50 hover:border-copper/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="vehicle"
+                      className="sr-only"
+                      checked={active}
+                      onChange={() => setRateId(r.id)}
+                    />
+                    <span
+                      className={`text-[15px] leading-snug ${
+                        active ? "text-copper-deep" : "text-ink"
+                      }`}
+                    >
+                      {r.label}
+                    </span>
+                    {/* whitespace-nowrap: this column is ~180px wide inside the
+                        /book layout, and the price broke mid-number without
+                        it — see the same rule in TransportRates. */}
+                    <span className="h-display mt-2 whitespace-nowrap text-3xl text-ink">
+                      {money(r.usdPerDay)}
+                      <span className="ml-1.5 font-sans text-[13px] uppercase tracking-[0.14em] text-ink/65">
+                        / day
+                      </span>
+                    </span>
+                    <span className="mt-2.5 text-[13px] leading-relaxed text-ink/65">
+                      {r.suits}
+                    </span>
+                    {active && (
+                      <span className="absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full bg-copper text-white">
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <label
+                  className="eyebrow text-ink/65 mb-2 block"
+                  htmlFor="bf-days"
+                >
+                  How many days?
+                </label>
+                {/* A stepper as well as a field: on a phone, two large targets
+                    beat summoning a numeric keyboard to change 6 to 7. The
+                    field stays typeable for anyone going straight to 14. */}
+                <div className="flex items-stretch border border-ink/25 bg-white/70 focus-within:border-copper">
+                  <button
+                    type="button"
+                    onClick={() => nudgeDays(-1)}
+                    disabled={days <= MIN_DAYS}
+                    aria-label="One day fewer"
+                    className="flex w-12 shrink-0 items-center justify-center border-r border-ink/15 text-ink/70 transition-colors hover:text-copper-deep disabled:opacity-40 disabled:hover:text-ink/70"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <input
+                    id="bf-days"
+                    type="number"
+                    inputMode="numeric"
+                    min={MIN_DAYS}
+                    max={MAX_DAYS}
+                    value={daysText}
+                    onChange={(e) =>
+                      setDaysText(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                    onBlur={() => setDaysText(String(days))}
+                    className="w-full min-w-0 bg-transparent px-3 py-3.5 text-center text-[15px] text-ink [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => nudgeDays(1)}
+                    disabled={days >= MAX_DAYS}
+                    aria-label="One day more"
+                    className="flex w-12 shrink-0 items-center justify-center border-l border-ink/15 text-ink/70 transition-colors hover:text-copper-deep disabled:opacity-40 disabled:hover:text-ink/70"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <p className="mt-2.5 text-[13px] leading-relaxed text-ink/65">
+                  A best guess is fine — we confirm the count against the
+                  finished itinerary before anything is agreed.
+                </p>
+              </div>
+
+              <div className="border border-copper/35 bg-copper/[0.06] p-5">
+                <p className="eyebrow text-copper-deep">Transport estimate</p>
+                {/* One live region, not two: the total and its breakdown
+                    announce together, so a screen-reader user hears the whole
+                    change once per press rather than a bare new number. */}
+                <div aria-live="polite">
+                  <p className="h-display mt-2 whitespace-nowrap text-4xl text-ink">
+                    {money(quote.total)}
+                  </p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-ink/75">
+                    {quote.rate.label} · {money(quote.rate.usdPerDay)} a day ×{" "}
+                    {quote.days} {quote.days === 1 ? "day" : "days"}
+                  </p>
+                </div>
+                <p className="mt-2 text-[12px] uppercase tracking-[0.14em] text-ink/65">
+                  {rateBasis}
+                </p>
+              </div>
+            </div>
+
+            <p className="eyebrow mt-8 text-ink/65">Every day rate includes</p>
+            <InclusionList className="mt-4" columns={2} />
+            <p className="mt-5 text-[13px] leading-relaxed text-ink/65">
+              Not included: accommodation, entrance tickets and your own meals.
+              Where you stay is yours to choose — tick the box in step 04 and
+              we&apos;ll shortlist stays along the route, with prices.
+            </p>
+          </Section>
+        )}
+
         <Section
-          step={kind === "booking" ? 2 : 1}
+          step={kind === "booking" ? 3 : 1}
           title="Who we're replying to"
         >
           <div className="grid gap-5 sm:grid-cols-2">
@@ -948,7 +1174,7 @@ export default function BookingForm({
           </div>
         </Section>
 
-        <Section step={kind === "booking" ? 3 : 2} title="The details">
+        <Section step={kind === "booking" ? 4 : 2} title="The details">
           {kind === "booking" && (
             <div className="grid gap-5 sm:grid-cols-2">
               <div>

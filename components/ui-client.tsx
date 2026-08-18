@@ -20,6 +20,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "./motion";
 import GradientPanel from "./media/GradientPanel";
+import { lowestDayRate, money, tripDays } from "@/lib/pricing";
 
 /* ------------------------------ Section heading ------------------------------ */
 
@@ -80,7 +81,6 @@ export type TourCardTour = {
   title: string;
   category: string;
   duration: string;
-  priceFrom: number;
   image: string;
   /** Shown only by `variant="feature"`, so a slim projection may omit it. */
   excerpt?: string;
@@ -168,14 +168,38 @@ export function TourCard({
                 {tour.excerpt}
               </p>
             )}
+            {/*
+              This line used to read "From $1,850 per person" — a shelf price
+              for a package that bundled accommodation. It is now the transport
+              cost the route implies, which is the number we can actually stand
+              behind: the vehicle and chauffeur for the length of the trip, all
+              in. `tripDays` returns null for a duration it cannot read, and
+              then the card says the rate without a total rather than inventing
+              one.
+            */}
             <p
               className={`text-sand/80 ${feature ? "mt-4 text-[15px]" : "mt-2 text-sm"}`}
             >
-              From{" "}
-              <span className="text-copper-light font-semibold">
-                ${tour.priceFrom}
-              </span>{" "}
-              per person
+              {(() => {
+                const d = tripDays(tour.duration);
+                return d ? (
+                  <>
+                    Transport from{" "}
+                    <span className="font-semibold text-copper-light">
+                      {money(lowestDayRate * d)}
+                    </span>{" "}
+                    for the car — all-inclusive
+                  </>
+                ) : (
+                  <>
+                    Transport from{" "}
+                    <span className="font-semibold text-copper-light">
+                      {money(lowestDayRate)}
+                    </span>{" "}
+                    a day — all-inclusive
+                  </>
+                );
+              })()}
             </p>
           </div>
         </div>

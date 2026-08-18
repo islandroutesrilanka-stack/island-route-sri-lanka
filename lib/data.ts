@@ -74,7 +74,11 @@ async function fromTable<Row, T>(
 
 type TourRow = {
   slug: string; title: string; category: Tour["category"]; duration: string | null;
-  price_from: number | null; image: string | null; excerpt: string | null;
+  /* `price_from` is still a column, and is deliberately not read. The fixed
+     per-person package price was retired when pricing moved to the transport
+     day rate (lib/pricing.ts); leaving the column in place keeps historic rows
+     intact, but nothing may render it. */
+  image: string | null; excerpt: string | null;
   highlights: string[] | null; includes: string[] | null;
   itinerary: Tour["itinerary"] | null; featured: boolean;
   /**
@@ -117,7 +121,6 @@ const mapTour = (r: TourRow): Tour => {
     title: r.title,
     category: r.category,
     duration: r.duration ?? "",
-    priceFrom: Number(r.price_from ?? 0),
     image: r.image ?? "",
     excerpt: r.excerpt ?? "",
     highlights: r.highlights ?? [],

@@ -23,7 +23,7 @@ export type Faq = { q: string; a: string };
 export const HOMEPAGE_FAQS: Faq[] = [
   {
     q: "How does pricing work?",
-    a: "Every journey is built around your dates, pace and choice of stays, so there is no fixed shelf price. Tell us what you have in mind and you'll get a clear, itemised quote — what's included, what isn't, and no commission built into the route.",
+    a: "You pay by the day for the vehicle and chauffeur — US$80 a day for a car, US$120 for a van, per vehicle rather than per person, with fuel, tolls, parking and the driver's own costs already inside it. There is no fixed package price on top, because accommodation moves by season and by how early you book, and we would rather you chose your own. If you'd like us to shortlist hotels along your route and quote them, tick the box on the booking form.",
   },
   {
     q: "How far ahead should I book?",

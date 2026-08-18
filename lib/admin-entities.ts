@@ -47,7 +47,6 @@ export const entities: Record<string, EntityConfig> = {
       { key: "slug", label: "URL slug", type: "text", required: true, help: "lowercase-with-dashes, unique" },
       { key: "category", label: "Category", type: "select", options: ["Day Tour", "Multi-Day", "Safari"], required: true },
       { key: "duration", label: "Duration", type: "text", help: "e.g. 7 days · 6 nights" },
-      { key: "price_from", label: "Price from (USD, per person)", type: "number" },
       { key: "image", label: "Cover image URL", type: "image" },
       { key: "excerpt", label: "Short description", type: "textarea" },
       { key: "highlights", label: "Highlights (one per line)", type: "lines" },

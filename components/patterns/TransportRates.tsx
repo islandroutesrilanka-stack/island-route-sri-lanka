@@ -10,13 +10,16 @@
  * background. It swaps the palette and nothing else — the content, the order
  * and the markup are identical, which is the point.
  */
-import { Check, Info } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check, Info } from "lucide-react";
 import {
   dayRates,
   money,
+  packageStance,
   rateBasis,
   serviceScope,
   transportInclusions,
+  tripDays,
 } from "@/lib/pricing";
 
 type Tone = "light" | "dark";
@@ -39,6 +42,57 @@ const t = (tone: Tone) =>
         accent: "text-copper-deep",
         panel: "bg-white/50",
       };
+
+/* ------------------------------ Package stance ----------------------------- */
+
+/**
+ * Why these routes carry no price, said once and reused.
+ *
+ * /tours and every /tours/[slug] used to end at a number — "From US$1,850 per
+ * person" — which framed each journey as a thing you buy off a shelf. It never
+ * survived first contact: most of that figure was hotels, hotels move by season
+ * and by lead time, and so the quote that followed was always a correction.
+ *
+ * The routes are now what they honestly were all along: itineraries worth
+ * stealing. This band says that in the visitor's own terms and points at the
+ * one number we can stand behind, so nobody has to work out from an absence
+ * that the price is missing on purpose.
+ *
+ * `href` defaults to the calculator on /book. Pass `?tour=` to carry the route
+ * through, which is what the detail page does.
+ */
+export function PackageStance({
+  tone = "light",
+  href = "/book",
+  className = "",
+}: {
+  tone?: Tone;
+  href?: string;
+  className?: string;
+}) {
+  const c = t(tone);
+  return (
+    <div className={`border ${c.border} ${c.panel} p-6 md:p-9 ${className}`}>
+      <p className={`eyebrow ${c.accent}`}>{packageStance.eyebrow}</p>
+      <h3 className={`h-display mt-3 max-w-xl text-3xl ${c.heading} md:text-4xl`}>
+        {packageStance.title}
+      </h3>
+      <p className={`mt-5 max-w-2xl text-[15px] leading-relaxed ${c.body}`}>
+        {packageStance.body}
+      </p>
+      <Link
+        href={href}
+        className={`mt-7 inline-flex items-center gap-2.5 border px-7 py-3.5 text-[13px] uppercase tracking-[0.16em] transition-colors ${
+          tone === "dark"
+            ? "border-sand/30 text-sand hover:border-copper-light hover:text-copper-light"
+            : "border-ink/25 text-ink hover:border-copper-deep hover:text-copper-deep"
+        }`}
+      >
+        {packageStance.cta} <ArrowRight size={15} />
+      </Link>
+    </div>
+  );
+}
 
 /* --------------------------------- Rates ---------------------------------- */
 
@@ -122,6 +176,60 @@ export function RateBadge({
           : `All-inclusive · ${rateBasis}`}
       </span>
     </p>
+  );
+}
+
+/**
+ * What a specific route costs to drive, both tiers, for its own length.
+ *
+ * This replaced the per-person price block on /tours/[slug]. It is a better
+ * answer to the same question — a guest asking "what will this cost me?" now
+ * gets a real total for the half of the trip we sell, rather than an indicative
+ * figure for a package that was going to be re-quoted anyway.
+ *
+ * Renders nothing when the duration has no readable day count. A journey we
+ * cannot measure is one we cannot total, and a wrong total is worse than none.
+ */
+export function TripCost({
+  duration,
+  tone = "light",
+  className = "",
+}: {
+  duration: string;
+  tone?: Tone;
+  className?: string;
+}) {
+  const c = t(tone);
+  const days = tripDays(duration);
+  if (!days) return null;
+
+  return (
+    <div className={className}>
+      <p className={`text-[13px] leading-relaxed ${c.muted}`}>
+        Transport for {days} {days === 1 ? "day" : "days"}, all-inclusive:
+      </p>
+      <ul className={`mt-3 divide-y divide-current/10 border-y ${c.border}`}>
+        {dayRates.map((r) => (
+          <li
+            key={r.id}
+            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+          >
+            <span className={`text-[15px] ${c.body}`}>{r.label}</span>
+            <span className={`whitespace-nowrap font-display text-2xl ${c.heading}`}>
+              {money(r.usdPerDay * days)}
+              <span className={`ml-1.5 font-body text-[12px] ${c.muted}`}>
+                {money(r.usdPerDay)}/day
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className={`mt-3 text-[13px] leading-relaxed ${c.muted}`}>
+        {rateBasis[0].toUpperCase() + rateBasis.slice(1)}. Accommodation is not
+        included — book your own stays, or tick the hotel box when you enquire
+        and we&apos;ll recommend and price them for you.
+      </p>
+    </div>
   );
 }
 

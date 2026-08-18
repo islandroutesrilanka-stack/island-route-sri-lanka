@@ -10,6 +10,8 @@ import { CTABand, TourCard } from "@/components/ui";
 import GradientPanel from "@/components/media/GradientPanel";
 import { getTours, getTourBySlug } from "@/lib/data";
 import { waLink, site } from "@/lib/site";
+import { lowestDayRate, money, tripDays } from "@/lib/pricing";
+import { PackageStance, TripCost } from "@/components/patterns/TransportRates";
 
 export const revalidate = 60;
 
@@ -55,6 +57,11 @@ export default async function TourPage({ params }: { params: { slug: string } })
     .filter((t) => t.slug !== tour.slug && t.category === tour.category)
     .slice(0, 3);
 
+  /* Length of the route, for the transport figures. Null when the duration
+     string carries no day count, in which case every surface below falls back
+     to the day rate on its own rather than inventing a total. */
+  const days = tripDays(tour.duration);
+
   // Rich-result markup so Google can show the trip, price and breadcrumb trail
   const jsonLd = {
     "@context": "https://schema.org",
@@ -74,12 +81,32 @@ export default async function TourPage({ params }: { params: { slug: string } })
           name: `${d.day}: ${d.title}`,
           description: d.detail,
         })),
+        /*
+          A UnitPriceSpecification, not a flat `price`, because there is no
+          longer a package price to state. What is genuinely for sale is a
+          vehicle and chauffeur by the day, so that is what the markup says —
+          and it stays valid whatever length the guest ends up travelling.
+          Emitting a fixed total here while the page shows a day rate would be
+          the kind of mismatch that costs a rich result.
+        */
         offers: {
           "@type": "Offer",
-          price: tour.priceFrom,
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
           url: `${site.url}/tours/${tour.slug}`,
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: lowestDayRate,
+            priceCurrency: "USD",
+            unitCode: "DAY",
+            referenceQuantity: {
+              "@type": "QuantitativeValue",
+              value: 1,
+              unitCode: "DAY",
+            },
+            description:
+              "Private vehicle with English-speaking chauffeur guide, per vehicle per day, inclusive of fuel, tolls, parking and the driver's own costs. Accommodation is not included.",
+          },
         },
       },
       {
@@ -129,7 +156,10 @@ export default async function TourPage({ params }: { params: { slug: string } })
                 <Clock size={15} className="text-copper-light" /> {tour.duration}
               </span>
               <span className="inline-flex items-center gap-2">
-                <Tag size={15} className="text-copper-light" /> From ${tour.priceFrom} per person
+                <Tag size={15} className="text-copper-light" />{" "}
+                {days
+                  ? `Transport from ${money(lowestDayRate * days)}, all-inclusive`
+                  : `Transport from ${money(lowestDayRate)} a day`}
               </span>
             </div>
           </Reveal>
@@ -184,15 +214,19 @@ export default async function TourPage({ params }: { params: { slug: string } })
           {/* Sidebar */}
           <aside className="lg:col-span-5">
             <Reveal className="lg:sticky lg:top-28 border border-ink/10 bg-white/60 p-7 md:p-9">
-              <p className="eyebrow text-copper-deep">Book this journey</p>
-              <p className="h-display text-4xl text-ink mt-3">
-                ${tour.priceFrom}
-                <span className="font-body text-sm text-ink/65"> / person, from</span>
-              </p>
-              <p className="mt-3 text-sm text-ink/70 leading-relaxed">
-                Final price depends on season, vehicle and group size. Request a
-                quote — we reply within hours, and nothing is paid until your
-                plan is perfect.
+              <p className="eyebrow text-copper-deep">What this route costs</p>
+              {/*
+                Two real totals, not one indicative per-person figure. The old
+                block quoted a package price that bundled hotels and was always
+                going to be re-quoted; this is the number we can hold to, and
+                the guest can see which vehicle changes it.
+              */}
+              <TripCost duration={tour.duration} className="mt-4" />
+              <p className="mt-4 text-sm leading-relaxed text-ink/70">
+                Take this route as written or reshape it — the rate is the same
+                either way, and nothing is paid online. The button below opens
+                the calculator with this route and its length already in it;
+                change either and the figure follows.
               </p>
 
               <div className="mt-6 space-y-2.5">
@@ -208,7 +242,7 @@ export default async function TourPage({ params }: { params: { slug: string } })
                   href={`/book?service=${encodeURIComponent(tour.category)}&tour=${encodeURIComponent(tour.title)}`}
                   className="bg-ink text-sand text-center px-7 py-4 text-[13px] uppercase tracking-[0.16em] hover:bg-copper-deep transition-colors"
                 >
-                  Request a quote
+                  Price this trip
                 </Link>
                 <a
                   href={waLink(`Hello Island Route! I'm interested in the "${tour.title}" (${tour.duration}). Could you send me a quote?`)}
@@ -221,6 +255,16 @@ export default async function TourPage({ params }: { params: { slug: string } })
               </div>
             </Reveal>
           </aside>
+        </div>
+      </section>
+
+      {/* Why there is no total on this page — placed after the itinerary,
+          because that is the point at which the question forms. */}
+      <section className="section bg-dune">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <PackageStance
+            href={`/book?service=${encodeURIComponent(tour.category)}&tour=${encodeURIComponent(tour.title)}`}
+          />
         </div>
       </section>
 

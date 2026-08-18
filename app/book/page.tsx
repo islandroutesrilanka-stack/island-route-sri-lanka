@@ -96,14 +96,12 @@ const toOption = (t: {
   title: string;
   category: string;
   duration: string;
-  priceFrom: number;
   image: string;
 }): JourneyOption => ({
   slug: t.slug,
   title: t.title,
   category: t.category,
   duration: t.duration,
-  priceFrom: t.priceFrom,
   image: t.image,
 });
 

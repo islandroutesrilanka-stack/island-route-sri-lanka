@@ -9,7 +9,6 @@ export type Tour = {
   title: string;
   category: "Day Tour" | "Multi-Day" | "Safari";
   duration: string;
-  priceFrom: number; // USD per person, indicative
   image: string;
   excerpt: string;
   highlights: string[];
@@ -64,7 +63,6 @@ const catalogue: Tour[] = [
     title: "Essential Sri Lanka",
     category: "Multi-Day",
     duration: "7 days · 6 nights",
-    priceFrom: 690,
     // The south-coast finale, not the train bridge. The bridge belongs to the
     // Ella day tour, and two cards in the same grid wearing the same photograph
     // read as a duplicate listing rather than as two different weeks.
@@ -103,7 +101,6 @@ const catalogue: Tour[] = [
     title: "Grand Island Circuit",
     category: "Multi-Day",
     duration: "14 days · 13 nights",
-    priceFrom: 1390,
     image: commonsPlaces.Anuradhapura.src,
     featured: true,
     excerpt:
@@ -140,7 +137,6 @@ const catalogue: Tour[] = [
     title: "Hill Country & Tea Trails",
     category: "Multi-Day",
     duration: "5 days · 4 nights",
-    priceFrom: 490,
     /* Lipton's Seat, which the itinerary itself climbs. */
     image: commonsPlaces.Haputale.src,
     excerpt:
@@ -172,7 +168,6 @@ const catalogue: Tour[] = [
     title: "Wild Coast — Safari & Beaches",
     category: "Multi-Day",
     duration: "10 days · 9 nights",
-    priceFrom: 980,
     /* Bundala rather than the leopard, so this doesn't
        duplicate the dedicated Yala safari card two entries down. */
     image: commonsPlaces.Bundala.src,
@@ -198,7 +193,6 @@ const catalogue: Tour[] = [
     title: "Surf & Soul — East Coast",
     category: "Multi-Day",
     duration: "8 days · 7 nights",
-    priceFrom: 720,
     image: media.arugamBay.src,
     excerpt:
       "Arugam Bay season done properly — dawn patrol transfers to Main Point, Whiskey Point and Peanut Farm, with a lagoon safari and Kumana wildlife on rest days.",
@@ -224,7 +218,6 @@ const catalogue: Tour[] = [
     title: "Sigiriya & Dambulla in a Day",
     category: "Day Tour",
     duration: "Full day · from Colombo/Kandy/Negombo",
-    priceFrom: 95,
     // Dambulla rather than Sigiriya: the rock itself leads The Cultural Odyssey
     // higher up the same grid, and the cave Buddhas are the half of this day
     // trip that nobody has already seen on a postcard.
@@ -247,7 +240,6 @@ const catalogue: Tour[] = [
     title: "Kandy — The Sacred City",
     category: "Day Tour",
     duration: "Full day · from Colombo/Negombo",
-    priceFrom: 85,
     image: media.kandyTempleMoat.src,
     excerpt:
       "Temples, royal gardens and highland air: the Temple of the Sacred Tooth, Peradeniya Botanical Gardens and a scenic hill-road return.",
@@ -266,7 +258,6 @@ const catalogue: Tour[] = [
     title: "Ella & the Nine Arch Bridge",
     category: "Day Tour",
     duration: "Full day · from south coast/hill country",
-    priceFrom: 80,
     image: media.nineArchBridge.src,
     excerpt:
       "Watch the blue train cross the jungle-wrapped Nine Arch Bridge, hike Little Adam's Peak, and cool off at Rawana Falls.",
@@ -285,7 +276,6 @@ const catalogue: Tour[] = [
     title: "Galle Fort & the South Coast",
     category: "Day Tour",
     duration: "Full day · from Colombo/south coast",
-    priceFrom: 75,
     image: media.galleFortStreet.src,
     excerpt:
       "Cinnamon-scented lanes inside a 17th-century Dutch fort, stilt-fishermen coastline, a turtle hatchery and the day's best beach.",
@@ -306,7 +296,6 @@ const catalogue: Tour[] = [
     title: "Yala Leopard Safari",
     category: "Safari",
     duration: "Half or full day · dawn & dusk drives",
-    priceFrom: 110,
     // The jeeps, not the leopard. The leopard portrait leads Leopard Light in
     // the same grid; this card is the day itself — and a photograph of the
     // vehicle you actually ride in promises less than a cat we cannot.
@@ -329,7 +318,6 @@ const catalogue: Tour[] = [
     title: "Minneriya — The Gathering",
     category: "Safari",
     duration: "Half day · afternoon drive",
-    priceFrom: 90,
     /* Hurulu Eco Park, the elephant reserve at Habarana that
        shares the Minneriya herds and is the wet-season alternative this tour
        already switches to. */
@@ -351,7 +339,6 @@ const catalogue: Tour[] = [
     title: "Udawalawe Elephant Safari",
     category: "Safari",
     duration: "Half day · dawn or dusk",
-    priceFrom: 85,
     image: commonsPlaces.Udawalawe.src,
     excerpt:
       "Almost guaranteed elephant encounters on open grassland beneath the highland escarpment, with a visit to the famous orphan Elephant Transit Home.",

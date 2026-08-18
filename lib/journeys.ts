@@ -23,11 +23,21 @@ import { commonsPlaces } from "./media/commons";
  * adopting this collection publishes the five categories currently sitting
  * empty (food, wellness, adventure, local-life, luxury).
  *
- * PRICES ARE PLACEHOLDERS. `priceFrom` is an indicative per-person figure at
- * twin share, positioned for the boutique/luxury tier rather than costed against
- * real supplier rates. Replace every one before this goes live — likewise the
- * `includes` lines that name accommodation standards, which are a commercial
- * promise only you can make.
+ * THESE ROUTES CARRY NO PRICE, by design. They used to hold an indicative
+ * per-person figure at twin share, which bundled accommodation and therefore
+ * could not stay true: hotel tariffs move by season and by lead time, so a
+ * shelf price is stale the week it is published. Cost is now composed from the
+ * transport day rate in lib/pricing.ts — vehicle × days — and the stays are the
+ * guest's own, or ours to recommend when they ask. Do not reintroduce a
+ * `priceFrom` field here; `Tour` no longer has one.
+ *
+ * The `includes` lines below therefore describe what is genuinely in the
+ * transport service plus what the route delivers — not accommodation. They
+ * used to open with a hotel line ("Boutique and heritage accommodation,
+ * breakfast daily") which was the one promise here we could not keep: we do
+ * not hold the rooms, take the money for them, or own the cancellation terms.
+ * Hotels are an opt-in service the booking form asks about, and the enquiry
+ * says so in plain words. Do not put accommodation back into `includes`.
  *
  * Seasonality is stated inside the copy, never implied. The east and the north
  * run May–September; the south and west run November–April. Selling an east
@@ -40,7 +50,6 @@ export const journeys: Tour[] = [
     title: "The Cultural Odyssey",
     category: "Multi-Day",
     duration: "8 days · 7 nights",
-    priceFrom: 1850,
     image: "/photography/sigiriya-rock.jpg",
     featured: true,
     destinationSlugs: ["sigiriya", "kandy"],
@@ -66,8 +75,8 @@ export const journeys: Tour[] = [
       "Private A/C vehicle & chauffeur-guide throughout",
       "Chartered licensed site guide at Anuradhapura and Polonnaruwa",
       "Cultural Triangle site tickets and temple donations",
-      "Boutique and heritage accommodation, breakfast daily",
-      "All fuel, parking, and driver accommodation",
+      "All fuel, tolls, parking and the driver's own costs",
+      "A shortlist of heritage stays near each night's stop, on request",
       "Airport pickup & drop-off, bottled water daily",
       "24/7 WhatsApp support",
     ],
@@ -129,7 +138,6 @@ export const journeys: Tour[] = [
     title: "Sun-Kissed Horizons: The Southern Escape",
     category: "Multi-Day",
     duration: "9 days · 8 nights",
-    priceFrom: 2150,
     image: "/photography/mirissa-coconut-tree-hill.jpg",
     featured: true,
     destinationSlugs: ["galle", "mirissa"],
@@ -154,7 +162,7 @@ export const journeys: Tour[] = [
     ],
     includes: [
       "Private A/C vehicle & chauffeur-guide throughout",
-      "Boutique villa and small-hotel accommodation, breakfast daily",
+      "All fuel, tolls, parking and the driver's own costs",
       "Private half-day cookery session with a local family",
       "Small-boat whale excursion with a licensed skipper (in season)",
       "Ayurvedic consultation and treatment at a certified centre",
@@ -226,7 +234,6 @@ export const journeys: Tour[] = [
     title: "Luxe Serenity in the Hills",
     category: "Multi-Day",
     duration: "7 days · 6 nights",
-    priceFrom: 1690,
     image: "/photography/hill-country-train.jpg",
     featured: true,
     destinationSlugs: ["kandy", "nuwara-eliya", "ella"],
@@ -248,7 +255,7 @@ export const journeys: Tour[] = [
     ],
     includes: [
       "Private A/C vehicle & chauffeur-guide throughout",
-      "Tea-estate bungalow accommodation with full board where offered",
+      "All fuel, tolls, parking and the driver's own costs",
       "Reserved first-class observation seats, Haputale–Ella",
       "Private tea factory tour and a guided tasting with the estate's taster",
       "Horton Plains park entry and a licensed nature guide",
@@ -307,7 +314,6 @@ export const journeys: Tour[] = [
     title: "Leopard Light: A Safari Journey",
     category: "Safari",
     duration: "8 days · 7 nights",
-    priceFrom: 2290,
     image: "/photography/yala-leopard.jpg",
     featured: true,
     destinationSlugs: ["yala"],
@@ -335,8 +341,8 @@ export const journeys: Tour[] = [
       "Private A/C vehicle & chauffeur-guide between parks",
       "Private 4x4 jeep and tracker for every game drive",
       "All national park entry fees and permits",
-      "Lodge and tented-camp accommodation, full board on safari days",
-      "Packed breakfast on dawn drives",
+      "All fuel, tolls, parking and the driver's own costs",
+      "Dawn departures timed to the park gates, water and a cool box in the jeep",
       "Airport pickup & drop-off, bottled water daily",
       "24/7 WhatsApp support",
     ],
@@ -398,7 +404,6 @@ export const journeys: Tour[] = [
     title: "Salt & Season: The East Coast Awakening",
     category: "Multi-Day",
     duration: "8 days · 7 nights",
-    priceFrom: 1590,
     image: "/photography/whisky-point-lineup.jpg",
     destinationSlugs: ["arugam-bay"],
     /* Days 2–5. The whole east coast north of Arugam Bay, none of it with a
@@ -421,7 +426,7 @@ export const journeys: Tour[] = [
     ],
     includes: [
       "Private A/C vehicle & chauffeur-guide throughout",
-      "Beachfront and boutique accommodation, breakfast daily",
+      "All fuel, tolls, parking and the driver's own costs",
       "Snorkelling boat and equipment at Pigeon Island",
       "Guided lagoon paddle at Pottuvil",
       "Surf guiding and board hire at Arugam Bay",
@@ -486,7 +491,6 @@ export const journeys: Tour[] = [
     title: "Palmyra & Pearl: The Northern Passage",
     category: "Multi-Day",
     duration: "9 days · 8 nights",
-    priceFrom: 1950,
     /* This shipped empty, so the card rendered a gradient — the one journey in
        the collection with no photograph was the one selling the half of the
        island nobody has pictured. Nallur's gopuram is the image the copy already
@@ -516,7 +520,7 @@ export const journeys: Tour[] = [
     ],
     includes: [
       "Private A/C vehicle & chauffeur-guide throughout",
-      "Boutique and locally owned accommodation, breakfast daily",
+      "All fuel, tolls, parking and the driver's own costs",
       "Tamil-speaking guide for the peninsula",
       "Delft and Nagadeepa ferry crossings, arranged and timed",
       "Private jeep and tracker for the Wilpattu game drive",

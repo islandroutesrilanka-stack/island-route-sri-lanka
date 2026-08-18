@@ -16,7 +16,9 @@ import { commonsPlaces } from "@/lib/media/commons";
 import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
 import { regions } from "@/lib/regions";
-import { formatPrice } from "@/utils/format";
+import { lowestDayRate, money, tripDays } from "@/lib/pricing";
+import { PackageStance } from "@/components/patterns/TransportRates";
+
 import { splitIfLong } from "@/lib/copy";
 import {
   seasons,
@@ -25,6 +27,21 @@ import {
   type SeasonPick,
 } from "@/lib/seasons";
 import type { Tour } from "@/lib/tours";
+
+/**
+ * The transport figure that follows a duration in a meta line.
+ *
+ * Replaces "· From $1,850 per person", which priced a package that included
+ * hotels. What a route costs to drive is knowable; what it costs to sleep is
+ * not, so only the first half is quoted. One helper because this line appears
+ * in three places on this page and they must not diverge.
+ */
+const transportNote = (duration: string): string => {
+  const d = tripDays(duration);
+  return d
+    ? ` · transport from ${money(lowestDayRate * d)}`
+    : ` · transport from ${money(lowestDayRate)} a day`;
+};
 
 /*
   Static, and it stays static.
@@ -218,8 +235,7 @@ function SeasonPanel({
                 </h4>
                 <p className="mt-2 text-[12px] uppercase tracking-[0.14em] text-ink/65">
                   {t.duration}
-                  {t.priceFrom > 0 &&
-                    ` · From ${formatPrice(t.priceFrom)} per person`}
+                  {transportNote(t.duration)}
                 </p>
                 <p className="mt-4 text-[15px] leading-relaxed text-ink/75">
                   {why.lede}
@@ -261,8 +277,7 @@ function SeasonPanel({
                       </span>
                       <span className="mt-0.5 block text-[12px] uppercase tracking-[0.14em] text-ink/65">
                         {t.duration}
-                        {t.priceFrom > 0 &&
-                          ` · From ${formatPrice(t.priceFrom)}`}
+                        {transportNote(t.duration)}
                       </span>
                     </Link>
                     <p className="mt-1 text-[13px] leading-relaxed text-ink/65">
@@ -297,7 +312,6 @@ export default async function ToursPage() {
     title: t.title,
     category: t.category,
     duration: t.duration,
-    priceFrom: t.priceFrom,
     image: t.image,
     themeSlugs: t.themeSlugs,
     destinationSlugs: t.destinationSlugs,
@@ -312,10 +326,10 @@ export default async function ToursPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Tours & packages"
+        eyebrow="Curated routes"
         title="Journeys crafted, never copied"
-        intro="Every route, hotel and hour of pacing is reshaped around you."
-        note="Prices are indicative, per person, and confirmed in your personal quote."
+        intro="Real itineraries, drivable tomorrow — take one as written or lift two days out of it."
+        note="No fixed package price: you pay the transport day rate, all-inclusive, and keep your choice of where to stay."
         image={commonsPlaces.Trincomalee.src}
       />
 
@@ -497,8 +511,7 @@ export default async function ToursPage() {
                                 </span>
                                 <span className="text-[12px] uppercase tracking-[0.14em] text-ink/65">
                                   {t.duration}
-                                  {t.priceFrom > 0 &&
-                                    ` · From ${formatPrice(t.priceFrom)} per person`}
+                                  {transportNote(t.duration)}
                                 </span>
                               </Link>
                             </li>
@@ -521,6 +534,16 @@ export default async function ToursPage() {
           </div>
         </section>
       </FilteredCatalogue>
+
+      {/* ═══════════ How these routes are priced ═══════════
+          Placed after the catalogue and before the builder, which is where the
+          question actually lands: someone who has just read six itineraries
+          without seeing a total is looking for this paragraph. */}
+      <section className="section bg-dune">
+        <div className="mx-auto max-w-wrap px-5 md:px-8">
+          <PackageStance />
+        </div>
+      </section>
 
       {/* ═══════════ Build your own journey ═══════════
           Client-side selections only. No reservation, no new table — the CTA
