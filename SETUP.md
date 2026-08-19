@@ -47,7 +47,35 @@ extra alert layer.
 You'll now receive an email for every new booking/enquiry, and guests get an
 automatic confirmation.
 
-## 4. Deploy (Vercel, free)
+## 4. Telegram alerts (optional, ~3 minutes)
+
+Email is the record; Telegram is the alert. Every new **booking request**
+arrives as a push notification with the guest, the vehicle, the day count,
+the transport quote and — highlighted — whether they asked for hotel booking
+assistance.
+
+1. In Telegram, open a chat with **@BotFather** and send `/newbot`. Give it a
+   display name (e.g. *Island Route Bookings*) and a username ending in `bot`
+   (e.g. `islandroute_bookings_bot`). BotFather replies with an **HTTP API
+   token** — that is `TELEGRAM_BOT_TOKEN`.
+2. Open a chat with your new bot and press **Start** (or send any message).
+   A bot cannot message you until you have messaged it first.
+3. Visit `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and
+   read `result[0].message.chat.id` — that is `TELEGRAM_CHAT_ID`.
+4. Add to `.env.local`:
+   ```
+   TELEGRAM_BOT_TOKEN=<the token from BotFather>
+   TELEGRAM_CHAT_ID=<the numeric chat id>
+   ```
+
+Leave either blank and the send is skipped silently. A Telegram failure of any
+kind — wrong token, blocked bot, API down — never affects the booking: the row
+is written to the database before the notification is attempted.
+
+To alert more than one person, add the bot to a **group** instead and use the
+group's id (negative, e.g. `-1001234567890`) as `TELEGRAM_CHAT_ID`.
+
+## 5. Deploy (Vercel, free)
 
 1. Push the project to GitHub, import it at [vercel.com](https://vercel.com).
 2. Add the same environment variables in **Project → Settings → Environment Variables**.

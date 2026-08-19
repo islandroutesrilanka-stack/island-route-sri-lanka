@@ -131,6 +131,24 @@ export function transportQuote(id: RateId, days: number): Quote {
 }
 
 /**
+ * The calculator's state as it arrives from the browser, turned back into a
+ * quote the server can trust.
+ *
+ * A server action's arguments are attacker-controlled, so the figure is
+ * recomputed here from the published rate rather than accepted as sent: the
+ * client says which vehicle and how many days, never how much that costs.
+ * Returns null when the vehicle isn't one we publish a rate for, which is the
+ * honest answer for a submission that carried no calculator state at all —
+ * the caller then shows no transport line rather than an invented one.
+ */
+export function parseQuote(rateId: unknown, days: unknown): Quote | null {
+  const rate = dayRates.find((r) => r.id === rateId);
+  const n = typeof days === "number" ? days : Number(days);
+  if (!rate || !Number.isFinite(n)) return null;
+  return transportQuote(rate.id, n);
+}
+
+/**
  * How many chargeable days a catalogue duration implies, for the "transport
  * from US$X" line on a journey card.
  *

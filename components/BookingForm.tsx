@@ -634,6 +634,13 @@ export default function BookingForm({
               travellers: form.travellers,
               message: outgoingMessage,
               company: form.company,
+              /* The calculator's state, structured, for the Telegram alert
+                 only — the stored record is still the message above. The
+                 server recomputes the money from these two; nothing here is
+                 trusted as a figure. */
+              rateId,
+              days,
+              hotelHelp,
             })
           : await submitInquiry({
               name: form.name,
