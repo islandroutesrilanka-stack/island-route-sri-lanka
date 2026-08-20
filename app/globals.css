@@ -344,3 +344,32 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Google Translate: keep the machinery, drop the furniture ────────────────
+
+   The widget arrives with a UI of its own: a mount point we never show, a
+   banner bolted to the top of the document, and a tooltip that pops up over
+   translated text. The banner is the one that actually breaks something —
+   Google gives `body` an inline `top: 40px` to clear it, which slides the
+   whole page down behind a header that is fixed to the viewport and does not
+   move with it. Hidden in CSS rather than in JavaScript so none of it is on
+   screen for even the frame it would take a script to react. */
+#google-translate-host,
+body > .skiptranslate,
+.goog-te-banner-frame,
+#goog-gt-tt {
+  display: none !important;
+}
+
+/* Undoes the inline offset described above. */
+body {
+  top: 0 !important;
+}
+
+/* Google marks translated runs with a yellow highlight, on the assumption that
+   translation is something you are debugging. Here it is something a guest is
+   reading. */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}

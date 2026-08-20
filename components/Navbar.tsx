@@ -11,6 +11,10 @@ import {
   type CSSProperties,
 } from "react";
 import { Menu, X } from "lucide-react";
+import LanguageSwitcher, {
+  LanguageRow,
+  TranslateHost,
+} from "@/components/LanguageSwitcher";
 import { waLink, defaultWaMessage } from "@/lib/site";
 
 /**
@@ -24,6 +28,11 @@ import { waLink, defaultWaMessage } from "@/lib/site";
  * "Journeys" points at /tours — the URL is preserved for SEO, the label speaks
  * the brand's language. "Experiences" now points at the real /experiences axis
  * rather than a homepage anchor.
+ *
+ * The language control is the one addition, and it is placed after the
+ * links rather than among them: it is not somewhere you can go. It sits
+ * between the last destination and the conversion, which is where a
+ * utility belongs — reachable, unweighted, and out of the CTA's way.
  *
  * Services, Gallery and Reviews are demoted, not removed: they stay in the
  * mobile sheet and in the footer. Fleet and Contact live in the footer only —
@@ -133,10 +142,41 @@ export default function Navbar() {
     const nav = navRef.current;
     const el = nav?.querySelector<HTMLElement>("[data-nav-active]");
     if (!nav || !el) return setRule(null);
-    setRule({ x: el.offsetLeft, w: el.offsetWidth });
+    /*
+      Rects, not `offsetLeft`.
+
+      `offsetLeft` is measured from the offset parent, and each link's offset
+      parent is not this nav — it is the `rise-in` wrapper immediately around
+      it, because an element carrying a transform animation counts as one. So
+      every link reported an offset of 0 and the rule sat at the far left of
+      the nav with the right width and the wrong position, whichever section
+      you were in. Two rects subtract to the distance that was actually
+      wanted, and they answer for the real box regardless of what is wrapped
+      around it.
+    */
+    const bar = nav.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    const x = box.left - bar.left;
+    const w = box.width;
+    // Same numbers, same object: an observer that feeds this must not be
+    // able to re-render its way into a loop.
+    setRule((prev) => (prev && prev.x === x && prev.w === w ? prev : { x, w }));
   }, []);
 
-  useLayoutEffect(measure, [measure, pathname]);
+  useLayoutEffect(() => {
+    measure();
+    /*
+      The active label can change width without the window moving: the
+      display font swaps in, and the language switcher rewrites every label
+      in place. Watching the element itself catches both, and catches them
+      even when the nav's overall width happens to come out the same.
+    */
+    const el = navRef.current?.querySelector<HTMLElement>("[data-nav-active]");
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure, pathname]);
 
   useEffect(() => {
     // Nav labels reflow when the font swaps in and when the viewport changes.
@@ -180,7 +220,13 @@ export default function Navbar() {
           {/* Wordmark. Tighter optical tracking on the display face, and the
               locality set in small caps rather than as a second-class label. */}
           <div className="rise-in" style={enter(0.22, "-8px", "0.5s")}>
-            <Link href="/" className="group flex items-baseline gap-2.5">
+            {/* A brand name, not a phrase: `translate` keeps it reading
+                Island Route in every language the switcher offers. */}
+            <Link
+              href="/"
+              translate="no"
+              className="group flex items-baseline gap-2.5"
+            >
               <span
                 className={`font-display text-xl tracking-[-0.015em] transition-colors md:text-[1.6rem] ${
                   solid ? "text-ink" : "text-sand"
@@ -255,6 +301,13 @@ export default function Navbar() {
               className="rise-in"
               style={enter(0.275 + links.length * 0.055, "-8px", "0.5s")}
             >
+              <LanguageSwitcher solid={solid} />
+            </div>
+
+            <div
+              className="rise-in"
+              style={enter(0.275 + (links.length + 1) * 0.055, "-8px", "0.5s")}
+            >
               <Link
                 href="/book"
                 aria-current={isActive("/book") ? "page" : undefined}
@@ -313,16 +366,31 @@ export default function Navbar() {
             {links.map((l, i) => {
               const active = isActive(l.href);
               return (
-                /* `key` carries `open` so the stagger restarts on each opening
-                   — a CSS animation only replays if the element is new. */
+                /*
+                  A transition, not a keyed animation.
+
+                  The stagger used to be a CSS animation restarted by giving
+                  each link a `key` that carried `open`, because an animation
+                  only replays for an element the browser has not seen before.
+                  Remounting is exactly what must not happen once the page can
+                  be translated: Google rewrites the text nodes it finds, and a
+                  node React creates afterwards is one it never revisits — so
+                  the sheet reopened in English on an otherwise German page.
+                  A transition replays on the same element, so the gesture is
+                  unchanged (12px, 350ms, same curve) and the words survive.
+                */
                 <div
-                  key={`${l.href}-${open}`}
-                  className={open ? "slide-in" : undefined}
+                  key={l.href}
                   style={
-                    open
-                      ? ({ animationDelay: `${0.05 * i}s` } as CSSProperties)
-                      : undefined
+                    {
+                      transitionDelay: open ? `${0.05 * i}s` : "0s",
+                    } as CSSProperties
                   }
+                  className={`transition-[opacity,transform] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    open
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-3 opacity-0"
+                  }`}
                 >
                   <Link
                     href={l.href}
@@ -368,9 +436,16 @@ export default function Navbar() {
             >
               WhatsApp us
             </a>
+
+            <LanguageRow />
           </div>
         </nav>
       </div>
+
+      {/* Google's gadget builds itself in here and is hidden in
+          globals.css. It has to hang off something that survives every
+          client-side navigation, and the header is exactly that. */}
+      <TranslateHost />
     </header>
   );
 }
