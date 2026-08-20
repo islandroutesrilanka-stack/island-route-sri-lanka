@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -22,16 +23,18 @@ import {
 } from "@/lib/google-translate";
 
 /**
- * The language control, in two shapes.
+ * The language control.
  *
- * `LanguageSwitcher` is the header disclosure — a globe and two letters, at the
- * same 11px/0.2em as the nav links, opening a panel of language names.
- * `LanguageRow` is the same choice laid flat for the mobile sheet, where a
- * popover inside an already-open sheet would be a menu inside a menu.
+ * One component, mounted twice: once among the desktop nav links, once in the
+ * mobile bar beside the menu button. Both are in the markup at every width —
+ * one of them is merely `display: none` — which is why the chosen language
+ * lives in the module store below rather than in either one's state.
+ *
+ * `touch` is the whole difference between them. Among text the trigger is
+ * baseline-sized and sits on the nav's own rhythm; among icon buttons it has
+ * to be a 44px target like the one it stands next to.
+ *
  * `TranslateHost` is the widget's mount point and renders nothing you can see.
- *
- * Both shapes share `useLanguageChoice`, which is where the behaviour lives;
- * the components below are presentation.
  *
  * ── Why the names are never translated ──────────────────────────────────────
  *
@@ -45,14 +48,15 @@ import {
 /* -------------------------------- Behaviour -------------------------------- */
 
 /*
-  One choice, two controls.
+  One choice, two triggers.
 
-  Both shapes are mounted at every viewport — one of them is merely hidden —
-  so a `useState` in each would give the site two disagreeing opinions about
-  what language it is in, and a switch made in one would leave the other still
-  showing the old one. A module-level store is the smallest thing that keeps
-  them equal, and it is the reason the root layout needs no provider: a
-  context here would mean a client boundary wrapped around every page.
+  The desktop and mobile controls are both mounted at every width — one of
+  them is merely hidden — so a `useState` in each would give the site two
+  disagreeing opinions about what language it is in, and a choice made at one
+  width would be forgotten at the other the moment the viewport crossed the
+  breakpoint. A module-level store is the smallest thing that keeps them
+  equal, and it is the reason the root layout needs no provider: a context
+  here would mean a client boundary wrapped around every page.
 */
 let currentLanguage = DEFAULT_LANGUAGE;
 let booted = false;
@@ -161,10 +165,26 @@ export function TranslateHost() {
   return <div id={HOST_ID} aria-hidden="true" />;
 }
 
-/** Header disclosure. Sized and coloured to sit beside the nav links. */
-export default function LanguageSwitcher({ solid }: { solid: boolean }) {
+/**
+ * Header disclosure. `solid` follows the header's own light/dark state;
+ * `touch` swaps the text-sized trigger for a 44px one for the mobile bar.
+ */
+export default function LanguageSwitcher({
+  solid,
+  touch = false,
+}: {
+  solid: boolean;
+  touch?: boolean;
+}) {
   const { code, busy, choose } = useLanguageChoice();
   const [open, setOpen] = useState(false);
+  /*
+    The id is generated, not written, because this component is on the page
+    twice. A tablet rotating across the `lg` breakpoint with the panel open
+    would otherwise leave two elements claiming the same id — the hidden one
+    still holds its own `open` state, and nothing closes it on the way past.
+  */
+  const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -196,11 +216,11 @@ export default function LanguageSwitcher({ solid }: { solid: boolean }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-controls="language-menu"
+        aria-controls={menuId}
         aria-busy={busy || undefined}
-        className={`flex items-center gap-1.5 py-1 text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${
-          busy ? "opacity-60" : ""
-        } ${
+        className={`flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${
+          touch ? "h-11 px-2" : "py-1"
+        } ${busy ? "opacity-60" : ""} ${
           solid
             ? open
               ? "text-copper-deep"
@@ -210,7 +230,7 @@ export default function LanguageSwitcher({ solid }: { solid: boolean }) {
               : "text-sand/80 hover:text-sand"
         }`}
       >
-        <Globe size={13} strokeWidth={1.6} aria-hidden />
+        <Globe size={touch ? 15 : 13} strokeWidth={1.6} aria-hidden />
         {/*
           The name, not an aria-label.
 
@@ -229,12 +249,28 @@ export default function LanguageSwitcher({ solid }: { solid: boolean }) {
         /* The entrance borrows the header's own keyframe, so reduced motion is
            already handled — globals.css collapses every animation on the site. */
         <ul
-          id="language-menu"
+          id={menuId}
           translate="no"
           style={
             { "--rise-from": "-6px", "--rise-dur": "0.25s" } as CSSProperties
           }
-          className="rise-in absolute right-0 top-full z-50 mt-3 w-44 border border-ink/10 bg-sand py-1.5 shadow-[0_20px_45px_-28px_rgba(16,29,24,0.6)]"
+          /* A phone in landscape is 360px tall and this list is eight names
+             deep, so it is allowed to scroll rather than run off the bottom,
+             and to keep that scroll to itself. The cap leaves the last name
+             half-showing rather than cleanly cut, which is the only thing
+             telling a thumb there is more below. */
+          className={`rise-in absolute top-full z-50 mt-3 max-h-[calc(100vh-5.5rem)] w-44 overflow-y-auto overscroll-contain border border-ink/10 bg-sand py-1.5 shadow-[0_20px_45px_-28px_rgba(16,29,24,0.6)] ${
+            /*
+              In the bar the panel hangs off the page's own right margin, not
+              off this trigger — the trigger is not the last thing in the row,
+              and a panel whose edge lines up with nothing reads as an
+              accident. 40px is the menu button (44) plus the gap (4) less the
+              8 it is pulled outward by, which is the distance from this
+              trigger's right edge to the container's padding regardless of
+              how wide the screen is.
+            */
+            touch ? "-right-10" : "right-0"
+          }`}
         >
           {languages.map((l) => {
             const on = l.code === code;
@@ -262,46 +298,6 @@ export default function LanguageSwitcher({ solid }: { solid: boolean }) {
           })}
         </ul>
       )}
-    </div>
-  );
-}
-
-/** Mobile sheet: flat, because a popover inside an open sheet is a menu in a menu. */
-export function LanguageRow() {
-  const { code, busy, choose } = useLanguageChoice();
-
-  return (
-    <div className="mt-8 border-t border-ink/10 pt-5">
-      <p className="text-[10px] uppercase tracking-[0.28em] text-ink/45">
-        Language
-      </p>
-      <ul
-        translate="no"
-        className={`mt-3 flex flex-wrap gap-2 transition-opacity ${
-          busy ? "opacity-60" : ""
-        }`}
-      >
-        {languages.map((l) => {
-          const on = l.code === code;
-          return (
-            <li key={l.code}>
-              <button
-                type="button"
-                lang={l.code}
-                aria-current={on ? "true" : undefined}
-                onClick={() => void choose(l.code)}
-                className={`border px-3 py-1.5 text-[12px] transition-colors ${
-                  on
-                    ? "border-copper-deep bg-copper-deep text-sand"
-                    : "border-ink/15 text-ink/70"
-                }`}
-              >
-                {l.label}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }

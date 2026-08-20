@@ -11,10 +11,7 @@ import {
   type CSSProperties,
 } from "react";
 import { Menu, X } from "lucide-react";
-import LanguageSwitcher, {
-  LanguageRow,
-  TranslateHost,
-} from "@/components/LanguageSwitcher";
+import LanguageSwitcher, { TranslateHost } from "@/components/LanguageSwitcher";
 import { waLink, defaultWaMessage } from "@/lib/site";
 
 /**
@@ -33,6 +30,12 @@ import { waLink, defaultWaMessage } from "@/lib/site";
  * links rather than among them: it is not somewhere you can go. It sits
  * between the last destination and the conversion, which is where a
  * utility belongs — reachable, unweighted, and out of the CTA's way.
+ *
+ * On a phone it is in the bar itself, left of the menu button, and not in
+ * the sheet. Someone who cannot read the page cannot be expected to guess
+ * that the control which fixes that is behind a button labelled in the
+ * language they cannot read. It is the one utility that has to be visible
+ * before anything else is understood.
  *
  * Services, Gallery and Reviews are demoted, not removed: they stay in the
  * mobile sheet and in the footer. Fleet and Contact live in the footer only —
@@ -213,7 +216,9 @@ export default function Navbar() {
           className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-deep/70 to-transparent"
         />
       )}
-      <div className="relative mx-auto max-w-wrap px-5 md:px-8">
+      {/* `z-10` so the language panel, which drops out of this bar, paints
+          over the sheet below it — a later sibling would otherwise win. */}
+      <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
         {/* Height is unchanged (h-16 / md:h-20). Every page's top padding is
             calibrated to it, so anything added here has to fit inside it. */}
         <div className="flex h-16 items-center justify-between md:h-20">
@@ -322,18 +327,24 @@ export default function Navbar() {
             </div>
           </nav>
 
-          <button
-            type="button"
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            aria-controls="mobile-nav"
-            onClick={() => setOpen((v) => !v)}
-            className={`-mr-2 flex h-11 w-11 items-center justify-center transition-colors lg:hidden ${
-              solid ? "text-ink" : "text-sand"
-            }`}
-          >
-            {open ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* The mobile pair. Two controls, both 44px, both reachable with
+              the thumb that is already holding the phone. */}
+          <div className="flex items-center gap-1 lg:hidden">
+            <LanguageSwitcher solid={solid} touch />
+
+            <button
+              type="button"
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+              onClick={() => setOpen((v) => !v)}
+              className={`-mr-2 flex h-11 w-11 items-center justify-center transition-colors ${
+                solid ? "text-ink" : "text-sand"
+              }`}
+            >
+              {open ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -436,8 +447,6 @@ export default function Navbar() {
             >
               WhatsApp us
             </a>
-
-            <LanguageRow />
           </div>
         </nav>
       </div>
