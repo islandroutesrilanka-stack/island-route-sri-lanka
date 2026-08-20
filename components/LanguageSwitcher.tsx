@@ -10,6 +10,7 @@ import {
   type CSSProperties,
 } from "react";
 import { Check, Globe } from "lucide-react";
+import Flag from "@/components/Flag";
 import { DEFAULT_LANGUAGE, findLanguage, languages } from "@/lib/languages";
 import {
   HOST_ID,
@@ -290,7 +291,17 @@ export default function LanguageSwitcher({
                       : "text-ink/75 hover:bg-dune/70 hover:text-ink"
                   }`}
                 >
-                  {l.label}
+                  <span className="flex items-center gap-2.5">
+                    {/* A slot wider than the flag, so eight names of eight
+                        different widths still start on one column. */}
+                    <span
+                      aria-hidden
+                      className="flex w-6 shrink-0 justify-center"
+                    >
+                      <Flag code={l.code} />
+                    </span>
+                    {l.label}
+                  </span>
                   {on && <Check size={13} strokeWidth={2} aria-hidden />}
                 </button>
               </li>

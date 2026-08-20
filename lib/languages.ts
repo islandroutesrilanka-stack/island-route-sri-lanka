@@ -15,8 +15,9 @@
  * that must never need translating. For the same reason the switcher itself
  * carries `translate="no"` — see components/LanguageSwitcher.tsx.
  *
- * Adding one is a line here and nothing else: the widget is initialised from
- * `includedLanguages`, which is derived from this array.
+ * Adding one is a line here and a flag in components/Flag.tsx. Nothing else:
+ * the widget is initialised from `includedLanguages`, which is derived from
+ * this array.
  */
 export type Language = {
   /** ISO 639-1, as Google Translate expects it. */
