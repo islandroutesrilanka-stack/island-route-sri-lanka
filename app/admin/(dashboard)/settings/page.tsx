@@ -50,12 +50,12 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       {
         key: "hero_video_url",
         label: "Hero video URL — desktop",
-        help: "Leave blank until you have original footage. Adding a URL here switches the hero to video with no code change.",
+        help: "The hero currently loops placeholder stock footage. Paste a URL to your own film to replace it, or type `none` to switch the video off and show the hero image instead.",
       },
       {
         key: "hero_video_mobile_url",
         label: "Hero video URL — mobile",
-        help: "Recommended: leave blank. Phones use the image, which saves visitors a large download.",
+        help: "Blank uses a narrower cut of the placeholder footage, at roughly half the bytes. Same rules as above: paste a URL to replace it, or `none` to switch it off on phones only.",
       },
       {
         key: "hero_slideshow_enabled",

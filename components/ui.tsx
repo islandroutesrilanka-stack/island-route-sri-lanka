@@ -46,7 +46,10 @@ export function DestinationCard({
             fallbackPattern="contour"
             className="transition-transform duration-[1.4s] ease-out group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/35 to-transparent" />
+          {/* Same floor as the tour card, and for the same reason: the region
+              label is 11px at sand/75 and was landing at 3.6:1 over the paler
+              hill-country crops. See the note in TourCard. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-deep via-deep/65 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-4">
             <p className="text-[11px] uppercase tracking-[0.18em] text-sand/75">
               {d.region}
@@ -77,8 +80,15 @@ export function ReviewCard({
           dark ? "border-sand/15 bg-palm/40" : "border-ink/10 bg-white/50"
         }`}
       >
+        {/*
+          The stars are a rating, so they are non-text content carrying
+          information and owe 3:1 — which copper-deep never paid on the dark
+          card: 2.4:1 before this pass and 2.0:1 against the deeper ground it
+          now sits on. Mango is 6.4:1 there, and gold is what a star wants to
+          be anyway. The light card keeps copper-deep, where it is 5.9:1.
+        */}
         <div
-          className="flex gap-1 text-copper-deep"
+          className={`flex gap-1 ${dark ? "text-mango" : "text-copper-deep"}`}
           aria-label={`${r.rating} star review`}
         >
           {Array.from({ length: r.rating }).map((_, i) => (
@@ -118,16 +128,28 @@ export function CTABand({
   title?: string;
   body?: string;
 }) {
+  /*
+    The band travels from ocean at the top-left corner, through the deep, and
+    out into jungle at the bottom-right — the island in one diagonal.
+
+    A gradient rather than a wash of colour laid over the dark ground, and
+    that is a contrast decision as much as a visual one. Anything additive
+    lightens what it touches, and this band carries the smallest type on the
+    page; a teal glow strong enough to see was also strong enough to drop the
+    body copy under 4.5:1. Travelling between three darks costs nothing —
+    every stop here is a ground in its own right, and the lightest of them
+    still holds sand at 11.2:1.
+  */
   return (
-    <section className="relative bg-deep grain overflow-hidden">
+    <section className="relative bg-gradient-to-br from-ocean-deep via-deep to-palm grain overflow-hidden">
       <div className="mx-auto max-w-wrap px-5 md:px-8 py-20 md:py-28 relative z-10">
         <div className="max-w-2xl">
           <Reveal>
-            <p className="eyebrow text-copper-light">Begin the journey</p>
+            <p className="eyebrow text-mango">Begin the journey</p>
             <h2 className="h-display mt-3 text-4xl md:text-6xl text-sand">
               {title}
             </h2>
-            <p className="mt-6 text-sand/60 leading-relaxed">{body}</p>
+            <p className="mt-6 text-sand/75 leading-relaxed">{body}</p>
             <div className="mt-9 flex flex-col sm:flex-row gap-4">
               <Link
                 href="/book"
@@ -197,7 +219,16 @@ export function PageHeader({
             className="object-cover opacity-40"
             aria-hidden
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-deep/70 via-deep/50 to-deep" />
+          {/*
+            Three stops, and the middle one is the one that matters. It used to
+            be deep/50, which over a bright photograph at 40% left a ground
+            light enough to fail the eyebrow and the fine print outright — the
+            two smallest things on the page, sitting exactly where the gradient
+            was thinnest. It is now the darkest kind of ocean at 80%, which
+            both fixes that and puts the header in the water rather than in a
+            neutral shadow.
+          */}
+          <div className="absolute inset-0 bg-gradient-to-b from-deep/85 via-ocean-deep/85 to-deep" />
         </>
       )}
       <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
@@ -206,17 +237,17 @@ export function PageHeader({
             opacity 0 and waited for hydration, which put first contentful paint
             behind the JavaScript bundle on every route on the site. */}
         <Reveal immediate>
-          <p className="eyebrow text-copper-light">{eyebrow}</p>
+          <p className="eyebrow text-mango">{eyebrow}</p>
           <h1 className="h-display mt-3 text-5xl md:text-7xl text-sand max-w-3xl">
             {title}
           </h1>
           {intro && (
-            <p className="mt-6 max-w-2xl text-sand/70 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-sand/75 leading-relaxed">
               {intro}
             </p>
           )}
           {note && (
-            <p className="mt-5 max-w-xl text-[13px] leading-relaxed text-sand/60">
+            <p className="mt-5 max-w-xl text-[13px] leading-relaxed text-sand/70">
               {note}
             </p>
           )}

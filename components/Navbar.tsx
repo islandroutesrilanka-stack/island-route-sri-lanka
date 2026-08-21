@@ -209,11 +209,25 @@ export default function Navbar() {
           : "border-b border-transparent bg-transparent"
       }`}
     >
-      {/* Scrim keeps nav text legible over bright hero imagery */}
+      {/*
+        Scrim keeps nav text legible over bright hero imagery.
+
+        Sized from the measurement rather than by eye. The bar is h-16 / h-20,
+        so nav text sits in the top quarter of this band — which is why the
+        gradient holds near its full weight down to 45% and only then falls
+        away, instead of easing off linearly from the first pixel and leaving
+        the type in the thin end of it. At the worst frame a hero can produce,
+        a pure white one, that puts `text-sand/70` — the faintest thing in the
+        bar — above 4.5:1 on this layer alone, before the hero adds its own.
+
+        The band is taller than the bar it protects (14rem against 5rem) for
+        the same reason a film title has a graded top edge: the fade has to
+        finish somewhere the eye does not read as an edge.
+      */}
       {!solid && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-deep/70 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[linear-gradient(to_bottom,rgba(3,39,34,0.88),rgba(3,39,34,0.78)_45%,rgba(3,39,34,0.34)_72%,transparent)]"
         />
       )}
       {/* `z-10` so the language panel, which drops out of this bar, paints
@@ -241,7 +255,7 @@ export default function Navbar() {
               </span>
               <span
                 className={`hidden text-[10px] uppercase tracking-[0.28em] transition-colors sm:inline ${
-                  solid ? "text-copper-deep/90" : "text-sand/70"
+                  solid ? "text-copper-deep" : "text-sand/70"
                 }`}
               >
                 Sri Lanka

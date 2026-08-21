@@ -98,6 +98,36 @@ export const HERO_DEFAULTS = {
   ctaSecondaryHref: "#explore",
 } as const;
 
+/**
+ * PLACEHOLDER FOOTAGE — REPLACE BEFORE THIS IS ADVERTISED.
+ *
+ * This is stock ocean video from Cloudinary's public demo cloud. It is not
+ * Sri Lanka, it is not ours, and it is not a location claim — which is exactly
+ * why it is allowed to sit behind the headline while a still photograph of a
+ * named place would not be. The <video> is `aria-hidden` and captions nothing,
+ * so nothing on the page asserts where this water is.
+ *
+ * To replace it: paste the real URLs into hero_video_url and
+ * hero_video_mobile_url in the admin. No code changes, and this constant stops
+ * being reachable the moment either field is filled in.
+ *
+ * webm is listed first so Chrome, Edge and Firefox take the VP9 cut (863 kB
+ * desktop / 433 kB mobile); Safari falls through to the H.264 mp4. `ac_none`
+ * strips the audio track — the hero is permanently muted, so shipping audio
+ * would be paying for something no one can ever hear.
+ */
+const CLOUDINARY = "https://res.cloudinary.com/demo/video/upload";
+const PLACEHOLDER_VIDEO = {
+  desktop: [
+    { src: `${CLOUDINARY}/q_auto:eco,w_1600,c_fill,ac_none/sea_turtle.webm`, type: "video/webm" },
+    { src: `${CLOUDINARY}/q_auto:eco,w_1600,c_fill,ac_none/sea_turtle.mp4`, type: "video/mp4" },
+  ],
+  mobile: [
+    { src: `${CLOUDINARY}/q_auto:eco,w_900,c_fill,ac_none/sea_turtle.webm`, type: "video/webm" },
+    { src: `${CLOUDINARY}/q_auto:eco,w_900,c_fill,ac_none/sea_turtle.mp4`, type: "video/mp4" },
+  ],
+} as const satisfies Record<string, readonly VideoSource[]>;
+
 /** Infer the MIME type from the file extension; default to mp4. */
 function toSource(url: string): VideoSource {
   return url.toLowerCase().endsWith(".webm")
@@ -105,9 +135,23 @@ function toSource(url: string): VideoSource {
     : { src: url, type: "video/mp4" };
 }
 
-function sourcesFrom(url: string | undefined): VideoSource[] {
+/**
+ * Resolve one hero video field.
+ *
+ * Three states, because two are not enough. A blank field means "nobody has
+ * said anything", which must not read as "the owner wants no video" — that is
+ * the state a fresh install and a half-filled settings row are both in, and
+ * both should get the designed hero. Turning the video off is a decision, so
+ * it takes a word: type `none` in the admin field.
+ */
+function sourcesFrom(
+  url: string | undefined,
+  fallback: readonly VideoSource[]
+): VideoSource[] {
   const clean = (url ?? "").trim();
-  return clean ? [toSource(clean)] : [];
+  if (!clean) return [...fallback];
+  if (clean.toLowerCase() === "none") return [];
+  return [toSource(clean)];
 }
 
 export function resolveHero(s: SiteSettings): HeroContent {
@@ -155,11 +199,15 @@ export function resolveHero(s: SiteSettings): HeroContent {
     },
     video: {
       poster,
-      // Empty at launch by decision. Populating hero_video_url in the admin is
-      // all that is required to turn the cinematic hero on.
-      sources: sourcesFrom(s.heroVideoUrl),
-      // Empty by decision — mobile uses the poster only.
-      mobileSources: sourcesFrom(s.heroVideoMobileUrl),
+      sources: sourcesFrom(s.heroVideoUrl, PLACEHOLDER_VIDEO.desktop),
+      /*
+        Mobile gets its own cut rather than the desktop file scaled down in the
+        decoder, and rather than nothing at all. The narrower encode is roughly
+        half the bytes, and every gate in VideoHero — Save-Data, sub-4g,
+        reduced-motion, a hidden tab, a remembered pause — still has to pass
+        before any of them are requested.
+      */
+      mobileSources: sourcesFrom(s.heroVideoMobileUrl, PLACEHOLDER_VIDEO.mobile),
     },
     slides,
     slideshow: {

@@ -193,7 +193,7 @@ function OptionCard({
       </span>
       {sub && (
         <span
-          className={`mt-1.5 line-clamp-2 text-[13px] leading-snug text-sand/50 ${
+          className={`mt-1.5 line-clamp-2 text-[13px] leading-snug text-sand/65 ${
             subFromSm ? "hidden sm:block" : ""
           }`}
         >
@@ -697,7 +697,7 @@ export default function JourneyBuilder() {
                     )}
                   </div>
 
-                  <p className="mt-5 text-[12px] leading-relaxed text-sand/50">
+                  <p className="mt-5 text-[12px] leading-relaxed text-sand/65">
                     This starts an enquiry — nothing is booked and no payment is
                     taken. You can edit everything on the next page.
                   </p>

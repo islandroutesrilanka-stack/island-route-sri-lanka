@@ -142,14 +142,14 @@ export default async function ExperiencePage({
           fallbackPattern="contour"
           className="absolute inset-0 opacity-70"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-deep/70 via-deep/45 to-deep" />
+        <div className="absolute inset-0 bg-gradient-to-b from-deep/80 via-deep/70 to-deep" />
 
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <Reveal>
             <nav aria-label="Breadcrumb" className="mb-5">
               <Link
                 href="/experiences"
-                className="eyebrow inline-flex items-center gap-2 text-copper-light transition-colors hover:text-sand"
+                className="eyebrow inline-flex items-center gap-2 text-mango transition-colors hover:text-sand"
               >
                 <Compass size={13} aria-hidden /> Experiences
               </Link>

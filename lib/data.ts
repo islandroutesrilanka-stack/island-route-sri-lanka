@@ -428,7 +428,12 @@ const defaultSettings: SiteSettings = {
   heroPosterUrl: "/photography/sigiriya-rock.jpg",
   heroPosterAlt:
     "Sigiriya rock fortress rising above the surrounding forest, Cultural Triangle, Sri Lanka",
-  // Intentionally empty: no stock hero video, by decision.
+  /*
+    Blank, which now means "use the placeholder footage" rather than "no
+    video" — see PLACEHOLDER_VIDEO in lib/media/hero.ts for what ships and how
+    it is replaced. `none` here or in the admin turns the video off entirely
+    and leaves the poster as the hero.
+  */
   heroVideoUrl: "",
   heroVideoMobileUrl: "",
 

@@ -144,10 +144,10 @@ export default async function TourPage({ params }: { params: { slug: string } })
         ) : (
           <GradientPanel tone="deep" pattern="contour" className="absolute inset-0" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-deep/60 via-deep/40 to-deep" />
+        <div className="absolute inset-0 bg-gradient-to-b from-deep/75 via-deep/65 to-deep" />
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <Reveal>
-            <p className="eyebrow text-copper-light">{tour.category}</p>
+            <p className="eyebrow text-mango">{tour.category}</p>
             <h1 className="h-display mt-3 text-4xl md:text-6xl text-sand max-w-3xl">
               {tour.title}
             </h1>

@@ -71,18 +71,26 @@ export default function ExperienceCard({
             temple sky) that measured 2.2–2.9:1 against sand. Large text needs
             3:1 and the 14px blurb needs 4.5:1, so most of the grid failed both.
 
-            Hence the explicit stops below: ~0.55 opacity where the title sits,
-            ~0.70 behind the blurb, ~0.85 behind the activity list, fading to
-            0.15 at the top so the upper quarter of the crop still reads as a
-            photograph. Re-measured, the worst tile is 4.6:1 on its title. If
-            the copy or the aspect ratio changes, the stops need re-checking —
-            they are positional, not decorative.
+            Hence the explicit stops below: ~0.62 opacity where the title sits,
+            ~0.75 behind the blurb, ~0.90 behind the activity list, fading to
+            0.20 at the top so the upper quarter of the crop still reads as a
+            photograph. Each is a step up from the first pass at these stops,
+            which measured 4.6:1 on the worst tile's title — true, and no margin
+            at all for the next photograph somebody uploads. If the copy or the
+            aspect ratio changes, the stops need re-checking: they are
+            positional, not decorative.
+
+            The colour is spelled out in rgba rather than taken from the token
+            because Tailwind cannot interpolate a named colour at five stops.
+            That makes it the one place on the site where `deep` is written by
+            hand, so it has to be changed by hand — it was still rgb(11,31,25),
+            two palettes out of date, until this pass caught it.
           */}
           <div
             className={`absolute inset-0 ${
               feature
-                ? "bg-gradient-to-t from-deep/95 via-deep/45 to-deep/5"
-                : "bg-[linear-gradient(to_top,rgba(11,31,25,0.95)_0%,rgba(11,31,25,0.85)_40%,rgba(11,31,25,0.62)_70%,rgba(11,31,25,0.45)_85%,rgba(11,31,25,0.15)_100%)]"
+                ? "bg-gradient-to-t from-deep via-deep/70 to-deep/10"
+                : "bg-[linear-gradient(to_top,rgba(3,39,34,1)_0%,rgba(3,39,34,0.9)_40%,rgba(3,39,34,0.72)_70%,rgba(3,39,34,0.55)_85%,rgba(3,39,34,0.2)_100%)]"
             }`}
           />
 

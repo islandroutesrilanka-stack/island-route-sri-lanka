@@ -41,9 +41,16 @@ export function SectionHeading({
     <Reveal
       className={`max-w-2xl ${align === "center" ? "mx-auto text-center" : ""}`}
     >
-      <p
-        className={`eyebrow ${dark ? "text-copper-light" : "text-copper-deep"}`}
-      >
+      {/*
+        Two eyebrow colours, because the two grounds want different things. On
+        sand, copper-deep is the site's small-text accent and clears AA at
+        5.9:1. On the dark grounds copper-light was doing the same job at
+        5.0:1, which left it nothing to spend the moment a ground carried any
+        tint at all — and every dark ground on the site now does. Mango is
+        6.9:1 on deep, reads as sun rather than as metal, and survives the
+        gradients underneath it.
+      */}
+      <p className={`eyebrow ${dark ? "text-mango" : "text-copper-deep"}`}>
         {eyebrow}
       </p>
       <h2
@@ -56,7 +63,7 @@ export function SectionHeading({
       {intro && (
         <p
           className={`mt-5 text-[15px] leading-relaxed ${
-            dark ? "text-sand/60" : "text-ink/70"
+            dark ? "text-sand/75" : "text-ink/70"
           }`}
         >
           {intro}
@@ -146,7 +153,19 @@ export function TourCard({
               className="h-full w-full"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/45 to-transparent" />
+          {/*
+            The caption's floor, not the picture's mood.
+
+            A scrim tuned by eye holds up over the photograph it was tuned on
+            and quietly fails over the next one. Measured across the real
+            catalogue, the old 45% mid-stop left the duration line at 3.7:1 and
+            the price at 4.1:1 over the brighter crops — Ella's tea slopes and
+            the coast tiles, where the picture is pale exactly where the type
+            sits. 70% is the mid-stop at which the worst crop in the catalogue
+            still clears 4.5:1, and the top of the frame is untouched, so the
+            card still opens on a photograph rather than on a dark panel.
+          */}
+          <div className="absolute inset-0 bg-gradient-to-t from-deep via-deep/70 to-transparent" />
           <span className="absolute left-4 top-4 bg-sand/90 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-ink">
             {tour.category}
           </span>

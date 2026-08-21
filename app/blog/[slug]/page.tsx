@@ -82,7 +82,7 @@ export default async function BlogPost({ params }: { params: { slug: string } })
           sizes="100vw"
           className="object-cover opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-deep/60 via-deep/40 to-deep" />
+        <div className="absolute inset-0 bg-gradient-to-b from-deep/75 via-deep/65 to-deep" />
         <div className="relative z-10 mx-auto max-w-3xl px-5 md:px-8">
           <Reveal>
             <Link

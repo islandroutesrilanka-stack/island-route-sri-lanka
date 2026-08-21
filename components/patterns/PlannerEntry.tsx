@@ -55,7 +55,11 @@ function Chips({
 }) {
   return (
     <div className="mt-5 first:mt-0">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-sand/50">{legend}</p>
+      {/* /65, not /50. This sits on the grained dark canvas, and the grain
+          is not decoration as far as contrast is concerned: an overlay blend
+          of light noise lifts `deep` from rgb(3,39,34) to rgb(5,53,49) in its
+          brightest specks, which put an 11px /50 legend at 4.17:1. */}
+      <p className="text-[11px] uppercase tracking-[0.18em] text-sand/65">{legend}</p>
       <ul className="mt-2.5 flex flex-wrap gap-2">
         {items.map((i) => (
           <li key={i.value}>

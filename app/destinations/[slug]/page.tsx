@@ -98,10 +98,20 @@ export default async function DestinationPage({
           fallbackPattern="contour"
           className="opacity-45"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-deep/60 via-deep/40 to-deep" />
+        {/* The eyebrow, headline and standfirst sit in the upper half of this
+            frame, where the ramp is at its thinnest — so the ramp is what has
+            to hold them, over whatever photograph the CMS is pointed at. The
+            first pass (60/40) left the eyebrow at 3.2:1 over Sigiriya's sky.
+
+            Every stop here must land on a multiple of 5. Tailwind's opacity
+            scale is 5-stepped, and an off-scale modifier does not warn — it
+            emits no rule, `--tw-gradient-stops` stays empty, and the whole
+            background-image is dropped as invalid. The scrim vanishes and the
+            page looks like nobody put one there. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-deep/75 via-deep/65 to-deep" />
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <Reveal>
-            <p className="eyebrow text-copper-light inline-flex items-center gap-2">
+            <p className="eyebrow text-mango inline-flex items-center gap-2">
               <MapPin size={13} /> {d.region}
             </p>
             <h1 className="h-display mt-3 text-5xl md:text-7xl text-sand">

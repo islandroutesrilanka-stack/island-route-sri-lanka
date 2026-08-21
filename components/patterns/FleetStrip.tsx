@@ -49,7 +49,7 @@ export default function FleetStrip({ fleet }: { fleet: Vehicle[] }) {
              three rates sit at three different heights. */
           <li key={v.slug} className="flex h-full flex-col bg-deep px-5 py-6">
             <p className="font-display text-xl text-sand">{v.name}</p>
-            <p className="mt-1.5 text-[12px] uppercase tracking-[0.14em] text-sand/55">
+            <p className="mt-1.5 text-[12px] uppercase tracking-[0.14em] text-sand/65">
               {seating(v)}{v.luggage ? ` · ${v.luggage}` : ""}
             </p>
             {/* Only the two published tiers carry a number here. A vehicle

@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --sand: #f6f1e6;
-  --deep: #0b1f19;
+  --sand: #f8f3e7;
+  --deep: #032722;
   --copper: #b26a3b;
+  --ocean-deep: #043a45;
 }
 
 html {
@@ -17,9 +18,13 @@ body {
   overflow-wrap: break-word;
 }
 
+/* Selecting text is one of the few moments the interface answers back, so it
+   answers in the ocean rather than in the brand's action colour — copper means
+   "this is clickable" everywhere else and should not also mean "this is
+   selected". 8.2:1. */
 ::selection {
-  background: #b26a3b;
-  color: #f6f1e6;
+  background: var(--ocean-deep);
+  color: var(--sand);
 }
 
 /* Visible keyboard focus everywhere — never remove without replacing */

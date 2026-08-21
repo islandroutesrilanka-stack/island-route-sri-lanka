@@ -8,9 +8,10 @@
  * progressive enhancement layered on top at opacity 0→1, so it can never cause
  * layout shift and can never become the LCP candidate.
  *
- * At launch no video is configured, so this renders as a still hero. Populating
- * `hero_video_url` in the admin turns the cinematic version on with no code
- * change — which is the whole reason this is built now rather than later.
+ * With nothing configured the hero loops placeholder footage (see
+ * PLACEHOLDER_VIDEO in lib/media/hero.ts). Pasting a URL into `hero_video_url`
+ * in the admin swaps it for real film; typing `none` there returns the hero to
+ * the poster alone. Neither is a code change.
  *
  * Deliberately absent: a `poster` attribute on the <video>. The image layer
  * beneath IS the poster; adding the attribute would download it twice.
@@ -109,8 +110,6 @@ export default function VideoHero({
     setMounted((m) => Math.max(m, Math.min(slides.length, active + 2)));
   }, [active, runnable, still, slides.length]);
 
-  const showControl = runnable && !still;
-
   const [sources, setSources] = useState<VideoAsset["sources"]>([]);
   const [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -155,6 +154,10 @@ export default function VideoHero({
     if (!el) return;
     const next = !paused;
     setPaused(next);
+    // Also stops the slideshow underneath, which the fade to opacity 0 is
+    // about to reveal. Pausing the video only to hand the visitor a
+    // cross-fading slideshow would not be pausing anything.
+    setSlidesPaused(next);
     if (next) el.pause();
     else void el.play().catch(() => {});
     try {
@@ -165,6 +168,19 @@ export default function VideoHero({
   }, [paused]);
 
   const showVideo = sources.length > 0;
+
+  /*
+    One pause control, never two.
+
+    Both kinds of motion can be live at once — the slideshow runs underneath
+    while the video fades in over it — and each used to render its own 44px
+    button into the same bottom-right corner, where they stacked. WCAG 2.2.2
+    asks for a mechanism to stop the motion, not for one button per moving
+    thing, so when a video is present it owns the corner and its button stops
+    both. The slideshow keeps its own control only when it is the only thing
+    moving.
+  */
+  const showControl = runnable && !still && !showVideo;
 
   return (
     <>
@@ -265,19 +281,63 @@ export default function VideoHero({
         </video>
       )}
 
-      {/* Scrim. Weighted to the lower-left where the type sits, and kept light
-          across the upper-right so a future film still reads as a film rather
-          than as a darkened backdrop. Flat tints fail on bright frames — sky,
-          sand, white architecture — so this protects contrast across a whole
-          clip, not just the poster frame. */}
+      {/*
+        Scrim — four graded layers, no flat tints anywhere.
+
+        A fixed opacity that is right for the poster frame is wrong two
+        seconds later, and the failure mode of every video hero is the same
+        one: a bright frame arrives — sky, surf, white sand, a sun flare — and
+        the type goes with it. So the darkening is placed where type and
+        controls actually live, and the middle of the frame is left clear
+        enough that the footage still reads as footage rather than as a
+        darkened backdrop.
+
+        Measured against the worst case the video can produce, a pure white
+        frame, not against the poster.
+      */}
+
+      {/* 1 — Foot of the frame: the headline, the subcopy and both CTAs. */}
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-t from-deep via-deep/25 to-transparent"
       />
+
+      {/* 2 — Lower-left weight, following the diagonal the type block sits on. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(120%_100%_at_10%_100%,rgba(11,31,25,0.88),rgba(11,31,25,0.35)_45%,transparent_75%)]"
+        className="absolute inset-0 bg-[radial-gradient(120%_100%_at_10%_100%,rgba(3,39,34,0.88),rgba(3,39,34,0.35)_45%,transparent_75%)]"
       />
+
+      {/*
+        3 — Head of the frame, under the navigation and the language switcher.
+
+        Deliberately the lighter half of that job. The navbar carries its own
+        scrim and has to: it is fixed, so it outlives this hero the moment the
+        page scrolls, and it must be legible on its own terms. This one is the
+        hero's share — enough that the two together hold small sand-toned text
+        above 4.5:1 over a white frame, and light enough that neither alone
+        reads as a black bar.
+      */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-56 bg-[linear-gradient(to_bottom,rgba(3,39,34,0.34),rgba(3,39,34,0.14)_55%,transparent)]"
+      />
+
+      {/*
+        4 — Colour, not protection.
+
+        Stock footage now and real footage later both arrive with a white
+        balance of their own, and neither will be this site's. A wash of ocean
+        across the upper right pulls the frame back toward the Indian Ocean
+        teal everything else is built on, so the hero belongs to the palette
+        instead of sitting in front of it — and it happens to fall exactly
+        where the language switcher does.
+      */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-[radial-gradient(80%_65%_at_82%_8%,rgba(11,110,127,0.42),rgba(11,110,127,0.14)_45%,transparent_72%)]"
+      />
+
       {/* Cinematic letterbox — a thin bar top and bottom on large screens.
           Reads as framing rather than chrome, and gives the hero a film aspect
           without cropping the media itself. */}

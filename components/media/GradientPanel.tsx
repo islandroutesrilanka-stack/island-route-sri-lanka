@@ -11,10 +11,18 @@
  */
 import type { ReactNode } from "react";
 
-type Tone = "deep" | "moss" | "sand" | "dune";
+type Tone = "deep" | "ocean" | "moss" | "sand" | "dune";
 
+/*
+  Each tone travels somewhere. The old `deep` ran deep → palm → deep, two
+  greens close enough that the panel read as one flat colour with a slight
+  bloom; it now crosses into the ocean and back, which is a gradient you can
+  actually see. `moss` climbs out of the water into jungle. Both end on `deep`
+  so a panel always meets the page's dark ground cleanly at one edge.
+*/
 const tones: Record<Tone, string> = {
-  deep: "from-deep via-palm to-deep",
+  deep: "from-deep via-ocean-deep to-deep",
+  ocean: "from-ocean-deep via-ocean to-deep",
   moss: "from-palm via-moss to-deep",
   sand: "from-dune via-sand to-dune",
   dune: "from-sand via-dune to-mist/40",
@@ -29,7 +37,11 @@ const tones: Record<Tone, string> = {
  * surface rather than an empty box, without implying anything about a place.
  */
 function ContourMotif({ light }: { light: boolean }) {
-  const stroke = light ? "rgba(16,29,24,0.10)" : "rgba(214,177,138,0.16)";
+  /* Aqua on the dark tones rather than the old copper: these curves are read
+     as water and terrain, and the warm line fought the teal underneath it
+     instead of sitting in it. Carried a little stronger (0.16 → 0.20) because
+     a cool line on a cool ground needs it to stay visible at all. */
+  const stroke = light ? "rgba(16,29,24,0.10)" : "rgba(143,199,188,0.20)";
   return (
     <svg
       aria-hidden
