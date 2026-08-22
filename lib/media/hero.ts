@@ -113,9 +113,12 @@ export const HERO_DEFAULTS = {
  * holds while their geometry matches, which is why POSTER_FOCAL below is
  * shared with the <video> rather than being an image-only concern.
  *
- * One H.264 mp4, no webm cut. Every browser that can autoplay a muted
- * background video plays H.264, so a second encode would only save bytes, and
- * there is no transcoding step in this pipeline to produce one honestly.
+ * Two H.264 cuts of the one film — 1080p for desktop, 720p for phones — and
+ * no webm. Every browser that can autoplay a muted background video plays
+ * H.264, so a webm would only save bytes, and there is no transcoding step in
+ * this pipeline to produce one honestly. The two cuts are the same 81.3s
+ * timeline at the same 16:9 aspect, which is the condition under which a
+ * single poster can be the first frame of both.
  *
  * This mp4 is progressive, not fragmented: a 44 KB `moov` carrying real sample
  * tables sits at byte 24, ahead of the media data. The demuxer reads it once
@@ -125,12 +128,10 @@ export const HERO_DEFAULTS = {
  *
  *     ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4
  *
- * Two costs remain, and neither is reachable from application code. The film
- * is 43.2 MB, so a narrower, shorter cut in hero_video_mobile_url is still the
- * change that saves someone money on mobile data. And Supabase serves both
- * objects `Cache-Control: no-cache`, so re-uploading with a `cacheControl`
- * value lets repeat visitors revalidate instead of refetching. The poster is
- * the one that stings there, because it is on the LCP path.
+ * One cost remains, and it is not reachable from application code: Supabase
+ * serves all three objects `Cache-Control: no-cache`, so re-uploading with a
+ * `cacheControl` value lets repeat visitors revalidate instead of refetching.
+ * The poster is the one that stings there, because it is on the LCP path.
  *
  * Spaces are percent-encoded and the rest is left literal, which is what RFC
  * 3986 permits in a path segment. Do not run these through `encodeURI` on the
@@ -158,14 +159,22 @@ const DEFAULT_VIDEO = {
     { src: `${SUPABASE_MEDIA}/Sequence%2001_1.mp4`, type: "video/mp4" },
   ],
   /*
-    Phones are served the same file, because there is only one. The gates in
-    VideoHero still stand in front of it — Save-Data, anything below 4g,
-    reduced motion, a hidden tab and a remembered pause all skip the request
-    entirely — but a 4g phone will download the full 43.2 MB. That is the
-    strongest argument for putting a narrower encode in hero_video_mobile_url.
+    The same film at 720p with the audio track dropped: 10.1 MB against the
+    desktop cut's 43.2 MB, for a file nothing on a phone can tell apart from
+    the original at that size. Audio costs bytes for nothing here — the hero
+    is `muted` and has no control that could unmute it.
+
+    Same 81.3s cut and the same 16:9 frame, which is what lets one poster serve
+    both. A shorter edit or a re-frame would need its own first-frame still, or
+    the seamless start silently becomes a cut on phones only.
+
+    The VideoHero gates still stand in front of this — Save-Data, anything
+    below 4g, reduced motion, a hidden tab and a remembered pause all skip the
+    request entirely — so 10.1 MB is the worst case for a phone that wants
+    the video, not the typical one.
   */
   mobile: [
-    { src: `${SUPABASE_MEDIA}/Sequence%2001_1.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/Sequence%2001.mp4`, type: "video/mp4" },
   ],
 } as const satisfies Record<string, readonly VideoSource[]>;
 

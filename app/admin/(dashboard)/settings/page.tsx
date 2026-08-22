@@ -55,7 +55,7 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       {
         key: "hero_video_mobile_url",
         label: "Hero video URL — mobile",
-        help: "Blank sends phones the same file as desktop — currently 43.2 MB, which is a great deal on mobile data. Paste a smaller, narrower encode here and phones will use that instead, or `none` to switch video off on phones only.",
+        help: "Blank sends phones the 720p cut of your film — 10.1 MB against the desktop version's 43.2 MB. Paste a different URL to override it, or `none` to switch video off on phones only. Any replacement should be the same edit as the desktop file, or the hero will visibly cut to it on phones.",
       },
       {
         key: "hero_slideshow_enabled",
