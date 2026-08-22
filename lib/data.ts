@@ -429,10 +429,10 @@ const defaultSettings: SiteSettings = {
   heroPosterAlt:
     "Sigiriya rock fortress rising above the surrounding forest, Cultural Triangle, Sri Lanka",
   /*
-    Blank, which now means "use the placeholder footage" rather than "no
-    video" — see PLACEHOLDER_VIDEO in lib/media/hero.ts for what ships and how
-    it is replaced. `none` here or in the admin turns the video off entirely
-    and leaves the poster as the hero.
+    Blank means "use the default film" rather than "no video" — see
+    DEFAULT_VIDEO in lib/media/hero.ts for what ships and how it is replaced.
+    `none` here or in the admin turns the video off entirely and leaves the
+    poster as the hero.
   */
   heroVideoUrl: "",
   heroVideoMobileUrl: "",

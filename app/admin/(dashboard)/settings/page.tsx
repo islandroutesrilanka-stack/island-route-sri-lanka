@@ -50,12 +50,12 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       {
         key: "hero_video_url",
         label: "Hero video URL — desktop",
-        help: "The hero currently loops placeholder stock footage. Paste a URL to your own film to replace it, or type `none` to switch the video off and show the hero image instead.",
+        help: "The hero loops your Sri Lanka film from Supabase storage. Paste a different URL to replace it, or type `none` to switch the video off and show the hero image instead.",
       },
       {
         key: "hero_video_mobile_url",
         label: "Hero video URL — mobile",
-        help: "Blank uses a narrower cut of the placeholder footage, at roughly half the bytes. Same rules as above: paste a URL to replace it, or `none` to switch it off on phones only.",
+        help: "Blank sends phones the same file as desktop — currently 21.6 MB, which is a lot on mobile data. Paste a smaller, narrower encode here and phones will use that instead, or `none` to switch video off on phones only.",
       },
       {
         key: "hero_slideshow_enabled",

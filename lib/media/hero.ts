@@ -99,32 +99,66 @@ export const HERO_DEFAULTS = {
 } as const;
 
 /**
- * PLACEHOLDER FOOTAGE — REPLACE BEFORE THIS IS ADVERTISED.
+ * The default hero film.
  *
- * This is stock ocean video from Cloudinary's public demo cloud. It is not
- * Sri Lanka, it is not ours, and it is not a location claim — which is exactly
- * why it is allowed to sit behind the headline while a still photograph of a
- * named place would not be. The <video> is `aria-hidden` and captions nothing,
- * so nothing on the page asserts where this water is.
+ * This is the owner's own footage of Sri Lanka, hosted in the project's
+ * Supabase storage bucket. It replaced stock placeholder video, so the earlier
+ * caveat no longer applies: the hero may now legitimately be read as depicting
+ * Sri Lanka, because it does. The <video> stays `aria-hidden` — it is
+ * atmosphere behind the headline, not content the page asserts anything about.
  *
- * To replace it: paste the real URLs into hero_video_url and
- * hero_video_mobile_url in the admin. No code changes, and this constant stops
- * being reachable the moment either field is filled in.
+ * One H.264 mp4, no webm cut. Every browser that can autoplay a muted
+ * background video plays H.264, so a second encode would only save bytes, and
+ * there is no transcoding step in this pipeline to produce one honestly.
  *
- * webm is listed first so Chrome, Edge and Firefox take the VP9 cut (863 kB
- * desktop / 433 kB mobile); Safari falls through to the H.264 mp4. `ac_none`
- * strips the audio track — the hero is permanently muted, so shipping audio
- * would be paying for something no one can ever hear.
+ * Measured, and the reason the hero holds its poster for a while: this is a
+ * FRAGMENTED mp4. The `moov` at byte 36 is only 1.4 KB and carries no sample
+ * tables, followed by a long moof/mdat chain with no `sidx` index. A plain
+ * <video> has no manifest to read, so the demuxer must walk that chain before
+ * it can report a duration, and over a network every hop is another ranged
+ * round-trip. Against Supabase that is 26 sequential range requests and about
+ * 10.5s before `loadedmetadata`, putting first frame near 11-12s. The very
+ * same bytes served locally reach metadata in 37ms and first frame in 2.3s
+ * over 6 requests. So the encode, the connection and this code are all fine —
+ * it is the container shape. Once running, playback is clean: zero `waiting`,
+ * `stalled` or `error` events.
+ *
+ * The remedy is a re-upload, not a code change. Export (or remux) as an
+ * ordinary progressive mp4, so the sample tables sit in one front-loaded
+ * `moov` and the demuxer needs a single read:
+ *
+ *     ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4
+ *
+ * Two storage-layer wins worth taking at the same time. Supabase serves this
+ * object `Cache-Control: no-cache`, so re-uploading with a `cacheControl`
+ * value lets repeat visitors revalidate instead of refetching; and a narrower,
+ * shorter cut pasted into hero_video_mobile_url spares phones the full
+ * 21.6 MB. Neither is reachable from application code.
+ *
+ * Spaces in the object name are percent-encoded and the comma is left literal,
+ * which is what RFC 3986 permits in a path segment. Do not run this through
+ * `encodeURI` on the way to the <source> tag — that would turn `%20` into
+ * `%2520` and 404.
+ *
+ * To replace it: paste new URLs into hero_video_url and hero_video_mobile_url
+ * in the admin. No code changes, and this constant stops being reachable the
+ * moment either field is filled in.
  */
-const CLOUDINARY = "https://res.cloudinary.com/demo/video/upload";
-const PLACEHOLDER_VIDEO = {
+const SUPABASE_MEDIA =
+  "https://weiwhqhvtdpcwzdwlazd.supabase.co/storage/v1/object/public/media";
+const DEFAULT_VIDEO = {
   desktop: [
-    { src: `${CLOUDINARY}/q_auto:eco,w_1600,c_fill,ac_none/sea_turtle.webm`, type: "video/webm" },
-    { src: `${CLOUDINARY}/q_auto:eco,w_1600,c_fill,ac_none/sea_turtle.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/Sri%20Lanka,%20Your%20Destination%20for%202026.mp4`, type: "video/mp4" },
   ],
+  /*
+    Phones are served the same file, because there is only one. The gates in
+    VideoHero still stand in front of it — Save-Data, anything below 4g,
+    reduced motion, a hidden tab and a remembered pause all skip the request
+    entirely — but a 4g phone will download the full 21.6 MB. That is the
+    strongest argument for putting a narrower encode in hero_video_mobile_url.
+  */
   mobile: [
-    { src: `${CLOUDINARY}/q_auto:eco,w_900,c_fill,ac_none/sea_turtle.webm`, type: "video/webm" },
-    { src: `${CLOUDINARY}/q_auto:eco,w_900,c_fill,ac_none/sea_turtle.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/Sri%20Lanka,%20Your%20Destination%20for%202026.mp4`, type: "video/mp4" },
   ],
 } as const satisfies Record<string, readonly VideoSource[]>;
 
@@ -199,7 +233,7 @@ export function resolveHero(s: SiteSettings): HeroContent {
     },
     video: {
       poster,
-      sources: sourcesFrom(s.heroVideoUrl, PLACEHOLDER_VIDEO.desktop),
+      sources: sourcesFrom(s.heroVideoUrl, DEFAULT_VIDEO.desktop),
       /*
         Mobile gets its own cut rather than the desktop file scaled down in the
         decoder, and rather than nothing at all. The narrower encode is roughly
@@ -207,7 +241,7 @@ export function resolveHero(s: SiteSettings): HeroContent {
         reduced-motion, a hidden tab, a remembered pause — still has to pass
         before any of them are requested.
       */
-      mobileSources: sourcesFrom(s.heroVideoMobileUrl, PLACEHOLDER_VIDEO.mobile),
+      mobileSources: sourcesFrom(s.heroVideoMobileUrl, DEFAULT_VIDEO.mobile),
     },
     slides,
     slideshow: {
