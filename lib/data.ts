@@ -352,7 +352,7 @@ export type SiteSettings = {
   heroCtaPrimaryHref: string;
   heroCtaSecondaryLabel: string;
   heroCtaSecondaryHref: string;
-  /** Empty until a poster is verified — hero renders the gradient treatment. */
+  /** Blank uses the film's first frame; `none` renders the contour treatment. */
   heroPosterUrl: string;
   heroPosterAlt: string;
   /** Empty by decision. Populate to enable the cinematic video hero. */
@@ -418,16 +418,19 @@ const defaultSettings: SiteSettings = {
   heroCtaSecondaryLabel: "Explore Sri Lanka",
   heroCtaSecondaryHref: "#explore",
   /*
-    Sigiriya, self-hosted and individually verified — see `media.sigiriyaRock`.
-    The rock's profile and the water-garden approach path identify it from the
-    frame alone, so the hero can finally open on Sri Lanka rather than on the
-    contour treatment that stood in while nothing was verified.
+    Blank so the hero opens on the film's own first frame — see
+    DEFAULT_POSTER_URL in lib/media/hero.ts. That pairing is what makes the
+    video's arrival invisible, and naming any other image here breaks it: the
+    poster would be one photograph and the footage another, so the fade becomes
+    a cut between two different shots.
 
-    Still overridable from Admin → Settings; this is only the default.
+    Sigiriya stood here before the film existed, and is still self-hosted and
+    individually verified — see `media.sigiriyaRock` — if it is ever wanted
+    back. `none` returns the hero to the contour treatment.
   */
-  heroPosterUrl: "/photography/sigiriya-rock.jpg",
+  heroPosterUrl: "",
   heroPosterAlt:
-    "Sigiriya rock fortress rising above the surrounding forest, Cultural Triangle, Sri Lanka",
+    "Sri Lanka — private journeys with Island Route",
   /*
     Blank means "use the default film" rather than "no video" — see
     DEFAULT_VIDEO in lib/media/hero.ts for what ships and how it is replaced.

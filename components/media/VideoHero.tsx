@@ -8,18 +8,26 @@
  * progressive enhancement layered on top at opacity 0→1, so it can never cause
  * layout shift and can never become the LCP candidate.
  *
- * With nothing configured the hero loops placeholder footage (see
- * PLACEHOLDER_VIDEO in lib/media/hero.ts). Pasting a URL into `hero_video_url`
- * in the admin swaps it for real film; typing `none` there returns the hero to
- * the poster alone. Neither is a code change.
+ * With nothing configured the hero shows the owner's film over its own first
+ * frame (see DEFAULT_VIDEO and DEFAULT_POSTER_URL in lib/media/hero.ts).
+ * Pasting a URL into `hero_video_url` or `hero_poster_url` in the admin swaps
+ * either one; typing `none` in them turns the video off, or returns the hero
+ * to its contour treatment. None of that is a code change.
  *
  * Deliberately absent: a `poster` attribute on the <video>. The image layer
- * beneath IS the poster; adding the attribute would download it twice.
+ * beneath IS the poster; adding the attribute would download it twice — once
+ * as the preloaded LCP image and once for the video element.
+ *
+ * The handoff is invisible only while the two layers are cropped identically.
+ * The poster is the film's first frame, so both use `object-cover` over the
+ * same box at the same `object-position`, and neither is scaled. Break any one
+ * of those and the fade stops being a dissolve and starts being a jump.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import type { VideoAsset, MediaAsset } from "@/lib/media/types";
+import { focalOf } from "@/lib/media/types";
 import Img from "./Img";
 import GradientPanel from "./GradientPanel";
 
@@ -209,7 +217,18 @@ export default function VideoHero({
                 <div
                   className="h-full w-full will-change-transform"
                   style={
-                    still
+                    /*
+                      Ken Burns belongs to a slideshow. With a single slide
+                      there is nothing to animate between, and because
+                      `isActive` is true from the very first render the scale
+                      never animates — it just paints permanently at 1.04. On a
+                      hero whose one slide is the film's first frame that is a
+                      4% crop away from the video laid over it, which turns the
+                      dissolve into a visible jump. `runnable` is derived from
+                      props alone, so this matches on the server and the client
+                      and cannot snap during hydration.
+                    */
+                    still || !runnable
                       ? undefined
                       : {
                           // Ken Burns: 1.00 → 1.04 across the slide's life,
@@ -271,6 +290,14 @@ export default function VideoHero({
           aria-hidden="true"
           tabIndex={-1}
           onCanPlayThrough={() => setReady(true)}
+          /*
+            Matched to the poster underneath rather than left at the CSS
+            default. They are the same picture, so they have to be cropped the
+            same way; a poster nudged off-centre against a centred video is the
+            one thing that makes an otherwise identical pair of frames read as
+            two different shots.
+          */
+          style={slides[0] ? { objectPosition: focalOf(slides[0]) } : undefined}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-out ${
             ready && !paused ? "opacity-100" : "opacity-0"
           }`}

@@ -44,7 +44,7 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       {
         key: "hero_poster_url",
         label: "Hero image URL",
-        help: "Leave blank until an image is verified — the hero shows an elegant gradient instead. Never use an image whose location you haven't confirmed.",
+        help: "Blank shows the first frame of your Sri Lanka film, which is what makes the video start invisibly. Replacing it with a different photograph means the hero visibly cuts to the footage, so only do that if you want it. Type `none` for no image at all.",
       },
       { key: "hero_poster_alt", label: "Hero image description (alt text)", long: true },
       {
@@ -55,7 +55,7 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       {
         key: "hero_video_mobile_url",
         label: "Hero video URL — mobile",
-        help: "Blank sends phones the same file as desktop — currently 21.6 MB, which is a lot on mobile data. Paste a smaller, narrower encode here and phones will use that instead, or `none` to switch video off on phones only.",
+        help: "Blank sends phones the same file as desktop — currently 43.2 MB, which is a great deal on mobile data. Paste a smaller, narrower encode here and phones will use that instead, or `none` to switch video off on phones only.",
       },
       {
         key: "hero_slideshow_enabled",
@@ -75,7 +75,8 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
           "Format: /photography/file.jpg | optional alt text | optional focal point such as 50% 40%. " +
           "Order here is the order on the page; delete a line to remove that slide. " +
           "Leave alt blank to inherit the verified description already recorded for that image. " +
-          "Only use photographs whose location you have confirmed — a path typed here does not make an image verified.",
+          "Only use photographs whose location you have confirmed — a path typed here does not make an image verified. " +
+          "These slides only appear while the hero video is switched off — set both video URLs to `none` to bring the slideshow back.",
       },
     ],
   },

@@ -99,66 +99,73 @@ export const HERO_DEFAULTS = {
 } as const;
 
 /**
- * The default hero film.
+ * The default hero film and its poster.
  *
- * This is the owner's own footage of Sri Lanka, hosted in the project's
- * Supabase storage bucket. It replaced stock placeholder video, so the earlier
- * caveat no longer applies: the hero may now legitimately be read as depicting
- * Sri Lanka, because it does. The <video> stays `aria-hidden` — it is
+ * Both are the owner's own footage of Sri Lanka, in the project's Supabase
+ * storage bucket. The hero may legitimately be read as depicting Sri Lanka,
+ * because it does. The <video> stays `aria-hidden` regardless — it is
  * atmosphere behind the headline, not content the page asserts anything about.
+ *
+ * The poster is the film's exact first frame, and that is the whole trick
+ * behind a seamless start. The poster paints immediately as the LCP element;
+ * the video fades in on top of it. Because the two images are identical, the
+ * handoff has nothing to reveal — no black frame, no cut, no jump. That only
+ * holds while their geometry matches, which is why POSTER_FOCAL below is
+ * shared with the <video> rather than being an image-only concern.
  *
  * One H.264 mp4, no webm cut. Every browser that can autoplay a muted
  * background video plays H.264, so a second encode would only save bytes, and
  * there is no transcoding step in this pipeline to produce one honestly.
  *
- * Measured, and the reason the hero holds its poster for a while: this is a
- * FRAGMENTED mp4. The `moov` at byte 36 is only 1.4 KB and carries no sample
- * tables, followed by a long moof/mdat chain with no `sidx` index. A plain
- * <video> has no manifest to read, so the demuxer must walk that chain before
- * it can report a duration, and over a network every hop is another ranged
- * round-trip. Against Supabase that is 26 sequential range requests and about
- * 10.5s before `loadedmetadata`, putting first frame near 11-12s. The very
- * same bytes served locally reach metadata in 37ms and first frame in 2.3s
- * over 6 requests. So the encode, the connection and this code are all fine —
- * it is the container shape. Once running, playback is clean: zero `waiting`,
- * `stalled` or `error` events.
- *
- * The remedy is a re-upload, not a code change. Export (or remux) as an
- * ordinary progressive mp4, so the sample tables sit in one front-loaded
- * `moov` and the demuxer needs a single read:
+ * This mp4 is progressive, not fragmented: a 44 KB `moov` carrying real sample
+ * tables sits at byte 24, ahead of the media data. The demuxer reads it once
+ * and knows the duration, which is what the earlier fragmented cut could not
+ * do — that one cost 26 sequential range requests and ~10.5s before
+ * `loadedmetadata`. Keep any replacement progressive:
  *
  *     ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4
  *
- * Two storage-layer wins worth taking at the same time. Supabase serves this
- * object `Cache-Control: no-cache`, so re-uploading with a `cacheControl`
- * value lets repeat visitors revalidate instead of refetching; and a narrower,
- * shorter cut pasted into hero_video_mobile_url spares phones the full
- * 21.6 MB. Neither is reachable from application code.
+ * Two costs remain, and neither is reachable from application code. The film
+ * is 43.2 MB, so a narrower, shorter cut in hero_video_mobile_url is still the
+ * change that saves someone money on mobile data. And Supabase serves both
+ * objects `Cache-Control: no-cache`, so re-uploading with a `cacheControl`
+ * value lets repeat visitors revalidate instead of refetching. The poster is
+ * the one that stings there, because it is on the LCP path.
  *
- * Spaces in the object name are percent-encoded and the comma is left literal,
- * which is what RFC 3986 permits in a path segment. Do not run this through
- * `encodeURI` on the way to the <source> tag — that would turn `%20` into
- * `%2520` and 404.
+ * Spaces are percent-encoded and the rest is left literal, which is what RFC
+ * 3986 permits in a path segment. Do not run these through `encodeURI` on the
+ * way out — that would turn `%20` into `%2520` and 404.
  *
- * To replace it: paste new URLs into hero_video_url and hero_video_mobile_url
- * in the admin. No code changes, and this constant stops being reachable the
- * moment either field is filled in.
+ * To replace any of it: paste new URLs into hero_poster_url, hero_video_url
+ * and hero_video_mobile_url in the admin. No code changes, and these constants
+ * stop being reachable the moment the matching field is filled in.
  */
 const SUPABASE_MEDIA =
   "https://weiwhqhvtdpcwzdwlazd.supabase.co/storage/v1/object/public/media";
+
+const DEFAULT_POSTER_URL = `${SUPABASE_MEDIA}/Sequence%2001.0_00.Still001.jpg`;
+
+/**
+ * Dead centre, and deliberately not the 50% 45% used for ordinary hero
+ * photography. A film frame is already composed; nudging it up crops it
+ * differently from the <video> painted over it, and the handoff that should be
+ * invisible becomes a visible shift. Whatever this is, the video gets it too.
+ */
+const POSTER_FOCAL = "50% 50%" as const;
+
 const DEFAULT_VIDEO = {
   desktop: [
-    { src: `${SUPABASE_MEDIA}/Sri%20Lanka,%20Your%20Destination%20for%202026.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/Sequence%2001_1.mp4`, type: "video/mp4" },
   ],
   /*
     Phones are served the same file, because there is only one. The gates in
     VideoHero still stand in front of it — Save-Data, anything below 4g,
     reduced motion, a hidden tab and a remembered pause all skip the request
-    entirely — but a 4g phone will download the full 21.6 MB. That is the
+    entirely — but a 4g phone will download the full 43.2 MB. That is the
     strongest argument for putting a narrower encode in hero_video_mobile_url.
   */
   mobile: [
-    { src: `${SUPABASE_MEDIA}/Sri%20Lanka,%20Your%20Destination%20for%202026.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/Sequence%2001_1.mp4`, type: "video/mp4" },
   ],
 } as const satisfies Record<string, readonly VideoSource[]>;
 
@@ -189,29 +196,66 @@ function sourcesFrom(
 }
 
 export function resolveHero(s: SiteSettings): HeroContent {
-  const posterUrl = (s.heroPosterUrl ?? "").trim();
+  const rawPoster = (s.heroPosterUrl ?? "").trim();
 
   /*
-   * No poster configured → poster is null and the hero renders its
-   * non-photographic treatment. This is deliberate, not a failure state: no
-   * unverified photograph has been approved yet, and an abstract hero is a
-   * defensible design choice where a wrong photograph is not.
+   * Same three states as the video fields, and for the same reason. Blank is
+   * "nobody has said anything", which a fresh install and a half-filled
+   * settings row are both in — both should get the designed hero, so blank
+   * means the default poster. Typing `none` is a decision, and returns the
+   * hero to its non-photographic contour treatment. That is a designed
+   * surface, not a failure state.
+   *
+   * A pasted poster keeps the film's focal point rather than the 50% 45% used
+   * elsewhere, because whatever sits here is composited against the video and
+   * has to be cropped the same way it is.
    */
+  const posterUrl = rawPoster.toLowerCase() === "none" ? "" : rawPoster || DEFAULT_POSTER_URL;
+
   const poster: MediaAsset | null = posterUrl
     ? fromCmsUrl(
         posterUrl,
         (s.heroPosterAlt ?? "").trim() ||
           "Sri Lanka — private journeys with Island Route",
-        { focal: "50% 45%" }
+        { focal: POSTER_FOCAL }
       )
     : null;
 
+  const sources = sourcesFrom(s.heroVideoUrl, DEFAULT_VIDEO.desktop);
+  const mobileSources = sourcesFrom(s.heroVideoMobileUrl, DEFAULT_VIDEO.mobile);
+
   /*
-    Slides fall back to the single poster, so every earlier behaviour still
-    holds: no slides + no poster → no photography → gradient treatment.
+    Two different heroes, and which one applies is decided by whether a film is
+    configured at all.
+
+    With a film, the still layer is the poster alone. The poster is that film's
+    first frame, so the video arrives over an identical image and the handoff
+    cannot be seen. Running the photo slideshow underneath instead would put a
+    different photograph on screen at the moment the video fades in, which
+    turns an invisible start into a visible cut — and those photographs would
+    be downloaded on every visit only to end up behind an opaque video, still
+    cross-fading where nobody can see them.
+
+    With the film switched off (`none`, or no sources configured), the
+    slideshow is the hero and runs exactly as before.
+
+    This is decided here, from settings, rather than from whether the video
+    actually ends up playing. The runtime gates in VideoHero — Save-Data,
+    sub-4g, reduced motion, a hidden tab, a remembered pause — are client-only
+    and resolve after paint, so keying off them would change the LCP image
+    during hydration. Failing a gate leaves the film's first frame on screen as
+    a still, which is a designed hero rather than a degraded one.
   */
   const parsed = parseSlides(s.heroSlides ?? "");
-  const slides = parsed.length > 0 ? parsed : poster ? [poster] : [];
+  const hasFilm = sources.length > 0 || mobileSources.length > 0;
+  const slides =
+    hasFilm && poster
+      ? [poster]
+      : parsed.length > 0
+        ? parsed
+        : poster
+          ? [poster]
+          : [];
 
   const enabled = (s.heroSlideshowEnabled ?? "").trim().toLowerCase() !== "false";
   const rawSeconds = Number.parseFloat((s.heroSlideDuration ?? "").trim());
@@ -231,18 +275,7 @@ export function resolveHero(s: SiteSettings): HeroContent {
         (s.heroCtaSecondaryLabel ?? "").trim() || HERO_DEFAULTS.ctaSecondaryLabel,
       href: (s.heroCtaSecondaryHref ?? "").trim() || HERO_DEFAULTS.ctaSecondaryHref,
     },
-    video: {
-      poster,
-      sources: sourcesFrom(s.heroVideoUrl, DEFAULT_VIDEO.desktop),
-      /*
-        Mobile gets its own cut rather than the desktop file scaled down in the
-        decoder, and rather than nothing at all. The narrower encode is roughly
-        half the bytes, and every gate in VideoHero — Save-Data, sub-4g,
-        reduced-motion, a hidden tab, a remembered pause — still has to pass
-        before any of them are requested.
-      */
-      mobileSources: sourcesFrom(s.heroVideoMobileUrl, DEFAULT_VIDEO.mobile),
-    },
+    video: { poster, sources, mobileSources },
     slides,
     slideshow: {
       // A slideshow of one is a still image; disable it rather than run a
