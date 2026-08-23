@@ -101,9 +101,9 @@ export const HERO_DEFAULTS = {
 /**
  * The default hero film and its poster.
  *
- * Both are the owner's own footage of Sri Lanka, in the project's Supabase
- * storage bucket. The hero may legitimately be read as depicting Sri Lanka,
- * because it does. The <video> stays `aria-hidden` regardless — it is
+ * All three are the owner's own footage of Sri Lanka, in the project's
+ * Supabase storage bucket. The hero may legitimately be read as depicting Sri
+ * Lanka, because it does. The <video> stays `aria-hidden` regardless — it is
  * atmosphere behind the headline, not content the page asserts anything about.
  *
  * The poster is the film's exact first frame, and that is the whole trick
@@ -113,18 +113,29 @@ export const HERO_DEFAULTS = {
  * holds while their geometry matches, which is why POSTER_FOCAL below is
  * shared with the <video> rather than being an image-only concern.
  *
- * Two H.264 cuts of the one film — 1080p for desktop, 720p for phones — and
- * no webm. Every browser that can autoplay a muted background video plays
- * H.264, so a webm would only save bytes, and there is no transcoding step in
- * this pipeline to produce one honestly. The two cuts are the same 81.3s
- * timeline at the same 16:9 aspect, which is the condition under which a
- * single poster can be the first frame of both.
+ * Two H.264 cuts of the one film and no webm. Every browser that can autoplay
+ * a muted background video plays H.264, so a webm would only save bytes, and
+ * there is no transcoding step in this pipeline to produce one honestly. The
+ * measured properties of what is actually in the bucket:
  *
- * This mp4 is progressive, not fragmented: a 44 KB `moov` carrying real sample
- * tables sits at byte 24, ahead of the media data. The demuxer reads it once
- * and knows the duration, which is what the earlier fragmented cut could not
- * do — that one cost 26 sequential range requests and ~10.5s before
- * `loadedmetadata`. Keep any replacement progressive:
+ *     desktop  1920x1080  43.2 MB  57.62s  50fps CFR  no audio track
+ *     mobile   1280x720   10.8 MB  57.62s  50fps CFR  no audio track
+ *     poster   1920x1080  898 KB   baseline JPEG
+ *
+ * Both cuts are the same timeline at the same 16:9 aspect, and the poster is
+ * that same frame at that same aspect. That is the condition under which one
+ * poster can be the first frame of both — a shorter edit or a re-frame on one
+ * cut would need its own first-frame still, or the seamless start silently
+ * becomes a cut on phones only.
+ *
+ * Neither cut carries an audio track. Audio would cost bytes for nothing here:
+ * the hero is `muted` and has no control that could unmute it.
+ *
+ * Both mp4s are progressive, not fragmented: a `moov` carrying real sample
+ * tables sits at byte 24, ahead of the media data, so the demuxer reads it
+ * once and knows the duration. An earlier fragmented cut could not do that and
+ * cost 26 sequential range requests and ~10.5s before `loadedmetadata`. Keep
+ * any replacement progressive:
  *
  *     ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4
  *
@@ -133,9 +144,11 @@ export const HERO_DEFAULTS = {
  * `cacheControl` value lets repeat visitors revalidate instead of refetching.
  * The poster is the one that stings there, because it is on the LCP path.
  *
- * Spaces are percent-encoded and the rest is left literal, which is what RFC
- * 3986 permits in a path segment. Do not run these through `encodeURI` on the
- * way out — that would turn `%20` into `%2520` and 404.
+ * These filenames are deliberately plain — no spaces, so no percent-encoding
+ * and nothing for a URL helper to double-escape on the way out. The set they
+ * replaced was named `Sequence 01*.mp4`, and those objects no longer exist in
+ * the bucket; a name that survives a round trip through a URL is worth more
+ * here than one that matches an export preset.
  *
  * To replace any of it: paste new URLs into hero_poster_url, hero_video_url
  * and hero_video_mobile_url in the admin. No code changes, and these constants
@@ -144,7 +157,7 @@ export const HERO_DEFAULTS = {
 const SUPABASE_MEDIA =
   "https://weiwhqhvtdpcwzdwlazd.supabase.co/storage/v1/object/public/media";
 
-const DEFAULT_POSTER_URL = `${SUPABASE_MEDIA}/Sequence%2001.0_00.Still001.jpg`;
+const DEFAULT_POSTER_URL = `${SUPABASE_MEDIA}/islandroute-hero-poster.jpg`;
 
 /**
  * Dead centre, and deliberately not the 50% 45% used for ordinary hero
@@ -156,25 +169,19 @@ const POSTER_FOCAL = "50% 50%" as const;
 
 const DEFAULT_VIDEO = {
   desktop: [
-    { src: `${SUPABASE_MEDIA}/Sequence%2001_1.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/islandroute-hero-desktop.mp4`, type: "video/mp4" },
   ],
   /*
-    The same film at 720p with the audio track dropped: 10.1 MB against the
-    desktop cut's 43.2 MB, for a file nothing on a phone can tell apart from
-    the original at that size. Audio costs bytes for nothing here — the hero
-    is `muted` and has no control that could unmute it.
-
-    Same 81.3s cut and the same 16:9 frame, which is what lets one poster serve
-    both. A shorter edit or a re-frame would need its own first-frame still, or
-    the seamless start silently becomes a cut on phones only.
+    The same film at 720p: 10.8 MB against the desktop cut's 43.2 MB, for a
+    file nothing on a phone can tell apart from the original at that size.
 
     The VideoHero gates still stand in front of this — Save-Data, anything
     below 4g, reduced motion, a hidden tab and a remembered pause all skip the
-    request entirely — so 10.1 MB is the worst case for a phone that wants
-    the video, not the typical one.
+    request entirely — so 10.8 MB is the worst case for a phone that wants the
+    video, not the typical one.
   */
   mobile: [
-    { src: `${SUPABASE_MEDIA}/Sequence%2001.mp4`, type: "video/mp4" },
+    { src: `${SUPABASE_MEDIA}/islandroute-hero-mobile.mp4`, type: "video/mp4" },
   ],
 } as const satisfies Record<string, readonly VideoSource[]>;
 
