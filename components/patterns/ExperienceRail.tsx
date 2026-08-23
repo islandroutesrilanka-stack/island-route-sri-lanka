@@ -32,8 +32,9 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import Img from "@/components/media/Img";
-import { experienceAsset } from "@/lib/media/experiences";
-import { getTours } from "@/lib/data";
+import type { MediaAsset } from "@/lib/media/types";
+import { slotAsset } from "@/lib/media/slots";
+import { getSettings, getTours } from "@/lib/data";
 import {
   publishedExperiences,
   type PublishedExperience,
@@ -43,10 +44,13 @@ function Feature({
   experience: { category, tours },
   index,
   tall = false,
+  asset,
 }: {
   experience: PublishedExperience;
   index: number;
   tall?: boolean;
+  /* Resolved by the caller — see the note on ExperienceCard's `asset`. */
+  asset: MediaAsset | null;
 }) {
   return (
     <Reveal index={index}>
@@ -59,7 +63,7 @@ function Feature({
           }`}
         >
           <Img
-            asset={experienceAsset(category.slug)}
+            asset={asset}
             /* Off, and staying off — same rule as ExperienceCard: an unchecked
                asset here would put a photograph of somewhere else behind a
                category name on the homepage. */
@@ -121,8 +125,11 @@ function Feature({
 }
 
 export default async function ExperienceRail() {
-  const published = publishedExperiences(await getTours());
+  const [tours, settings] = await Promise.all([getTours(), getSettings()]);
+  const published = publishedExperiences(tours);
   if (published.length === 0) return null;
+  const pictureFor = (slug: string) =>
+    slotAsset(settings.images, `experience-${slug}`);
 
   // Two features only when there are enough to spare; otherwise everything
   // that remains would be an index of one, which reads like an oversight.
@@ -137,11 +144,20 @@ export default async function ExperienceRail() {
         <div
           className={features.length > 1 ? "md:col-span-7" : "md:col-span-12"}
         >
-          <Feature experience={features[0]} index={0} />
+          <Feature
+            experience={features[0]}
+            index={0}
+            asset={pictureFor(features[0].category.slug)}
+          />
         </div>
         {features[1] && (
           <div className="md:col-span-5 md:pt-12">
-            <Feature experience={features[1]} index={1} tall />
+            <Feature
+              experience={features[1]}
+              index={1}
+              tall
+              asset={pictureFor(features[1].category.slug)}
+            />
           </div>
         )}
       </div>

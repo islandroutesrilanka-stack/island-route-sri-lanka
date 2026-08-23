@@ -53,6 +53,7 @@ import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import Img from "@/components/media/Img";
 import { experienceAsset } from "@/lib/media/experiences";
+import type { MediaAsset } from "@/lib/media/types";
 import type { PublishedExperience } from "@/lib/experiences";
 
 /** "1 journey" / "4 journeys" — the tile's only number, and it is derived. */
@@ -62,16 +63,29 @@ export default function ExperienceCard({
   experience,
   index = 0,
   variant = "default",
+  asset,
 }: {
   experience: PublishedExperience;
   index?: number;
   /** `feature` is the lead tile: editorial scale, copy set on the photograph. */
   variant?: "default" | "feature";
+  /*
+    The photograph, when the caller has already resolved it.
+
+    Category images are an editable slot now (Admin → Images), and resolving a
+    slot needs the settings row, which needs an await. Rather than make this
+    component async — it is rendered inside three different layouts, one of
+    them a rail — the caller that already has `settings` passes the asset down
+    and everyone else keeps the seed image. Same picture either way when
+    nothing has been overridden.
+  */
+  asset?: MediaAsset | null;
 }) {
+  const picture = asset ?? experienceAsset(experience.category.slug);
   return variant === "feature" ? (
-    <FeatureTile experience={experience} index={index} />
+    <FeatureTile experience={experience} index={index} asset={picture} />
   ) : (
-    <GridTile experience={experience} index={index} />
+    <GridTile experience={experience} index={index} asset={picture} />
   );
 }
 
@@ -80,9 +94,11 @@ export default function ExperienceCard({
 function GridTile({
   experience: { category, tours },
   index,
+  asset,
 }: {
   experience: PublishedExperience;
   index: number;
+  asset: MediaAsset | null;
 }) {
   return (
     /*
@@ -105,7 +121,7 @@ function GridTile({
         */}
         <div className="img-frame aspect-[4/5]">
           <Img
-            asset={experienceAsset(category.slug)}
+            asset={asset}
             /* Off, and staying off: an unchecked asset here would put a
                photograph of somewhere else behind a category name. */
             requireVerifiedLocation
@@ -164,16 +180,18 @@ function GridTile({
 function FeatureTile({
   experience: { category, tours },
   index,
+  asset,
 }: {
   experience: PublishedExperience;
   index: number;
+  asset: MediaAsset | null;
 }) {
   return (
     <Reveal index={index}>
       <Link href={`/experiences/${category.slug}`} className="group block">
         <div className="img-frame aspect-[4/5] md:aspect-[16/10]">
           <Img
-            asset={experienceAsset(category.slug)}
+            asset={asset}
             requireVerifiedLocation
             sizes="(min-width: 1216px) 1216px, 100vw"
             fallbackTone="moss"

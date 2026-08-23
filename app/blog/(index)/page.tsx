@@ -5,7 +5,6 @@ import { PageHeader, CTABand } from "@/components/ui";
 import EmptyState from "@/components/patterns/EmptyState";
 import { Reveal } from "@/components/motion";
 import { getPosts } from "@/lib/data";
-import { media } from "@/lib/media/registry";
 import { formatDate, toIsoDate } from "@/utils/format";
 
 export const revalidate = 60;
@@ -99,8 +98,9 @@ export default async function BlogPage() {
         intro="Guides and stories from the people who drive this island every day."
         /* Decorative, but a verified Sri Lankan location rather than generic
            stock — same rule the post images follow, and now visible at full
-           strength behind the title rather than washed out under a gradient. */
-        image={media.galleFortStreet.src}
+           strength behind the title rather than washed out under a gradient.
+           Editable at /admin/images; the default is the Galle fort street. */
+        slot="header-blog"
       />
       {posts.length === 0 && (
         <section className="py-16 md:py-24">

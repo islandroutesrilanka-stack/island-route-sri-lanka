@@ -15,8 +15,7 @@ import { getFleet, getReviews } from "@/lib/data";
 import { rateForVehicle } from "@/lib/pricing";
 import { seating } from "@/lib/content";
 import { RateBadge, InclusionList } from "@/components/patterns/TransportRates";
-import { fromCmsUrl, media } from "@/lib/media/registry";
-import { commonsPlaces } from "@/lib/media/commons";
+import { fromCmsUrl } from "@/lib/media/registry";
 import { waLink, defaultWaMessage, site } from "@/lib/site";
 
 /*
@@ -53,7 +52,7 @@ export default async function AboutPage() {
         eyebrow="Our story"
         title="Built on the island, for the island"
         intro="Island Route began with one driver, one well-loved car, and a belief that Sri Lanka deserved better than rushed bus tours."
-        image={commonsPlaces.Polonnaruwa.src}
+        slot="header-about"
       />
 
       <nav

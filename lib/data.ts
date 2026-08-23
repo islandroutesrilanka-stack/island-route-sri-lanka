@@ -29,6 +29,7 @@ import {
 } from "./content";
 import { posts as seedPosts, type Post } from "./blog";
 import { assetBySrc } from "./media/registry";
+import { IMAGE_KEY_PREFIX } from "./media/slots";
 import { isLocationVerified } from "./media/types";
 import { site as seedSite } from "./site";
 
@@ -50,7 +51,10 @@ async function fromTable<Row, T>(
   table: string,
   fallback: T[],
   map: (r: Row) => T,
-  opts: { published?: boolean; order?: string } = { published: true, order: "sort" }
+  opts: { published?: boolean; order?: string } = {
+    published: true,
+    order: "sort",
+  },
 ): Promise<T[]> {
   const sb = getAnonSupabase();
   if (!sb) return fallback;
@@ -59,7 +63,7 @@ async function fromTable<Row, T>(
     if (opts.published !== false) q = q.eq("published", true);
     if (opts.order) q = q.order(opts.order, { ascending: true });
     const { data, error } = await q.abortSignal(
-      AbortSignal.timeout(QUERY_TIMEOUT_MS)
+      AbortSignal.timeout(QUERY_TIMEOUT_MS),
     );
     if (error || !data || data.length === 0) return fallback;
     return (data as Row[]).map(map);
@@ -73,14 +77,20 @@ async function fromTable<Row, T>(
 /* ---------------------------------- Tours ---------------------------------- */
 
 type TourRow = {
-  slug: string; title: string; category: Tour["category"]; duration: string | null;
+  slug: string;
+  title: string;
+  category: Tour["category"];
+  duration: string | null;
   /* `price_from` is still a column, and is deliberately not read. The fixed
      per-person package price was retired when pricing moved to the transport
      day rate (lib/pricing.ts); leaving the column in place keeps historic rows
      intact, but nothing may render it. */
-  image: string | null; excerpt: string | null;
-  highlights: string[] | null; includes: string[] | null;
-  itinerary: Tour["itinerary"] | null; featured: boolean;
+  image: string | null;
+  excerpt: string | null;
+  highlights: string[] | null;
+  includes: string[] | null;
+  itinerary: Tour["itinerary"] | null;
+  featured: boolean;
   /**
    * Optional. No such column exists yet — `select("*")` simply omits it, which
    * yields undefined and an empty link list. Adding a `destination_slugs jsonb`
@@ -139,7 +149,7 @@ const mapTour = (r: TourRow): Tour => {
 };
 
 export const getTours = cache(() =>
-  fromTable<TourRow, Tour>("tours", seedTours, mapTour)
+  fromTable<TourRow, Tour>("tours", seedTours, mapTour),
 );
 export async function getTourBySlug(slug: string) {
   return (await getTours()).find((t) => t.slug === slug);
@@ -151,9 +161,15 @@ export async function getFeaturedTours() {
 /* ------------------------------- Destinations ------------------------------- */
 
 type DestRow = {
-  slug: string; name: string; region: string | null; headline: string | null;
-  description: string | null; best_for: string[] | null; best_time: string | null;
-  highlights: string[] | null; image: string | null;
+  slug: string;
+  name: string;
+  region: string | null;
+  headline: string | null;
+  description: string | null;
+  best_for: string[] | null;
+  best_time: string | null;
+  highlights: string[] | null;
+  image: string | null;
 };
 
 const mapDest = (r: DestRow): Destination => ({
@@ -169,7 +185,7 @@ const mapDest = (r: DestRow): Destination => ({
 });
 
 export const getDestinations = cache(() =>
-  fromTable<DestRow, Destination>("destinations", seedDestinations, mapDest)
+  fromTable<DestRow, Destination>("destinations", seedDestinations, mapDest),
 );
 export async function getDestinationBySlug(slug: string) {
   return (await getDestinations()).find((d) => d.slug === slug);
@@ -178,8 +194,12 @@ export async function getDestinationBySlug(slug: string) {
 /* --------------------------------- Services --------------------------------- */
 
 type ServiceRow = {
-  slug: string; name: string; tagline: string | null; description: string | null;
-  image: string | null; icon: Service["icon"] | null;
+  slug: string;
+  name: string;
+  tagline: string | null;
+  description: string | null;
+  image: string | null;
+  icon: Service["icon"] | null;
 };
 
 /**
@@ -209,14 +229,19 @@ export const getServices = cache(async () =>
       image: r.image ?? "",
       icon: r.icon ?? "car",
     }))
-  ).filter((s) => !retiredServiceSlugs.has(s.slug))
+  ).filter((s) => !retiredServiceSlugs.has(s.slug)),
 );
 
 /* ---------------------------------- Fleet ----------------------------------- */
 
 type VehicleRow = {
-  slug: string; name: string; category: string | null; passengers: number | null;
-  luggage: string | null; features: string[] | null; ideal_for: string | null;
+  slug: string;
+  name: string;
+  category: string | null;
+  passengers: number | null;
+  luggage: string | null;
+  features: string[] | null;
+  ideal_for: string | null;
   image: string | null;
 };
 
@@ -230,13 +255,17 @@ export const getFleet = cache(() =>
     features: r.features ?? [],
     idealFor: r.ideal_for ?? "",
     image: r.image ?? "",
-  }))
+  })),
 );
 
 /* --------------------------------- Reviews ---------------------------------- */
 
 type ReviewRow = {
-  name: string; country: string | null; trip: string | null; rating: number; text: string;
+  name: string;
+  country: string | null;
+  trip: string | null;
+  rating: number;
+  text: string;
 };
 
 export const getReviews = cache(() =>
@@ -246,14 +275,19 @@ export const getReviews = cache(() =>
     trip: r.trip ?? "",
     rating: r.rating,
     text: r.text,
-  }))
+  })),
 );
 
 /* ---------------------------------- Posts ----------------------------------- */
 
 type PostRow = {
-  slug: string; title: string; excerpt: string | null; date: string;
-  read_time: string | null; image: string | null; sections: Post["sections"] | null;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  date: string;
+  read_time: string | null;
+  image: string | null;
+  sections: Post["sections"] | null;
 };
 
 /**
@@ -308,8 +342,8 @@ export const getPosts = cache(() =>
       image: postImage(r.slug, r.image),
       sections: r.sections ?? [],
     }),
-    { published: true, order: "date" }
-  )
+    { published: true, order: "date" },
+  ),
 );
 
 export async function getPostBySlug(slug: string) {
@@ -318,14 +352,18 @@ export async function getPostBySlug(slug: string) {
 
 /* ---------------------------------- Gallery --------------------------------- */
 
-type GalleryRow = { src: string; caption: string | null; category: GalleryItem["category"] };
+type GalleryRow = {
+  src: string;
+  caption: string | null;
+  category: GalleryItem["category"];
+};
 
 export const getGallery = cache(() =>
   fromTable<GalleryRow, GalleryItem>("gallery", seedGallery, (r) => ({
     src: r.src,
     caption: r.caption ?? "",
     category: r.category,
-  }))
+  })),
 );
 
 /* ------------------------------- Site settings ------------------------------ */
@@ -393,7 +431,28 @@ export type SiteSettings = {
   featuredGuideRole: string;
   featuredGuideNote: string;
   featuredGuideImage: string;
+
+  /* ---- Editable image slots (Admin → Images) ----
+
+     Keyed by slot, not by settings row: the `img-` prefix that separates these
+     from ordinary settings is stripped on the way in, so a page asks for
+     "header-tours" and never has to know how the row is spelled. Missing keys
+     are the normal case and mean "use the designed default" — see
+     lib/media/slots.ts, which owns the list and the fallbacks. */
+  images: Record<string, string>;
 };
+
+/**
+ * The settings whose value is a plain string.
+ *
+ * `settingsKeyMap` may only point at these. Before `images` existed every field
+ * was a string and the map could be typed against the whole record; now that
+ * one field is an object, an untyped map would let a `string` be written into
+ * it and typecheck.
+ */
+type StringSettingKey = {
+  [K in keyof SiteSettings]: SiteSettings[K] extends string ? K : never;
+}[keyof SiteSettings];
 
 const defaultSettings: SiteSettings = {
   siteName: seedSite.name,
@@ -455,8 +514,7 @@ const defaultSettings: SiteSettings = {
     back. `none` returns the hero to the contour treatment.
   */
   heroPosterUrl: "",
-  heroPosterAlt:
-    "Sri Lanka — private journeys with Island Route",
+  heroPosterAlt: "Sri Lanka — private journeys with Island Route",
   /*
     Blank means "use the default film" rather than "no video" — see
     DEFAULT_VIDEO in lib/media/hero.ts for what ships and how it is replaced.
@@ -494,9 +552,11 @@ const defaultSettings: SiteSettings = {
   featuredGuideRole: "",
   featuredGuideNote: "",
   featuredGuideImage: "",
+
+  images: {},
 };
 
-const settingsKeyMap: Record<string, keyof SiteSettings> = {
+const settingsKeyMap: Record<string, StringSettingKey> = {
   site_name: "siteName",
   tagline: "tagline",
   phone_display: "phoneDisplay",
@@ -548,10 +608,22 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
       .select("*")
       .abortSignal(AbortSignal.timeout(QUERY_TIMEOUT_MS));
     if (error || !data?.length) return defaultSettings;
-    const merged = { ...defaultSettings };
+    /* `images` is copied, not shared: `defaultSettings` is a module singleton
+       and a shallow spread would hand every request the same object to write
+       slot overrides into. */
+    const merged: SiteSettings = { ...defaultSettings, images: {} };
     for (const row of data as { key: string; value: string | null }[]) {
+      if (!row.value) continue;
+      /* Image slots are the one open-ended namespace in this table: the admin
+         can hold a row for any slot lib/media/slots.ts declares, and adding a
+         slot must not require touching the key map below. Everything else is
+         still an explicit, closed mapping. */
+      if (row.key.startsWith(IMAGE_KEY_PREFIX)) {
+        merged.images[row.key.slice(IMAGE_KEY_PREFIX.length)] = row.value;
+        continue;
+      }
       const k = settingsKeyMap[row.key];
-      if (k && row.value) merged[k] = row.value;
+      if (k) merged[k] = row.value;
     }
     return merged;
   } catch {
@@ -583,12 +655,14 @@ export const getSitemapRows = cache(
         .eq("published", true)
         .abortSignal(AbortSignal.timeout(QUERY_TIMEOUT_MS));
       if (error || !data?.length) return [];
-      return (data as { slug: string; updated_at: string | null }[]).map((r) => ({
-        slug: r.slug,
-        updatedAt: r.updated_at ?? undefined,
-      }));
+      return (data as { slug: string; updated_at: string | null }[]).map(
+        (r) => ({
+          slug: r.slug,
+          updatedAt: r.updated_at ?? undefined,
+        }),
+      );
     } catch {
       return [];
     }
-  }
+  },
 );

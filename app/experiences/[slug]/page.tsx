@@ -6,16 +6,16 @@ import { Reveal } from "@/components/motion";
 import Img from "@/components/media/Img";
 import ExperienceGallery from "@/components/patterns/ExperienceGallery";
 import { CTABand, TourCard, DestinationCard } from "@/components/ui";
-import { getTours, getDestinations } from "@/lib/data";
+import { getSettings, getTours, getDestinations } from "@/lib/data";
 import {
   getPublishedExperience,
   publishedExperiences,
 } from "@/lib/experiences";
 import {
-  experienceAsset,
   experienceCredits,
   experienceGalleryAssets,
 } from "@/lib/media/experiences";
+import { slotAsset } from "@/lib/media/slots";
 import { clampDesc } from "@/lib/seo";
 import { siteUrl, waLink } from "@/lib/site";
 
@@ -73,7 +73,7 @@ export default async function ExperiencePage({
 }: {
   params: { slug: string };
 }) {
-  const tours = await getTours();
+  const [tours, settings] = await Promise.all([getTours(), getSettings()]);
   const experience = getPublishedExperience(tours, params.slug);
   if (!experience) notFound();
 
@@ -175,7 +175,7 @@ export default async function ExperiencePage({
       */}
       <section className="relative flex min-h-[84svh] items-end overflow-hidden bg-deep md:min-h-[90svh] lg:h-[min(90svh,54rem)] lg:min-h-0">
         <Img
-          asset={experienceAsset(category.slug)}
+          asset={slotAsset(settings.images, `experience-${category.slug}`)}
           requireVerifiedLocation
           sizes="100vw"
           priority

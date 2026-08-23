@@ -4,9 +4,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard, CalendarRange, Inbox, MessageSquare, Map, MapPin,
-  Briefcase, Car, Users, Star, Newspaper, Images, Settings, LogOut,
-  Menu, X, ExternalLink,
+  LayoutDashboard,
+  CalendarRange,
+  Inbox,
+  MessageSquare,
+  Map,
+  MapPin,
+  Briefcase,
+  Car,
+  Users,
+  Star,
+  Newspaper,
+  Images,
+  ImagePlus,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  ExternalLink,
 } from "lucide-react";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
@@ -23,6 +38,10 @@ const nav = [
   { href: "/admin/content/reviews", label: "Reviews", icon: Star },
   { href: "/admin/content/posts", label: "Blog", icon: Newspaper },
   { href: "/admin/content/gallery", label: "Gallery", icon: Images },
+  /* Page furniture rather than a content type: the photographs behind the
+     headers, the region tiles and the closing band, none of which is a row in
+     any table. See lib/media/slots.ts. */
+  { href: "/admin/images", label: "Images", icon: ImagePlus },
   { href: "/admin/settings", label: "Site & SEO", icon: Settings },
 ];
 
@@ -47,7 +66,9 @@ export default function AdminShell({
     <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
       {nav.map((n) => {
         const active =
-          n.href === "/admin" ? pathname === "/admin" : pathname.startsWith(n.href);
+          n.href === "/admin"
+            ? pathname === "/admin"
+            : pathname.startsWith(n.href);
         return (
           <Link
             key={n.href}
@@ -96,7 +117,10 @@ export default function AdminShell({
       {/* Mobile top bar */}
       <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between bg-deep px-4 py-3">
         <p className="font-display text-lg text-sand">
-          Island Route <span className="text-copper-light text-xs uppercase tracking-widest ml-1">Admin</span>
+          Island Route{" "}
+          <span className="text-copper-light text-xs uppercase tracking-widest ml-1">
+            Admin
+          </span>
         </p>
         <button onClick={() => setOpen((v) => !v)} className="p-2 text-sand">
           {open ? <X size={22} /> : <Menu size={22} />}
@@ -117,7 +141,9 @@ export default function AdminShell({
       )}
 
       {/* Content */}
-      <main className="flex-1 min-w-0 px-5 py-8 md:px-10 md:py-10">{children}</main>
+      <main className="flex-1 min-w-0 px-5 py-8 md:px-10 md:py-10">
+        {children}
+      </main>
     </div>
   );
 }

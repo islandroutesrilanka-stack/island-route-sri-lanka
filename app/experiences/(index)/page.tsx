@@ -7,7 +7,8 @@ import { Reveal } from "@/components/motion";
 import { getTours } from "@/lib/data";
 import { publishedExperiences } from "@/lib/experiences";
 import { experienceCredits } from "@/lib/media/experiences";
-import { media } from "@/lib/media/registry";
+import { slotAsset } from "@/lib/media/slots";
+import { getSettings } from "@/lib/data";
 import { clampDesc } from "@/lib/seo";
 import { siteUrl } from "@/lib/site";
 
@@ -52,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ExperiencesPage() {
-  const tours = await getTours();
+  const [tours, settings] = await Promise.all([getTours(), getSettings()]);
   const published = publishedExperiences(tours);
 
   const [lead, ...rest] = published;
@@ -106,8 +107,9 @@ export default async function ExperiencesPage() {
         intro="Most people don't start with a map — they start with a feeling. Leopards at first light, a train through tea country, a coast that's working in December. Choose the thread and we'll build the route around it."
         /* Decorative (alt=""), and no longer muted — the header shows it at
            full strength, so it has to hold up as a photograph rather than as a
-           texture. Verified Sri Lankan location, like every other image here. */
-        image={media.mirissaCoconutHill.src}
+           texture. Verified Sri Lankan location, like every other image here,
+           and swappable from /admin/images without a deploy. */
+        slot="header-experiences"
       />
 
       {published.length === 0 ? (
@@ -162,7 +164,15 @@ export default async function ExperiencesPage() {
 
               {/* One lead tile carries the page; the rest sit in an even grid.
                   Nothing here assumes a particular number of categories. */}
-              <ExperienceCard experience={lead} index={0} variant="feature" />
+              <ExperienceCard
+                experience={lead}
+                index={0}
+                variant="feature"
+                asset={slotAsset(
+                  settings.images,
+                  `experience-${lead.category.slug}`,
+                )}
+              />
 
               {rest.length > 0 && (
                 <div className="mt-6 grid gap-5 sm:grid-cols-2 md:gap-6 lg:grid-cols-3">
@@ -171,6 +181,10 @@ export default async function ExperiencesPage() {
                       key={e.category.slug}
                       experience={e}
                       index={i % 3}
+                      asset={slotAsset(
+                        settings.images,
+                        `experience-${e.category.slug}`,
+                      )}
                     />
                   ))}
                 </div>

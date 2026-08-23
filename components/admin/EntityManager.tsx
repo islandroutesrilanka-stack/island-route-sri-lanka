@@ -14,6 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { getBrowserSupabase } from "@/lib/supabase/client";
+import ImageField from "./ImageField";
 import type { EntityConfig, FieldDef } from "@/lib/admin-entities";
 
 type Row = Record<string, any>;
@@ -267,7 +268,27 @@ export default function EntityManager({ config }: { config: EntityConfig }) {
                         {f.label}
                         {f.required && <span className="text-copper"> *</span>}
                       </label>
-                      {f.type === "textarea" || f.type === "lines" ? (
+                      {f.type === "image" ? (
+                        /*
+                          The one field type that is not a variation on <input>.
+
+                          It was: a text box, plus a thumbnail underneath if the
+                          URL resolved. Which meant the only way to change a
+                          tour's photograph was to already have it hosted and
+                          know its address — a developer's workflow standing in
+                          for the client's. ImageField uploads to the project's
+                          own Storage bucket and hands back the public URL, and
+                          still accepts a pasted address for the times that is
+                          genuinely easier.
+                        */
+                        <ImageField
+                          value={String(form[f.key] ?? "")}
+                          onChange={(v) =>
+                            setForm((s) => ({ ...s, [f.key]: v }))
+                          }
+                          folder={config.table}
+                        />
+                      ) : f.type === "textarea" || f.type === "lines" ? (
                         <textarea
                           rows={f.type === "lines" ? 5 : 4}
                           className={inputCls}
@@ -330,16 +351,6 @@ export default function EntityManager({ config }: { config: EntityConfig }) {
                             setForm((s) => ({ ...s, [f.key]: e.target.value }))
                           }
                         />
-                      )}
-                      {f.type === "image" && form[f.key] && (
-                        <div className="relative mt-2 h-28 w-44 overflow-hidden border border-ink/10 bg-dune">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={String(form[f.key])}
-                            alt="preview"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
                       )}
                       {f.help && (
                         <p className="mt-1 text-xs text-ink/40">{f.help}</p>

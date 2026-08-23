@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { type JourneyOption } from "@/components/BookingForm";
 import BookingFormWithContext from "@/components/BookingFormWithContext";
-import { media } from "@/lib/media/registry";
 import { serviceScope } from "@/lib/pricing";
 import { RateCards, InclusionList } from "@/components/patterns/TransportRates";
 import FaqPreview from "@/components/patterns/FaqPreview";
@@ -138,7 +137,7 @@ export default async function BookPage() {
         eyebrow="Plan your journey"
         title="Tell us your dream. We'll route it."
         intro="Share as much or as little as you have. A planner reads every enquiry personally and replies with a considered proposal — no deposit, no obligation."
-        image={media.arugamBayEvening.src}
+        slot="header-book"
       />
 
       <section className="py-16 md:py-24">

@@ -8,9 +8,9 @@ import {
 import EmptyState from "@/components/patterns/EmptyState";
 import RegionExplorer from "@/components/patterns/RegionExplorer";
 import ScrollToAnchor from "@/components/patterns/ScrollToAnchor";
-import { getDestinations } from "@/lib/data";
+import { getDestinations, getSettings } from "@/lib/data";
+import { slotSrc } from "@/lib/media/slots";
 import { clampDesc } from "@/lib/seo";
-import { media } from "@/lib/media/registry";
 
 export const revalidate = 60;
 
@@ -83,7 +83,23 @@ export async function generateMetadata(): Promise<Metadata> {
   normal page rather than an empty one.
 */
 export default async function DestinationsPage() {
-  const all = await getDestinations();
+  const [all, settings] = await Promise.all([getDestinations(), getSettings()]);
+
+  /*
+    Which guide leads, and why it is derived rather than "the first one".
+
+    Several destination records are illustrated with the same registry files
+    the header slots draw from, and Sigiriya is both the first guide and the
+    default header photograph — so the page opened on the Lion Rock and then
+    showed the identical file again, at half width, one section later. The lead
+    is the first guide whose photograph is not the header's; everything else
+    keeps its order, and the skipped guide still appears in the grid. Comparing
+    resolved srcs rather than hardcoding a slug means this survives the client
+    changing either image from /admin/images.
+  */
+  const headerSrc = slotSrc(settings.images, "header-destinations");
+  const lead = all.find((d) => d.image !== headerSrc) ?? all[0];
+  const rest = lead ? all.filter((d) => d.slug !== lead.slug) : all;
 
   return (
     <>
@@ -101,7 +117,15 @@ export default async function DestinationsPage() {
         eyebrow="Destinations"
         title="Nine islands in one"
         intro="Golden coasts, cloud forest, ancient citadels and big-cat country — inside a drivable week."
-        image={media.elephantRockSandbar.src}
+        /*
+          Was a dusk sandbar on the east coast — a dark, low-contrast lagoon
+          that could have been any warm country and read as a texture at header
+          scale rather than as a place. Sigiriya is the island's signature
+          landmark, the largest file in the registry at 2560px, and the one
+          photograph a visitor can name before they have read a word. Editable
+          from /admin/images; the default is what ships.
+        */
+        slot="header-destinations"
       />
 
       {/*
@@ -168,16 +192,32 @@ export default async function DestinationsPage() {
               />
               {/*
                 data-qa scopes the QA harness's destination-card selector to
-                this grid. The explorer above also links to /destinations/…, and
-                a page-wide `a[href^="/destinations/"]` count would mix the two.
+                this section. The explorer above also links to /destinations/…,
+                and a page-wide `a[href^="/destinations/"]` count would mix the
+                two. It sits on the wrapper rather than the grid now, so the
+                lead tile is counted with the rest.
               */}
-              <div
-                data-qa="destination-grid"
-                className="section-body grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6"
-              >
-                {all.map((d, i) => (
-                  <DestinationCard key={d.slug} d={d} index={i % 3} />
-                ))}
+              <div data-qa="destination-grid" className="section-body">
+                {/*
+                  Hierarchy, not eleven identical tiles.
+
+                  The grid was every guide at the same size, which is an index
+                  rather than an invitation — nothing tells a first-time visitor
+                  where to start, so the honest reading is that no place here is
+                  more worth their week than any other. The first record leads
+                  at editorial scale with the headline and opening line it
+                  already carries; the rest keep the grid.
+                */}
+                {lead && (
+                  <DestinationCard d={lead} index={0} variant="feature" />
+                )}
+                {rest.length > 0 && (
+                  <div className="mt-12 grid grid-cols-2 gap-5 md:mt-16 md:grid-cols-3 md:gap-8 lg:grid-cols-4">
+                    {rest.map((d, i) => (
+                      <DestinationCard key={d.slug} d={d} index={i % 4} />
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}

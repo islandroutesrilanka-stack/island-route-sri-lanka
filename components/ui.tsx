@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { Reveal } from "./motion";
 import Img from "./media/Img";
 import { destinationAsset } from "@/lib/media/registry";
+import { slotAsset, slotSrc } from "@/lib/media/slots";
+import { getSettings } from "@/lib/data";
 import type { Destination } from "@/lib/destinations";
 import type { Review } from "@/lib/content";
 
@@ -20,16 +22,46 @@ export type { TourCardTour } from "./ui-client";
 
 /* ------------------------------ Destination card ------------------------------ */
 
+/**
+ * Destination card.
+ *
+ * The scrim is gone, and the caption moved out from under it.
+ *
+ * The old tile set an 11px region label and a 20px name inside the crop, which
+ * only cleared 4.5:1 once a `from-deep via-deep/65` blanket covered the whole
+ * frame — the same trade the experience and tour cards used to make, and the
+ * same one they no longer make. Ink on sand is 5.9:1 with nothing over the
+ * picture, so the picture runs clean and the words sit underneath it.
+ *
+ * All three callers — the homepage rail, the experience detail pages and the
+ * destinations index — render this on a light ground, which is what makes the
+ * move available. If a dark section ever needs one, it needs a `dark` prop
+ * first, not a scrim back.
+ */
 export function DestinationCard({
   d,
   index = 0,
+  variant = "default",
 }: {
   d: Destination;
   index?: number;
+  /*
+    `feature` is the same card at editorial scale: a landscape crop, the
+    headline the record already carries, and the first line of its description.
+    It exists because a grid of eleven identical tiles has no entry point — the
+    eye has nowhere to land and every place looks equally optional. One tile at
+    four times the area answers "where do I start" without adding a word of
+    copy that was not already written.
+  */
+  variant?: "default" | "feature";
 }) {
+  if (variant === "feature") return <DestinationFeature d={d} index={index} />;
   return (
-    <Reveal index={index}>
-      <Link href={`/destinations/${d.slug}`} className="group block">
+    <Reveal index={index} className="h-full">
+      <Link
+        href={`/destinations/${d.slug}`}
+        className="group flex h-full flex-col"
+      >
         <div className="img-frame aspect-[3/4]">
           {/*
             Routed through <Img> with requireVerifiedLocation rather than raw
@@ -44,18 +76,65 @@ export function DestinationCard({
             requireVerifiedLocation
             fallbackTone="moss"
             fallbackPattern="contour"
-            className="transition-transform duration-[1.4s] ease-out group-hover:scale-105"
+            className="transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
           />
-          {/* Same floor as the tour card, and for the same reason: the region
-              label is 11px at sand/75 and was landing at 3.6:1 over the paler
-              hill-country crops. See the note in TourCard. */}
-          <div className="absolute inset-0 bg-gradient-to-t from-deep via-deep/65 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-sand/75">
-              {d.region}
-            </p>
-            <h3 className="font-display text-xl text-sand">{d.name}</h3>
+        </div>
+        <div className="pt-4">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-ink/65">
+            {d.region}
+          </p>
+          <h3 className="h-display mt-1.5 text-xl text-ink transition-colors group-hover:text-copper-deep">
+            {d.name}
+          </h3>
+        </div>
+      </Link>
+    </Reveal>
+  );
+}
+
+function DestinationFeature({ d, index }: { d: Destination; index: number }) {
+  return (
+    <Reveal index={index}>
+      <Link
+        href={`/destinations/${d.slug}`}
+        className="group grid items-center gap-8 md:grid-cols-12 md:gap-12"
+      >
+        <div className="md:col-span-7">
+          <div className="img-frame aspect-[4/3] md:aspect-[16/10]">
+            <Img
+              asset={destinationAsset(d)}
+              sizes="(max-width: 768px) 100vw, 58vw"
+              requireVerifiedLocation
+              fallbackTone="moss"
+              fallbackPattern="contour"
+              className="transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
+            />
           </div>
+        </div>
+        <div className="md:col-span-5">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-copper-deep">
+            {d.region}
+          </p>
+          <h3 className="h-display mt-2 text-3xl text-ink transition-colors group-hover:text-copper-deep md:text-4xl">
+            {d.name}
+          </h3>
+          <p className="mt-3 text-[17px] italic leading-relaxed text-ink/75">
+            {d.headline}
+          </p>
+          {/* One sentence, cut on the sentence boundary rather than at a
+              character count, so the card never ends mid-clause. Falls back to
+              the whole description when there is only one. */}
+          <p className="mt-4 text-[15px] leading-relaxed text-ink/70">
+            {d.description.split(/(?<=\.)\s/)[0]}
+          </p>
+          <p className="mt-6 flex items-center gap-2 border-t border-ink/10 pt-4 text-[12px] uppercase tracking-[0.16em] text-copper-deep">
+            Read the guide
+            <ArrowRight
+              size={14}
+              aria-hidden
+              className="transition-transform group-hover:translate-x-1"
+            />
+          </p>
         </div>
       </Link>
     </Reveal>
@@ -121,7 +200,7 @@ export function ReviewCard({
 
 /* ---------------------------------- CTA band --------------------------------- */
 
-export function CTABand({
+export async function CTABand({
   title = "Ready to plan your Sri Lanka?",
   body = "Tell us your dates and dreams — we'll reply within hours with a personal quote. No forms lost in inboxes, no pressure, just island expertise.",
 }: {
@@ -129,6 +208,23 @@ export function CTABand({
   body?: string;
 }) {
   /*
+    ── The band now ends the page on a photograph ─────────────────────────────
+
+    Twelve routes close on this component, and until now every one of them
+    closed on a gradient — the last thing a visitor saw on a site selling a
+    country was a dark rectangle with a button in it. It reads as a form
+    footer, which is what it functionally is, and that is the problem.
+
+    The picture is a column, not a background, and that distinction is the
+    whole design. Laying it behind the type would have forced the same choice
+    the header and the cards used to make: the body copy here is 16px on a
+    photograph, so it needs 4.5:1, so it needs a wash heavy enough to flatten
+    whatever is underneath it. Beside the type instead, the words keep the
+    dark ground they were measured against and the photograph keeps every stop
+    of its own contrast. Nothing was traded.
+
+    ── The gradient it sits on is unchanged ───────────────────────────────────
+
     The band travels from ocean at the top-left corner, through the deep, and
     out into jungle at the bottom-right — the island in one diagonal.
 
@@ -140,32 +236,54 @@ export function CTABand({
     every stop here is a ground in its own right, and the lightest of them
     still holds sand at 11.2:1.
   */
+  const settings = await getSettings();
+  const asset = slotAsset(settings.images, "band-cta");
+
   return (
-    <section className="relative bg-gradient-to-br from-ocean-deep via-deep to-palm grain overflow-hidden">
-      <div className="mx-auto max-w-wrap px-5 md:px-8 py-20 md:py-28 relative z-10">
-        <div className="max-w-2xl">
+    <section className="grain relative overflow-hidden bg-gradient-to-br from-ocean-deep via-deep to-palm">
+      <div className="relative z-10 mx-auto grid max-w-wrap items-center gap-10 px-5 py-20 md:grid-cols-12 md:gap-14 md:px-8 md:py-28">
+        <div className="md:col-span-7 lg:col-span-6">
           <Reveal>
             <p className="eyebrow text-mango">Begin the journey</p>
-            <h2 className="h-display mt-3 text-4xl md:text-6xl text-sand">
+            <h2 className="h-display mt-3 text-4xl text-sand md:text-6xl">
               {title}
             </h2>
-            <p className="mt-6 text-sand/75 leading-relaxed">{body}</p>
-            <div className="mt-9 flex flex-col sm:flex-row gap-4">
+            <p className="mt-6 leading-relaxed text-sand/75">{body}</p>
+            <div className="mt-9 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/book"
-                className="bg-copper-deep text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-copper-light hover:text-deep transition-colors"
+                className="bg-copper-deep px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-light hover:text-deep"
               >
                 Request a quote
               </Link>
               <Link
                 href="/tours"
-                className="border border-sand/30 text-sand px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] hover:bg-sand hover:text-deep transition-colors"
+                className="border border-sand/30 px-8 py-4 text-center text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-sand hover:text-deep"
               >
                 Browse tours
               </Link>
             </div>
           </Reveal>
         </div>
+
+        {/* Hidden below md rather than stacked. On a phone this column would
+            land underneath the buttons, which puts a photograph between the
+            call to action and the footer — a picture nobody scrolls past to
+            reach a link they have already been given. */}
+        {asset && (
+          <div className="hidden md:col-span-5 md:block lg:col-span-6">
+            <Reveal>
+              <div className="img-frame aspect-[4/5] lg:aspect-[3/4]">
+                <Img
+                  asset={asset}
+                  sizes="(max-width: 768px) 0px, 42vw"
+                  fallbackTone="deep"
+                  fallbackPattern="contour"
+                />
+              </div>
+            </Reveal>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -173,11 +291,12 @@ export function CTABand({
 
 /* -------------------------------- Page header -------------------------------- */
 
-export function PageHeader({
+export async function PageHeader({
   eyebrow,
   title,
   intro,
   note,
+  slot,
   image,
 }: {
   eyebrow: string;
@@ -193,6 +312,18 @@ export function PageHeader({
     headline. Same information, one step down in the hierarchy.
   */
   note?: string;
+  /*
+    The image slot this header draws from — see lib/media/slots.ts.
+
+    Eight routes used to hard-code `image={media.something.src}`, which meant
+    the photograph behind every page title on the site was a compile-time
+    constant and changing one was a deploy. Naming the slot instead lets the
+    admin swap it from /admin/images, and the slot's own fallback is the
+    photograph that was hard-coded here before — so an untouched database
+    renders exactly what these pages rendered yesterday.
+  */
+  slot?: string;
+  /** Escape hatch for a header whose picture is not a slot. Wins over `slot`. */
   image?: string;
 }) {
   /*
@@ -216,13 +347,16 @@ export function PageHeader({
     now read the way that one does: the photograph carries the title, and paper
     carries the words.
   */
+  const settings = slot ? await getSettings() : null;
+  const src = image || (slot ? slotSrc(settings?.images, slot) : "");
+
   return (
     <>
       <section className="relative flex min-h-[56svh] items-end overflow-hidden bg-deep md:min-h-[62svh] lg:h-[min(64svh,40rem)] lg:min-h-0">
-        {image && (
+        {src && (
           <>
             <Image
-              src={image}
+              src={src}
               alt=""
               fill
               priority

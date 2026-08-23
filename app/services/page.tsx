@@ -29,7 +29,6 @@ import {
 import { Reveal } from "@/components/motion";
 import { getServices } from "@/lib/data";
 import type { Service } from "@/lib/content";
-import { commonsPlaces } from "@/lib/media/commons";
 import { waLink } from "@/lib/site";
 
 export const revalidate = 60;
@@ -98,7 +97,7 @@ export default async function ServicesPage() {
         eyebrow="What we do"
         title="However you need to move, we drive it"
         intro="Transport and private chauffeurs across Sri Lanka — from a midnight airport pickup to a fortnight with your own driver. One trusted team, one fixed price."
-        image={commonsPlaces.Weligama.src}
+        slot="header-services"
       />
 
       {services.length === 0 ? (
