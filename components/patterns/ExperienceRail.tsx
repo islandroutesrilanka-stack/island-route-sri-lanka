@@ -34,7 +34,10 @@ import { Reveal } from "@/components/motion";
 import Img from "@/components/media/Img";
 import { experienceAsset } from "@/lib/media/experiences";
 import { getTours } from "@/lib/data";
-import { publishedExperiences, type PublishedExperience } from "@/lib/experiences";
+import {
+  publishedExperiences,
+  type PublishedExperience,
+} from "@/lib/experiences";
 
 function Feature({
   experience: { category, tours },
@@ -50,7 +53,9 @@ function Feature({
       <Link href={`/experiences/${category.slug}`} className="group block">
         <div
           className={`img-frame relative ${
-            tall ? "aspect-[4/5] md:aspect-[3/4]" : "aspect-[4/5] md:aspect-[4/3]"
+            tall
+              ? "aspect-[4/5] md:aspect-[3/4]"
+              : "aspect-[4/5] md:aspect-[4/3]"
           }`}
         >
           <Img
@@ -69,15 +74,25 @@ function Feature({
             className="transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
           />
           {/*
-            The scrim stops are ExperienceCard's grid-tile set, not its gentler
-            feature ramp, and deliberately so: these tiles carry the full
-            activity list, so the copy fills roughly the bottom three-quarters
-            of a 4/3 or 3/4 frame — the same geometry those stops were measured
-            against, where the gentle ramp had faded to ~24% behind the title
-            and left the bright crops at 2.2–2.9:1. See the note in
-            ExperienceCard.tsx before changing either; they are positional.
+            NOTE — this component is not currently mounted by any page. The
+            homepage was cut from ten sections to five and this was one of the
+            sections removed; it is kept because it is not badly made and the
+            axis may come back.
+
+            Which is the only reason it still carries a full-frame scrim. The
+            stops used to be shared with ExperienceCard's grid tile, and that
+            tile has since moved its copy out of the photograph entirely and
+            dropped its scrim — see the note there for why. If this section is
+            ever remounted, it should be rebuilt the same way rather than
+            re-tuned: the copy fills roughly the bottom three-quarters of a 4/3
+            or 3/4 frame, which is a geometry no scrim can serve without
+            painting the picture out.
+
+            The colour is at least correct now. It was rgba(11,31,25) — the
+            `deep` of two palettes ago — on a ground that has been #032722
+            since the tropical pass.
           */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(11,31,25,0.95)_0%,rgba(11,31,25,0.85)_40%,rgba(11,31,25,0.62)_70%,rgba(11,31,25,0.45)_85%,rgba(11,31,25,0.15)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(3,39,34,0.95)_0%,rgba(3,39,34,0.85)_40%,rgba(3,39,34,0.62)_70%,rgba(3,39,34,0.45)_85%,rgba(3,39,34,0.15)_100%)]" />
           <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
             <p className="text-[11px] uppercase tracking-[0.16em] text-sand/60">
               {tours.length} {tours.length === 1 ? "journey" : "journeys"}
@@ -111,14 +126,17 @@ export default async function ExperienceRail() {
 
   // Two features only when there are enough to spare; otherwise everything
   // that remains would be an index of one, which reads like an oversight.
-  const featureCount = published.length >= 4 ? 2 : Math.min(published.length, 1);
+  const featureCount =
+    published.length >= 4 ? 2 : Math.min(published.length, 1);
   const features = published.slice(0, featureCount);
   const rest = published.slice(featureCount);
 
   return (
     <>
       <div className="mt-12 grid gap-5 md:mt-16 md:grid-cols-12 md:gap-6">
-        <div className={features.length > 1 ? "md:col-span-7" : "md:col-span-12"}>
+        <div
+          className={features.length > 1 ? "md:col-span-7" : "md:col-span-12"}
+        >
           <Feature experience={features[0]} index={0} />
         </div>
         {features[1] && (

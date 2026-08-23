@@ -127,12 +127,48 @@ export default async function ExperiencePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Hero — the category's photograph where one has been verified, and the
-          contour treatment where none has. `requireVerifiedLocation` is what
-          keeps the second case from becoming "a photograph of somewhere else
-          captioned Tea Country"; the className lands on both branches, so the
-          fallback is positioned and dimmed exactly as the photograph is. */}
-      <section className="relative overflow-hidden bg-deep pt-32 pb-16 md:pt-44 md:pb-24">
+      {/*
+        Hero — the category's photograph, at full strength.
+
+        It used to run at `opacity-70` under a `from-deep/80 via-deep/70
+        to-deep` wash, which left about a fifth of the photograph visible: the
+        page opened on a dark green rectangle that happened to have been a
+        beach. The photograph is the only thing on this page that can tell a
+        visitor what "Tea Country" feels like, and it was the thing hardest to
+        see.
+
+        It now covers the frame at full opacity, at roughly four times the
+        height it had, with a single scrim anchored to the bottom edge. The
+        navbar is opaque on this route (`solid` unless the path is `/`), so
+        unlike the homepage this hero needs nothing at the top — the whole
+        upper half of the crop is untouched.
+
+        ── Why only two lines of type are left on the picture ─────────────
+
+        Measured, not guessed. Hide the type, sample the composited pixels
+        behind every run, take the brightest one — the worst case for light
+        text — and the scrim opacity each run needs to clear WCAG falls out of
+        it. Over the brightest of the twelve category photographs: 0.58 for the
+        title and the deck, which are both large text at 3:1, and 0.83 for an
+        11px mango eyebrow at 4.5:1.
+
+        That last number is the whole design. The eyebrow sat at the *top* of
+        the copy block — the point furthest from the bottom edge, where a
+        bottom-anchored scrim is by definition weakest — and asked for the
+        heaviest paint on the page. Buying it would have meant covering the
+        bottom three-quarters of every crop in near-solid colour, which is the
+        thing this pass exists to undo.
+
+        So the breadcrumb and the two counts moved to the strip below, onto the
+        page's own sand ground, where they are 5.9:1 with nothing over them at
+        all. What is left on the photograph is what earns being there: the
+        category's name, and the one italic line that says what it feels like.
+        Both are large text and so need 3:1, which a scrim that only carries
+        weight in the bottom third of the frame can pay for. Measured across all
+        twelve categories at both viewports, the worst case as shipped is 3.45:1
+        on desktop and 3.37:1 on a phone.
+      */}
+      <section className="relative flex min-h-[84svh] items-end overflow-hidden bg-deep md:min-h-[90svh] lg:h-[min(90svh,54rem)] lg:min-h-0">
         <Img
           asset={experienceAsset(category.slug)}
           requireVerifiedLocation
@@ -140,65 +176,129 @@ export default async function ExperiencePage({
           priority
           fallbackTone="moss"
           fallbackPattern="contour"
-          className="absolute inset-0 opacity-70"
+          /*
+            The site's own hero entrance, finally wired to something. It was
+            authored in globals.css and exported from motion.tsx and had never
+            been used by any page: a 2.2s settle from scale(1.08) to 1 on the
+            site's standard ease-out. On a frame this size it reads as a film
+            opening rather than as an effect, and because it lands on the
+            <img> — already absolutely positioned by next/image's fill mode —
+            it needs no wrapper element. The global reduced-motion rule
+            collapses it to a single frame.
+          */
+          className="ken-burns"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-deep/80 via-deep/70 to-deep" />
 
-        <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
-          <Reveal>
-            <nav aria-label="Breadcrumb" className="mb-5">
-              <Link
-                href="/experiences"
-                className="eyebrow inline-flex items-center gap-2 text-mango transition-colors hover:text-sand"
-              >
-                <Compass size={13} aria-hidden /> Experiences
-              </Link>
-            </nav>
-            <h1 className="h-display max-w-3xl text-5xl text-sand md:text-7xl">
+        {/*
+          Bottom-anchored and eased, not a full-frame ramp.
+
+          Capped at 60% of the frame on a phone and 54% on desktop, and shaped
+          so the weight lands where the type actually is. The title's top edge
+          sits about 35% up a desktop frame and 28% up a phone one; the ramp is
+          between 0.55 and 0.70 at those points, which is what large text over
+          the brightest of the twelve crops needs. Everything above the copy
+          falls away fast — under 0.2 by 88% of the gradient's own height, and
+          nothing at all above 54–60% of the frame.
+
+          Eight stops rather than three because the falloff has to be a curve.
+          A linear ramp of the same weight reads as a grey wash with a visible
+          horizon partway up the picture; an eased one finishes somewhere the
+          eye does not find a line.
+
+          Two stop sets because the geometry differs, not for taste, and the
+          desktop one is the heavier of the two: the same two lines sit higher
+          up a taller frame there, so its curve is still paying out at a point
+          where the phone's has already done its work. If the copy or the frame
+          height changes these need re-measuring; they are positional, not
+          decorative.
+
+          The colour is written out in rgba rather than taken from the token
+          because Tailwind cannot interpolate a named colour across eight
+          stops. It is one of five files that spell `deep` out this way —
+          `grep 'rgba(3,39,34'` finds all of them — so a palette change has to
+          reach them by hand.
+        */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-[60%] bg-[linear-gradient(to_top,rgba(3,39,34,0.90)_0%,rgba(3,39,34,0.86)_16%,rgba(3,39,34,0.80)_30%,rgba(3,39,34,0.71)_44%,rgba(3,39,34,0.60)_58%,rgba(3,39,34,0.41)_74%,rgba(3,39,34,0.17)_88%,transparent_100%)] md:h-[54%] md:bg-[linear-gradient(to_top,rgba(3,39,34,0.90)_0%,rgba(3,39,34,0.87)_16%,rgba(3,39,34,0.82)_30%,rgba(3,39,34,0.75)_44%,rgba(3,39,34,0.66)_58%,rgba(3,39,34,0.46)_74%,rgba(3,39,34,0.19)_88%,transparent_100%)]"
+        />
+
+        <div className="relative z-10 mx-auto w-full max-w-wrap px-5 pb-16 pt-32 md:px-8 md:pb-24 md:pt-44">
+          {/* `immediate`: this is the first heading on the page and it is
+              always above the fold. Inside a scroll-triggered Reveal it was
+              painted at opacity 0 and waited for hydration, which put first
+              contentful paint behind the JavaScript bundle. */}
+          <Reveal immediate>
+            <h1 className="h-display max-w-3xl text-5xl leading-[1.04] text-sand md:text-7xl lg:text-[5.25rem]">
               {category.name}
             </h1>
-            <p className="mt-5 max-w-2xl font-display-italic text-xl text-sand/85 md:text-2xl">
+            {/*
+              24px on a phone, not 20px. The deck is set on the photograph, and
+              WCAG's large-text allowance starts at 24px — one step of type
+              size is the difference between needing 3:1 and needing 4.5:1
+              behind it, and 4.5:1 over a bright crop costs another 0.15 of
+              scrim across the whole block.
+            */}
+            <p className="mt-5 max-w-2xl font-display-italic text-2xl leading-snug text-sand/90 md:mt-6 md:text-[1.75rem]">
               {category.blurb}
             </p>
-            <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-sand/75">
-              <span>
-                {themeTours.length} private{" "}
-                {themeTours.length === 1 ? "journey" : "journeys"}
-              </span>
-              {relatedDestinations.length > 0 && (
-                <span>
-                  {relatedDestinations.length}{" "}
-                  {relatedDestinations.length === 1
-                    ? "destination"
-                    : "destinations"}{" "}
-                  on these routes
-                </span>
-              )}
-            </div>
           </Reveal>
+        </div>
+      </section>
 
-          {/* CC BY / BY-SA require the photographer named and the licence
-              stated wherever the image is used — including here, where the
-              photograph is a dimmed backdrop rather than the subject. */}
+      {/*
+        The orientation strip: where you are, what is here, and who took the
+        picture — everything the hero used to carry in 11px type over a
+        photograph, set on paper instead.
+
+        The credit is the reason this exists in its current shape. CC BY / BY-SA
+        require the photographer named and the licence stated wherever the image
+        is used, and that line used to sit inside the hero at 11px in sand/55 —
+        the least legible spot on the page, for the one line that is a legal
+        obligation rather than a design choice.
+      */}
+      <div className="mx-auto max-w-wrap px-5 md:px-8">
+        <div className="flex flex-wrap items-center gap-x-7 gap-y-3 border-b border-ink/10 py-5 text-[13px] text-ink/70">
+          <nav aria-label="Breadcrumb">
+            <Link
+              href="/experiences"
+              className="inline-flex items-center gap-2 uppercase tracking-[0.14em] text-copper-deep transition-colors hover:text-ink"
+            >
+              <Compass size={13} aria-hidden /> All experiences
+            </Link>
+          </nav>
+          <span>
+            {themeTours.length} private{" "}
+            {themeTours.length === 1 ? "journey" : "journeys"}
+          </span>
+          {relatedDestinations.length > 0 && (
+            <span>
+              {relatedDestinations.length}{" "}
+              {relatedDestinations.length === 1
+                ? "destination"
+                : "destinations"}{" "}
+              on these routes
+            </span>
+          )}
           {heroCredit && (
-            <p className="mt-10 text-[11px] text-sand/55">
+            <span className="text-ink/65 lg:ml-auto">
               Photograph: {heroCredit.author} ·{" "}
               <a
                 href={heroCredit.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline decoration-sand/20 underline-offset-2 transition-colors hover:text-copper-light"
+                className="underline decoration-ink/25 underline-offset-2 transition-colors hover:text-copper-deep"
               >
                 {heroCredit.license}
               </a>{" "}
               · Wikimedia Commons
-            </p>
+            </span>
           )}
         </div>
-      </section>
+      </div>
 
       {/* What it covers + how to act on it */}
-      <section className="py-14 md:py-20">
+      <section className="pb-14 pt-12 md:pb-20 md:pt-16">
         <div className="mx-auto grid max-w-wrap gap-12 px-5 md:px-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <Reveal>
