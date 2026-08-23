@@ -323,10 +323,25 @@ export default function VideoHero({
         frame, not against the poster.
       */}
 
-      {/* 1 — Foot of the frame: the headline, the subcopy and both CTAs. */}
+      {/*
+        1 — Foot of the frame: the eyebrow, the headline, the subcopy and both
+        CTAs.
+
+        Five stops rather than three. The old `via-deep/25` curve put roughly
+        0.17 alpha two-thirds of the way up, which held the headline and the
+        subcopy but left the eyebrow line sitting on raw frame. Measured against
+        the poster's misty band that was 1.19:1 — text that is present in the
+        DOM and invisible on screen. The curve now carries ~0.45 at that height
+        and still falls to nothing before the top scrim begins, so the two never
+        stack into a band.
+
+        Tuned to the copy block's height, not to a round number: on both the
+        672px desktop hero and the 839px phone hero the eyebrow lands near 65%,
+        which is where this curve is strongest relative to the old one.
+      */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-deep via-deep/25 to-transparent"
+        className="absolute inset-0 bg-[linear-gradient(to_top,rgba(3,39,34,0.94)_0%,rgba(3,39,34,0.80)_25%,rgba(3,39,34,0.62)_45%,rgba(3,39,34,0.40)_68%,rgba(3,39,34,0.16)_86%,transparent_100%)]"
       />
 
       {/* 2 — Lower-left weight, following the diagonal the type block sits on. */}
@@ -381,7 +396,14 @@ export default function VideoHero({
           onClick={togglePause}
           aria-pressed={paused}
           aria-label={paused ? "Play background video" : "Pause background video"}
-          className="absolute bottom-6 right-5 z-30 flex h-11 w-11 items-center justify-center border border-sand/30 bg-deep/50 text-sand backdrop-blur-sm transition-colors hover:bg-deep/80 md:bottom-8 md:right-8"
+          /* Offset left of the floating WhatsApp button, which is fixed at
+             bottom-right with z-50 and was covering this control completely
+             on phones — a pause control that cannot be seen or pressed does
+             not satisfy 2.2.2. Below lg the hero is full-height, so its
+             bottom-right corner IS the viewport corner the button occupies.
+             At lg the hero becomes a fixed 672px band that ends above the
+             button on any viewport, so the corner is free again. */
+          className="absolute bottom-6 right-[5.5rem] z-30 flex h-11 w-11 items-center justify-center border border-sand/30 bg-deep/50 text-sand backdrop-blur-sm transition-colors hover:bg-deep/80 lg:bottom-8 lg:right-8"
         >
           {paused ? <Play size={16} /> : <Pause size={16} />}
         </button>

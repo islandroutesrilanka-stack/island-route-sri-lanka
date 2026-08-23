@@ -8,6 +8,7 @@ import BookingFormWithContext from "@/components/BookingFormWithContext";
 import { media } from "@/lib/media/registry";
 import { serviceScope } from "@/lib/pricing";
 import { RateCards, InclusionList } from "@/components/patterns/TransportRates";
+import FaqPreview from "@/components/patterns/FaqPreview";
 import { getTours } from "@/lib/data";
 import { journeys } from "@/lib/journeys";
 import { experienceCategories } from "@/lib/experiences";
@@ -277,6 +278,12 @@ export default async function BookPage() {
           </aside>
         </div>
       </section>
+
+      {/* The last objections, immediately below the form that answers them —
+          moved here from the foot of the homepage, which is where a visitor
+          met them before they had any reason to care. Emits the site's
+          FAQPage structured data along with the visible questions. */}
+      <FaqPreview />
     </>
   );
 }

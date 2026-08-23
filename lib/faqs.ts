@@ -3,13 +3,17 @@
  *
  * Deliberately a plain, directive-free module containing no JSX.
  *
- * This data is consumed from two sides: the Server Component `app/page.tsx`
- * reads it to emit FAQPage structured data, and `components/patterns/FaqPreview`
- * renders it. A non-component value exported from a client-boundary module is
- * replaced on the server by a client-reference proxy, so calling `.map()` on it
- * throws — the property access resolves to a stub rather than the array method.
- * Keeping shared data in a neutral module removes that class of bug rather than
- * working around it.
+ * `components/patterns/FaqPreview` renders these and emits the FAQPage
+ * structured data from the same array, so the markup and the questions it
+ * describes cannot drift apart. A non-component value exported from a
+ * client-boundary module is replaced on the server by a client-reference proxy,
+ * so calling `.map()` on it throws — the property access resolves to a stub
+ * rather than the array method. Keeping shared data in a neutral module removes
+ * that class of bug rather than working around it.
+ *
+ * The name is now historical: these moved off the homepage to /book in the
+ * homepage redesign, and are kept under this export so the admin's later `faqs`
+ * table can seed from a stable identifier.
  *
  * A `faqs` table with per-entity attachment arrives in a later phase; these
  * become its seed rows.

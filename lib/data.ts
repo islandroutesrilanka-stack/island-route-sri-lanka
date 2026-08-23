@@ -415,8 +415,8 @@ const defaultSettings: SiteSettings = {
     "Private journeys through an island of wild landscapes, living culture and extraordinary encounters.",
   heroCtaPrimaryLabel: "Plan Your Journey",
   heroCtaPrimaryHref: "/book",
-  heroCtaSecondaryLabel: "Explore Sri Lanka",
-  heroCtaSecondaryHref: "#explore",
+  heroCtaSecondaryLabel: "See the journeys",
+  heroCtaSecondaryHref: "#journeys",
   /*
     Blank so the hero opens on the film's own first frame — see
     DEFAULT_POSTER_URL in lib/media/hero.ts. That pairing is what makes the

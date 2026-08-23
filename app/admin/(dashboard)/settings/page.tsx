@@ -39,8 +39,12 @@ const groups: { title: string; note?: string; keys: { key: string; label: string
       { key: "hero_subcopy", label: "Supporting line", long: true },
       { key: "hero_cta_primary_label", label: "Primary button text" },
       { key: "hero_cta_primary_href", label: "Primary button link", help: "e.g. /book" },
-      { key: "hero_cta_secondary_label", label: "Secondary button text" },
-      { key: "hero_cta_secondary_href", label: "Secondary button link", help: "#explore scrolls to the map section" },
+      {
+        key: "hero_cta_secondary_label",
+        label: "Second link text",
+        help: "The quiet text link beside the main button — not a second button, so it never competes with it. Type `none` to leave the hero with a single call to action.",
+      },
+      { key: "hero_cta_secondary_href", label: "Second link URL", help: "`#journeys` scrolls down to the featured journeys." },
       {
         key: "hero_poster_url",
         label: "Hero image URL",

@@ -94,8 +94,8 @@ export const HERO_DEFAULTS = {
     "Private journeys through an island of wild landscapes, living culture and extraordinary encounters.",
   ctaPrimaryLabel: "Plan Your Journey",
   ctaPrimaryHref: "/book",
-  ctaSecondaryLabel: "Explore Sri Lanka",
-  ctaSecondaryHref: "#explore",
+  ctaSecondaryLabel: "See the journeys",
+  ctaSecondaryHref: "#journeys",
 } as const;
 
 /**
@@ -272,6 +272,9 @@ export function resolveHero(s: SiteSettings): HeroContent {
     ? Math.min(MAX_SECONDS, Math.max(MIN_SECONDS, rawSeconds))
     : DEFAULT_SECONDS;
 
+  const secondaryLabel =
+    (s.heroCtaSecondaryLabel ?? "").trim() || HERO_DEFAULTS.ctaSecondaryLabel;
+
   return {
     headline: (s.heroHeadline ?? "").trim() || HERO_DEFAULTS.headline,
     subcopy: (s.heroSubcopy ?? "").trim() || HERO_DEFAULTS.subcopy,
@@ -279,9 +282,12 @@ export function resolveHero(s: SiteSettings): HeroContent {
       label: (s.heroCtaPrimaryLabel ?? "").trim() || HERO_DEFAULTS.ctaPrimaryLabel,
       href: (s.heroCtaPrimaryHref ?? "").trim() || HERO_DEFAULTS.ctaPrimaryHref,
     },
+    // The hero renders one button; this is the quiet text link beside it, and
+    // `none` removes it so the hero can be left with a single call to action.
+    // Same sentinel the video and poster fields use, rather than a second
+    // convention for the same idea.
     ctaSecondary: {
-      label:
-        (s.heroCtaSecondaryLabel ?? "").trim() || HERO_DEFAULTS.ctaSecondaryLabel,
+      label: secondaryLabel.toLowerCase() === "none" ? "" : secondaryLabel,
       href: (s.heroCtaSecondaryHref ?? "").trim() || HERO_DEFAULTS.ctaSecondaryHref,
     },
     video: { poster, sources, mobileSources },
