@@ -98,7 +98,8 @@ export default async function BlogPage() {
         title="Notes from the road"
         intro="Guides and stories from the people who drive this island every day."
         /* Decorative, but a verified Sri Lankan location rather than generic
-           stock — same rule the post images now follow. */
+           stock — same rule the post images follow, and now visible at full
+           strength behind the title rather than washed out under a gradient. */
         image={media.galleFortStreet.src}
       />
       {posts.length === 0 && (

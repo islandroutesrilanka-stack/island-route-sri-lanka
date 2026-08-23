@@ -4,13 +4,18 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Check, Compass } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import Img from "@/components/media/Img";
+import ExperienceGallery from "@/components/patterns/ExperienceGallery";
 import { CTABand, TourCard, DestinationCard } from "@/components/ui";
 import { getTours, getDestinations } from "@/lib/data";
 import {
   getPublishedExperience,
   publishedExperiences,
 } from "@/lib/experiences";
-import { experienceAsset, experienceCredits } from "@/lib/media/experiences";
+import {
+  experienceAsset,
+  experienceCredits,
+  experienceGalleryAssets,
+} from "@/lib/media/experiences";
 import { clampDesc } from "@/lib/seo";
 import { siteUrl, waLink } from "@/lib/site";
 
@@ -368,6 +373,21 @@ export default async function ExperiencePage({
           </aside>
         </div>
       </section>
+
+      {/*
+        The photographs, between the description and the journeys.
+
+        Above this the page is words — a paragraph, a checklist and a booking
+        aside — and below it the journey cards each carry one small image. The
+        band is the only place a visitor can look at the *place* at size, and
+        it belongs here rather than lower down: it answers "what does this
+        actually look like" while they are still deciding whether they want it,
+        not after they have started comparing prices.
+      */}
+      <ExperienceGallery
+        assets={experienceGalleryAssets(category.slug)}
+        heading={`${category.name} in Sri Lanka`}
+      />
 
       {/* The journeys — the reason this page exists */}
       <section className="bg-dune/60 py-16 md:py-24" aria-labelledby="journeys">

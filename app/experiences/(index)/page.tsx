@@ -104,9 +104,9 @@ export default async function ExperiencesPage() {
         eyebrow="Experiences"
         title="Travel by what moves you"
         intro="Most people don't start with a map — they start with a feeling. Leopards at first light, a train through tea country, a coast that's working in December. Choose the thread and we'll build the route around it."
-        /* Decorative (alt="", 40% opacity, behind a gradient) — but still a
-           verified Sri Lankan location rather than generic tropical stock,
-           because every other image on this page now is. */
+        /* Decorative (alt=""), and no longer muted — the header shows it at
+           full strength, so it has to hold up as a photograph rather than as a
+           texture. Verified Sri Lankan location, like every other image here. */
         image={media.mirissaCoconutHill.src}
       />
 

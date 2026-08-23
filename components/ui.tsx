@@ -195,64 +195,106 @@ export function PageHeader({
   note?: string;
   image?: string;
 }) {
+  /*
+    Two grounds, not one.
+
+    This was a single dark band: the photograph at 40% opacity under a wash
+    that never dropped below 85%, carrying four runs of type — an 11px eyebrow,
+    the h1, a deck and a line of fine print. The wash was doing real work. The
+    smallest of those runs needs 4.5:1 and it sat at the *top* of the block,
+    which is exactly where a bottom-anchored gradient is thinnest, so the only
+    ramp that could pay for it was one that covered the whole frame. That is
+    how a photograph ends up as a texture.
+
+    So the block is split at the line where the requirement changes. The h1 is
+    48–72px — large text, 3:1 — and stays on the photograph over a scrim that
+    leaves the top half of the frame alone. The eyebrow, the deck and the note
+    are small text, and they move to the sand strip underneath, where they sit
+    at 5.9:1 and better with nothing over them at all.
+
+    Same split as the experience hero, for the same reason, and eight routes
+    now read the way that one does: the photograph carries the title, and paper
+    carries the words.
+  */
   return (
-    <section className="relative bg-deep pt-32 md:pt-44 pb-16 md:pb-24 overflow-hidden">
-      {image && (
-        <>
-          <Image
-            src={image}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            /*
-              This is the largest contentful paint on every page that has one,
-              and it is also the least detailed thing on screen: 40% opacity
-              under a three-stop dark gradient, behind the headline. At the
-              default quality of 75 it was the biggest image request on the
-              page for a surface where JPEG artefacts are mathematically
-              invisible — they are multiplied by 0.4 and then buried under
-              50–70% of flat colour. 45 costs roughly half the bytes off the
-              critical path and cannot be told apart from 75 here.
-            */
-            quality={45}
-            className="object-cover opacity-40"
-            aria-hidden
-          />
-          {/*
-            Three stops, and the middle one is the one that matters. It used to
-            be deep/50, which over a bright photograph at 40% left a ground
-            light enough to fail the eyebrow and the fine print outright — the
-            two smallest things on the page, sitting exactly where the gradient
-            was thinnest. It is now the darkest kind of ocean at 80%, which
-            both fixes that and puts the header in the water rather than in a
-            neutral shadow.
-          */}
-          <div className="absolute inset-0 bg-gradient-to-b from-deep/85 via-ocean-deep/85 to-deep" />
-        </>
-      )}
-      <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
-        {/* `immediate`: this is the first heading on the page and it is always
-            above the fold. Inside a scroll-triggered Reveal it was painted at
-            opacity 0 and waited for hydration, which put first contentful paint
-            behind the JavaScript bundle on every route on the site. */}
-        <Reveal immediate>
-          <p className="eyebrow text-mango">{eyebrow}</p>
-          <h1 className="h-display mt-3 text-5xl md:text-7xl text-sand max-w-3xl">
-            {title}
-          </h1>
+    <>
+      <section className="relative flex min-h-[56svh] items-end overflow-hidden bg-deep md:min-h-[62svh] lg:h-[min(64svh,40rem)] lg:min-h-0">
+        {image && (
+          <>
+            <Image
+              src={image}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              /*
+                45 was right when this image was multiplied by 0.4 and buried
+                under 85% of flat colour — artefacts genuinely could not be
+                found. Nothing is over it now, and it is both the largest and
+                the most-looked-at element on the page, where 45 shows as
+                banding in any gradient sky. 68 is where that stops being
+                findable at this size, and still under the default 75.
+              */
+              quality={68}
+              className="object-cover"
+              aria-hidden
+            />
+            {/*
+              The experience hero's ramp, unchanged, because it is solving the
+              identical problem one element lighter: eight stops approximating
+              an ease, bottom-anchored, capped so that the top 42–50% of the
+              frame is untouched. It was measured against the brightest of
+              twelve crops for large text at 3:1 and the copy here is a strict
+              subset of the copy there — a title and nothing else.
+
+              `deep` is spelled out in rgba because Tailwind cannot interpolate
+              a named colour across eight stops. `grep 'rgba(3,39,34'` finds
+              every file that does this; a palette change has to reach them all
+              by hand.
+            */}
+            <div
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-[58%] bg-[linear-gradient(to_top,rgba(3,39,34,0.90)_0%,rgba(3,39,34,0.86)_16%,rgba(3,39,34,0.80)_30%,rgba(3,39,34,0.71)_44%,rgba(3,39,34,0.60)_58%,rgba(3,39,34,0.41)_74%,rgba(3,39,34,0.17)_88%,transparent_100%)] md:h-[50%] md:bg-[linear-gradient(to_top,rgba(3,39,34,0.90)_0%,rgba(3,39,34,0.87)_16%,rgba(3,39,34,0.82)_30%,rgba(3,39,34,0.75)_44%,rgba(3,39,34,0.66)_58%,rgba(3,39,34,0.46)_74%,rgba(3,39,34,0.19)_88%,transparent_100%)]"
+            />
+          </>
+        )}
+        <div className="relative z-10 mx-auto w-full max-w-wrap px-5 pb-14 pt-32 md:px-8 md:pb-20 md:pt-44">
+          {/* `immediate`: this is the first heading on the page and it is always
+              above the fold. Inside a scroll-triggered Reveal it was painted at
+              opacity 0 and waited for hydration, which put first contentful paint
+              behind the JavaScript bundle on every route on the site. */}
+          <Reveal immediate>
+            <h1 className="h-display max-w-3xl text-5xl leading-[1.04] text-sand md:text-7xl">
+              {title}
+            </h1>
+          </Reveal>
+        </div>
+      </section>
+
+      {/*
+        The deck, on paper. Everything here was over the photograph until the
+        split above: the eyebrow is 11px, the note is 13px, and both need 4.5:1
+        — which no honest scrim can offer at the top of a copy block.
+
+        The eyebrow reads after the title rather than before it now. That is the
+        one thing the split costs, and it buys a masthead where the label is
+        legible instead of decorative.
+      */}
+      <div className="mx-auto max-w-wrap px-5 md:px-8">
+        <div className="py-7 md:py-9">
+          <p className="eyebrow text-copper-deep">{eyebrow}</p>
           {intro && (
-            <p className="mt-6 max-w-2xl text-sand/75 leading-relaxed">
+            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink/80 md:text-xl">
               {intro}
             </p>
           )}
           {note && (
-            <p className="mt-5 max-w-xl text-[13px] leading-relaxed text-sand/70">
+            <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-ink/70">
               {note}
             </p>
           )}
-        </Reveal>
+        </div>
       </div>
-    </section>
+    </>
   );
 }
