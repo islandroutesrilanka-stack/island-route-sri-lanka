@@ -8,9 +8,22 @@
  * a sitemap on another — which is an indexing bug that is very hard to spot.
  *
  * Set NEXT_PUBLIC_SITE_URL in Vercel per environment. Never hardcode elsewhere.
+ *
+ * The fallback is the APEX, deliberately, and changing it back to `www` would
+ * break the site's indexing. The www host does not point at this deployment:
+ * it 302s to `islandroutesrilanka-com.l.ink`, a third-party link-parking page.
+ * While the fallback named www, every page advertised a canonical URL on a
+ * host that redirects off-site, and `og:image` resolved to
+ * `https://www.islandroutesrilanka.com/og-default.png`, which followed that
+ * redirect to a 404 — so every Facebook and WhatsApp share rendered with no
+ * image at all. The apex answers 200 from Vercel.
+ *
+ * If the www record is ever repointed at Vercel and www becomes the preferred
+ * host, set NEXT_PUBLIC_SITE_URL rather than editing this line, and add the
+ * apex→www redirect in next.config.mjs so only one of the two is canonical.
  */
 export const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.islandroutesrilanka.com"
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://islandroutesrilanka.com"
 ).replace(/\/+$/, "");
 
 export const site = {

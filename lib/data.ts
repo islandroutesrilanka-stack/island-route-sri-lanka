@@ -403,11 +403,37 @@ const defaultSettings: SiteSettings = {
   whatsappNumber: seedSite.whatsappNumber,
   email: seedSite.email,
   address: seedSite.address,
-  seoTitle: "Island Route Sri Lanka — Private Tours & Transfers",
+  /*
+    Search copy. These three ship whenever the CMS says nothing — but the live
+    `site_settings` table DOES carry seo_title, seo_description and
+    seo_keywords rows, so in production these are fallbacks, not what Google
+    sees. supabase/update-seo-metadata.sql updates the stored values to match;
+    editing here alone changes preview deployments and nothing else.
+
+    The title is 56 characters, inside the ~60 Google renders before it
+    truncates, and leads with the brand because most of the traffic that
+    converts here already knows the name.
+  */
+  seoTitle: "Island Route Sri Lanka | Private Journeys & Custom Tours",
+  /*
+    189 characters. Google truncates the displayed snippet around 155—160, so
+    the tail is written to be expendable: "private driver services and
+    custom-tailored tour packages" — the phrases people actually search — land
+    inside the first 90 characters, and what gets cut is the atmosphere.
+  */
   seoDescription:
-    "Private chauffeur-driven tours, airport transfers and tailor-made itineraries across Sri Lanka. Trusted local drivers, direct booking, 24/7 WhatsApp.",
+    "Experience Sri Lanka with our private driver services and custom-tailored tour packages. Discover wild landscapes, living culture, and extraordinary encounters with our expert local guides.",
+  /*
+    Long-tail intent phrases rather than head terms. Worth being honest about
+    what this does: Google has ignored the keywords meta tag since 2009 and
+    Bing treats it as a spam signal at worst, so this element earns nothing on
+    its own. It is kept because it costs nothing, some smaller crawlers and
+    internal site-search tools still read it, and it is a useful written record
+    of which queries the page copy is meant to answer. The ranking work is done
+    by the same phrases appearing in the title, the description and the body.
+  */
   seoKeywords:
-    "Sri Lanka tours, Sri Lanka private driver, Colombo airport transfer, Yala safari",
+    "Private driver Sri Lanka, hire a car with driver Sri Lanka, custom tours Sri Lanka, tailor-made holidays Sri Lanka, Sri Lanka tour packages, independent travel Sri Lanka",
 
   // Approved brand copy. These ship whenever the CMS says nothing.
   heroHeadline: "Sri Lanka, Unscripted.",

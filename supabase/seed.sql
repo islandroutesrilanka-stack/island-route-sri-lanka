@@ -71,9 +71,9 @@ insert into public.site_settings (key,value) values ('phone_e164','+94771066677'
 insert into public.site_settings (key,value) values ('whatsapp_number','94771066677') on conflict (key) do update set value = excluded.value;
 insert into public.site_settings (key,value) values ('email','islandroutesrilanka@gmail.com') on conflict (key) do update set value = excluded.value;
 insert into public.site_settings (key,value) values ('address','Colombo, Sri Lanka') on conflict (key) do update set value = excluded.value;
-insert into public.site_settings (key,value) values ('seo_title','Island Route Sri Lanka — Private Tours, Transfers & Tailor-Made Journeys') on conflict (key) do update set value = excluded.value;
-insert into public.site_settings (key,value) values ('seo_description','Island Route Sri Lanka crafts private, chauffeur-driven journeys across Sri Lanka — airport transfers, day tours, safaris, surf trips and tailor-made multi-day itineraries with trusted English-speaking drivers.') on conflict (key) do update set value = excluded.value;
-insert into public.site_settings (key,value) values ('seo_keywords','Sri Lanka tours, Sri Lanka private driver, Colombo airport transfer, Yala safari, Sri Lanka tour packages') on conflict (key) do update set value = excluded.value;
+insert into public.site_settings (key,value) values ('seo_title','Island Route Sri Lanka | Private Journeys & Custom Tours') on conflict (key) do update set value = excluded.value;
+insert into public.site_settings (key,value) values ('seo_description','Experience Sri Lanka with our private driver services and custom-tailored tour packages. Discover wild landscapes, living culture, and extraordinary encounters with our expert local guides.') on conflict (key) do update set value = excluded.value;
+insert into public.site_settings (key,value) values ('seo_keywords','Private driver Sri Lanka, hire a car with driver Sri Lanka, custom tours Sri Lanka, tailor-made holidays Sri Lanka, Sri Lanka tour packages, independent travel Sri Lanka') on conflict (key) do update set value = excluded.value;
 
 -- Example drivers (edit in the admin dashboard)
 insert into public.drivers (name,phone,languages) select 'Gayan','+94771066677','["English","Sinhala"]'::jsonb where not exists (select 1 from public.drivers where name = 'Gayan');

@@ -68,9 +68,40 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+/**
+ * Site-wide metadata.
+ *
+ * Every child route inherits this and overrides what it needs, so anything set
+ * here is the answer for a page that says nothing. All three of title,
+ * description and keywords come from the CMS, which means the live
+ * `site_settings` rows — not the seed defaults in lib/data.ts — are what
+ * Google actually reads in production.
+ *
+ * `metadataBase` is what makes the relative `ogDefault` path absolute in the
+ * emitted tags. Social crawlers reject a relative og:image outright, so this
+ * is load-bearing rather than a convenience, and it resolves from `siteUrl`
+ * so a preview deployment cannot advertise production URLs.
+ */
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();
   const url = siteUrl;
+
+  /*
+    One image object, shared by Open Graph and Twitter rather than declared
+    twice. `type` is included because several scrapers — WhatsApp's among them
+    — will skip an image whose MIME type they have to infer, and it is the
+    cheapest possible insurance for the preview that matters most to this
+    business: most enquiries arrive over WhatsApp, so the WhatsApp unfurl is
+    the card worth optimising for.
+  */
+  const ogImage = {
+    url: ogDefault,
+    width: 1200,
+    height: 630,
+    type: "image/png",
+    alt: `${s.siteName} — private journeys and custom tours across Sri Lanka`,
+  };
+
   return {
     metadataBase: new URL(url),
     title: {
@@ -79,7 +110,23 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: s.seoDescription,
     keywords: s.seoKeywords.split(",").map((k) => k.trim()),
+    applicationName: s.siteName,
+    authors: [{ name: s.siteName, url }],
+    creator: s.siteName,
+    publisher: s.siteName,
+    category: "travel",
     alternates: { canonical: "/" },
+    /*
+      Wires up the manifest that has sat unreferenced in /public since the
+      project started. Without this line it was never requested by anything.
+    */
+    manifest: "/site.webmanifest",
+    /*
+      Stops iOS Safari turning the phone number in the footer into a tel: link
+      styled with its own blue, which it does to any digit string that looks
+      like a number whether or not it is already a link.
+    */
+    formatDetection: { telephone: false, address: false, email: false },
     openGraph: {
       type: "website",
       siteName: s.siteName,
@@ -87,20 +134,18 @@ export async function generateMetadata(): Promise<Metadata> {
       description: s.seoDescription,
       url,
       locale: "en_GB",
-      images: [
-        {
-          url: ogDefault,
-          width: 1200,
-          height: 630,
-          alt: `${s.siteName} — private journeys across Sri Lanka`,
-        },
-      ],
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
-      title: s.siteName,
+      /*
+        The site name alone used to go here, so a shared link showed "Island
+        Route Sri Lanka" on X while Facebook showed the full positioning line.
+        There is no reason for the two to disagree.
+      */
+      title: s.seoTitle,
       description: s.seoDescription,
-      images: [ogDefault],
+      images: [ogImage],
     },
     icons: {
       icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
@@ -109,7 +154,19 @@ export async function generateMetadata(): Promise<Metadata> {
     robots: {
       index: true,
       follow: true,
-      googleBot: { index: true, follow: true, "max-image-preview": "large" },
+      /*
+        `max-snippet: -1` and `max-video-preview: -1` remove Google's default
+        length caps on the snippet and any video preview. The defaults are
+        conservative; for a business whose descriptions are the pitch, a longer
+        snippet is strictly better.
+      */
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
     },
   };
 }
