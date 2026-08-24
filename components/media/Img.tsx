@@ -28,6 +28,7 @@ export default function Img({
   fallbackPattern = "none",
   requireVerifiedLocation = false,
   quality,
+  onLoad,
 }: {
   asset: MediaAsset | null | undefined;
   sizes: string;
@@ -39,6 +40,15 @@ export default function Img({
   /** True for destination-specific slots. Gates on provenance.verifiedLocation. */
   requireVerifiedLocation?: boolean;
   quality?: number;
+  /**
+   * Fires when the browser has the decoded bitmap. Only meaningful from a
+   * client component — passing a function from a server component is a build
+   * error, which is the correct outcome rather than a silent no-op.
+   *
+   * Exists for one job: cross-fading to an image that is not the server-rendered
+   * one without ever showing the gap between them. See VideoHero.
+   */
+  onLoad?: React.ReactEventHandler<HTMLImageElement>;
 }) {
   const blocked = requireVerifiedLocation && !isLocationVerified(asset);
 
@@ -62,6 +72,7 @@ export default function Img({
       quality={quality}
       placeholder={asset.blurDataURL ? "blur" : "empty"}
       blurDataURL={asset.blurDataURL}
+      onLoad={onLoad}
       style={{ objectPosition: focalOf(asset) }}
       className={`object-cover ${className}`}
     />

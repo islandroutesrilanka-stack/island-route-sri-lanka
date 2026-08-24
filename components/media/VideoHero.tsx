@@ -8,11 +8,17 @@
  * progressive enhancement layered on top at opacity 0→1, so it can never cause
  * layout shift and can never become the LCP candidate.
  *
- * With nothing configured the hero shows the owner's film over its own first
- * frame (see DEFAULT_VIDEO and DEFAULT_POSTER_URL in lib/media/hero.ts).
- * Pasting a URL into `hero_video_url` or `hero_poster_url` in the admin swaps
- * either one; typing `none` in them turns the video off, or returns the hero
- * to its contour treatment. None of that is a code change.
+ * With nothing configured the hero shows one of the owner's films over its own
+ * first frame. Which film is chosen at random per visit, from the complete sets
+ * in HERO_MEDIA_SETS (lib/media/hero.ts) — a set being a desktop cut, a phone
+ * cut and that film's opening frame, which only work as a set. The pick is made
+ * after hydration, so the server and the first client render always agree; see
+ * "Which film today" below for why that is not negotiable.
+ *
+ * Pasting a URL into `hero_video_url` or `hero_poster_url` in the admin pins the
+ * hero to that film and switches the rotation off; typing `none` in them turns
+ * the video off, or returns the hero to its contour treatment. None of that is
+ * a code change.
  *
  * Deliberately absent: a `poster` attribute on the <video>. The image layer
  * beneath IS the poster; adding the attribute would download it twice — once
@@ -26,6 +32,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
+import type { HeroVariant } from "@/lib/media/hero";
 import type { VideoAsset, MediaAsset } from "@/lib/media/types";
 import { focalOf } from "@/lib/media/types";
 import Img from "./Img";
@@ -73,10 +80,17 @@ function onIdle(cb: () => void): () => void {
 
 export default function VideoHero({
   video,
+  variants = [],
   slides = [],
   slideshow = { enabled: false, durationMs: 7000 },
 }: {
   video: VideoAsset;
+  /**
+   * Complete hero sets to choose between, index 0 being the one the server
+   * rendered. Fewer than two means there is nothing to choose and every branch
+   * below collapses to the old single-film behaviour.
+   */
+  variants?: HeroVariant[];
   slides?: MediaAsset[];
   slideshow?: { enabled: boolean; durationMs: number };
 }) {
@@ -118,6 +132,45 @@ export default function VideoHero({
     setMounted((m) => Math.max(m, Math.min(slides.length, active + 2)));
   }, [active, runnable, still, slides.length]);
 
+  /* ---------------------------- Which film today ---------------------------- */
+  /*
+    One complete set — desktop cut, phone cut, and the still that is that film's
+    own first frame — picked at random per visit.
+
+    The pick happens in an effect, and that ordering is the entire hydration
+    story. `pick` is 0 on the server and 0 on the client's first render, so the
+    two trees match exactly; randomising during render, or inside a useState
+    initialiser, would let the server and the browser disagree about the src of
+    an <img>, which React reports as a hydration error and repaints. Everything
+    here is an ordinary state update after that first paint.
+
+    The cost is one image: the set-0 poster is preloaded from the HTML and is
+    already in flight before this code runs, so a pick of set 1 downloads a
+    second still. That is the right trade — the alternative is a hero with no
+    photograph until JavaScript has decided, which is the black screen this
+    whole component exists to prevent — and it is only paid on the loads that
+    actually rotate.
+  */
+  const [pick, setPick] = useState(0);
+  const [swapPainted, setSwapPainted] = useState(false);
+
+  useEffect(() => {
+    if (variants.length < 2) return;
+    setPick(Math.floor(Math.random() * variants.length));
+  }, [variants.length]);
+
+  const film = variants[pick] ?? video;
+
+  /*
+    True while a poster other than the server-rendered one is on its way in. It
+    is laid over the original rather than replacing it, so there is never a
+    frame with no photograph on it, and the film is held back until it has
+    painted — otherwise the video could dissolve in over the previous set's
+    still, which is exactly the visible cut the first-frame poster exists to
+    avoid.
+  */
+  const swapping = pick !== 0 && Boolean(film.poster);
+
   const [sources, setSources] = useState<VideoAsset["sources"]>([]);
   const [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -126,7 +179,7 @@ export default function VideoHero({
   /* ---- Gate evaluation. Runs after hydration, never during render. ---- */
   useEffect(() => {
     const desktop = window.innerWidth >= MOBILE_BREAKPOINT;
-    const chosen = desktop ? video.sources : video.mobileSources;
+    const chosen = desktop ? film.sources : film.mobileSources;
 
     if (chosen.length === 0) return; // nothing configured — poster stays
     if (prefersReducedMotion()) return; // never requested, not merely paused
@@ -140,8 +193,14 @@ export default function VideoHero({
       /* storage unavailable — proceed */
     }
 
-    return onIdle(() => setSources(chosen));
-  }, [video.sources, video.mobileSources]);
+    return onIdle(() => {
+      // A different set may have been picked since the last run. Drop the
+      // readiness the previous element reported, or the replacement fades in
+      // before it has a frame to show.
+      setReady(false);
+      setSources(chosen);
+    });
+  }, [film]);
 
   /* ---- Pause when the tab is hidden: a background tab decoding video
          drains battery for no benefit. ---- */
@@ -198,7 +257,11 @@ export default function VideoHero({
           previous gradient had. */}
       <div className="absolute inset-0" aria-hidden="true">
         {slides.length === 0 ? (
-          <GradientPanel tone="deep" pattern="contour" className="h-full w-full" />
+          <GradientPanel
+            tone="deep"
+            pattern="contour"
+            className="h-full w-full"
+          />
         ) : (
           slides.slice(0, mounted).map((asset, i) => {
             const isActive = i === active;
@@ -254,6 +317,28 @@ export default function VideoHero({
         )}
       </div>
 
+      {/* Layer 0b — the chosen set's own first frame, when the set chosen is
+          not the one the server rendered. It fades in over layer 0 and layer 0
+          stays mounted underneath, so the handover has no gap in it: at every
+          moment there is a photograph of Sri Lanka behind the headline. */}
+      {swapping && (
+        <div className="absolute inset-0" aria-hidden="true">
+          <div
+            className={`h-full w-full transition-opacity duration-700 ease-out motion-reduce:transition-none ${
+              swapPainted ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <Img
+              asset={film.poster}
+              sizes="100vw"
+              quality={82}
+              fallbackTone="deep"
+              onLoad={() => setSwapPainted(true)}
+            />
+          </div>
+        </div>
+      )}
+
       {/*
         Motion runs longer than five seconds, so an accessible stop is required
         rather than optional. It is a real <button>, so it is keyboard-reachable
@@ -281,6 +366,13 @@ export default function VideoHero({
           that isn't already in the text layer. */}
       {showVideo && (
         <video
+          /*
+            Keyed on the file, so choosing a different set replaces the element
+            instead of mutating the <source> children of a playing one — which
+            HTML ignores until an explicit load(), leaving the previous film
+            running under the new poster.
+          */
+          key={sources[0]?.src}
           ref={videoRef}
           autoPlay
           muted
@@ -297,9 +389,17 @@ export default function VideoHero({
             one thing that makes an otherwise identical pair of frames read as
             two different shots.
           */
-          style={slides[0] ? { objectPosition: focalOf(slides[0]) } : undefined}
+          style={
+            film.poster
+              ? { objectPosition: focalOf(film.poster) }
+              : slides[0]
+                ? { objectPosition: focalOf(slides[0]) }
+                : undefined
+          }
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-out ${
-            ready && !paused ? "opacity-100" : "opacity-0"
+            ready && !paused && (!swapping || swapPainted)
+              ? "opacity-100"
+              : "opacity-0"
           }`}
         >
           {sources.map((s) => (
@@ -395,7 +495,9 @@ export default function VideoHero({
           type="button"
           onClick={togglePause}
           aria-pressed={paused}
-          aria-label={paused ? "Play background video" : "Pause background video"}
+          aria-label={
+            paused ? "Play background video" : "Pause background video"
+          }
           /* Offset left of the floating WhatsApp button, which is fixed at
              bottom-right with z-50 and was covering this control completely
              on phones — a pause control that cannot be seen or pressed does

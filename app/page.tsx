@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { HeroLine, Reveal } from "@/components/motion";
-import { SectionHeading, TourCard, DestinationCard, CTABand } from "@/components/ui";
+import {
+  SectionHeading,
+  TourCard,
+  DestinationCard,
+  CTABand,
+} from "@/components/ui";
 import VideoHero from "@/components/media/VideoHero";
 import TrustBand from "@/components/patterns/TrustBand";
 import { resolveHero } from "@/lib/media/hero";
@@ -44,6 +49,7 @@ export default async function HomePage() {
       <section className="relative flex min-h-[100svh] items-end overflow-hidden bg-deep lg:min-h-0 lg:h-[max(42rem,min(94svh,calc(100vw*9/21)))]">
         <VideoHero
           video={hero.video}
+          variants={hero.variants}
           slides={hero.slides}
           slideshow={hero.slideshow}
         />

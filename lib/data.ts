@@ -503,11 +503,16 @@ const defaultSettings: SiteSettings = {
   heroCtaSecondaryLabel: "See the journeys",
   heroCtaSecondaryHref: "#journeys",
   /*
-    Blank so the hero opens on the film's own first frame — see
-    DEFAULT_POSTER_URL in lib/media/hero.ts. That pairing is what makes the
-    video's arrival invisible, and naming any other image here breaks it: the
-    poster would be one photograph and the footage another, so the fade becomes
-    a cut between two different shots.
+    Blank so the hero opens on the film's own first frame — see HERO_MEDIA_SETS
+    in lib/media/hero.ts. That pairing is what makes the video's arrival
+    invisible, and naming any other image here breaks it: the poster would be
+    one photograph and the footage another, so the fade becomes a cut between
+    two different shots.
+
+    Blank is also what lets the hero rotate between the sets. Filling any of the
+    three fields below pins it to that one film, which is the right response to
+    someone naming a specific poster — they have chosen a shot, and a rotation
+    that overrode them half the time would look like a bug.
 
     Sigiriya stood here before the film existed, and is still self-hosted and
     individually verified — see `media.sigiriyaRock` — if it is ever wanted
@@ -516,8 +521,8 @@ const defaultSettings: SiteSettings = {
   heroPosterUrl: "",
   heroPosterAlt: "Sri Lanka — private journeys with Island Route",
   /*
-    Blank means "use the default film" rather than "no video" — see
-    DEFAULT_VIDEO in lib/media/hero.ts for what ships and how it is replaced.
+    Blank means "rotate through the shipped films" rather than "no video" — see
+    HERO_MEDIA_SETS in lib/media/hero.ts for what ships and how it is replaced.
     `none` here or in the admin turns the video off entirely and leaves the
     poster as the hero.
   */
