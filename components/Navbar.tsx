@@ -487,22 +487,41 @@ export default function Navbar() {
                     href={l.href}
                     aria-current={active ? "page" : undefined}
                     /*
-                      Short screens compress rather than scroll. At this size
-                      the column is 687px, which a 390x844 phone holds with
-                      room over and an iPhone SE does not — and a menu you have
-                      to scroll to reach the booking button is a menu that has
-                      lost the argument. Above 720px of viewport the spacing is
-                      the generous one; below it the type steps down and the
-                      padding halves, and the whole sheet fits again.
+                      `h-display` rather than a bare `font-display`, and that
+                      is the whole point of this row.
+
+                      Every display line on this site — section headings, card
+                      titles, the price figures in the booking form — carries
+                      the same three settings: Fraunces at 300, leading 1.05,
+                      tracking tight. The menu was the one place setting the
+                      face without them, which meant its links arrived a weight
+                      heavier and a hair wider than every heading they sit
+                      under. At 27px that is not a subtle difference; light
+                      Fraunces at this size is the site's voice, and regular
+                      Fraunces is a different, blunter one.
+
+                      Sharing the class rather than restating the values also
+                      means the menu cannot drift again: whatever the display
+                      face becomes, these links become it too.
+
+                      Short screens compress rather than scroll. At the generous
+                      spacing the column runs to 669px, which a 390x844 phone
+                      holds with room over and an iPhone SE does not — and a
+                      menu you have to scroll to reach the booking button is a
+                      menu that has lost the argument. Above 720px of viewport
+                      the spacing is the generous one; below it the type steps
+                      down and the padding halves, and the whole sheet fits
+                      again.
                     */
-                    className={`relative block py-4 font-display text-[1.7rem] leading-[1.15] transition-colors [@media(max-height:720px)]:py-2 [@media(max-height:720px)]:text-[1.45rem] ${
+                    className={`h-display relative block py-4 text-[1.7rem] transition-colors [@media(max-height:720px)]:py-2 [@media(max-height:720px)]:text-[1.45rem] ${
                       active ? "text-copper-deep" : "text-ink"
                     }`}
                   >
                     {l.label}
                     {/*
                       The same copper rule the desktop nav slides between its
-                      items, held still under one label. It is the flourish on
+                      items, at the weight it carries there — copper-deep at
+                      70% — held still under one label. It is the flourish on
                       a state the copper already carries, so it is absolutely
                       positioned and cannot touch the rhythm of the column.
 
@@ -519,7 +538,7 @@ export default function Navbar() {
                     {active && (
                       <span
                         aria-hidden
-                        className="pointer-events-none absolute inset-x-0 bottom-2 mx-auto h-px w-8 bg-copper-deep/60 [@media(max-height:720px)]:hidden"
+                        className="pointer-events-none absolute inset-x-0 bottom-1.5 mx-auto h-px w-10 bg-copper-deep/70 [@media(max-height:720px)]:hidden"
                       />
                     )}
                   </Link>
@@ -527,17 +546,25 @@ export default function Navbar() {
               );
             })}
 
-            {/* Secondary — present and reachable, given less weight. The rule
-                above it is short and centred rather than edge to edge: it
-                closes the navigation group without drawing a box around it. */}
+            {/* Secondary — present and reachable, given less weight, and set
+                in the desktop nav's own measure: 11px, 0.2em, ink at 70%. On a
+                wide screen that row is the navigation; here it is the footnote
+                to it, and the identical treatment is what makes the two read as
+                one menu seen at two sizes.
+
+                The rule above it is short and centred rather than edge to
+                edge: it closes the navigation group without drawing a box
+                around it. A shade stronger than the site's full-width hairline
+                because it is a 48px stub — at 10% a rule this short stops
+                reading as a mark and starts reading as an artifact. */}
             <div style={riseDelay(links.length)} className={rise}>
-              <div aria-hidden className="mx-auto mt-8 h-px w-10 bg-ink/15" />
+              <div aria-hidden className="mx-auto mt-8 h-px w-12 bg-ink/15" />
               <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
                 {secondaryLinks.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-[11px] uppercase tracking-[0.18em] text-ink/60 transition-colors hover:text-ink"
+                      className="text-[11px] uppercase tracking-[0.2em] text-ink/70 transition-colors hover:text-ink"
                     >
                       {l.label}
                     </Link>
@@ -549,7 +576,7 @@ export default function Navbar() {
             <div style={riseDelay(links.length + 1)} className={rise}>
               <Link
                 href="/book"
-                className="mt-8 block bg-ink py-4 text-[12px] uppercase tracking-[0.18em] text-sand transition-colors hover:bg-copper-deep"
+                className="mt-8 block bg-ink py-4 text-[13px] uppercase tracking-[0.16em] text-sand transition-colors hover:bg-copper-deep"
               >
                 Plan your journey
               </Link>
@@ -558,6 +585,15 @@ export default function Navbar() {
             {/* The WhatsApp channel stays — the raw number does not. It opens
                 a pre-filled chat, which is the useful part; printing the
                 digits only added noise the header had to carry.
+
+                Both buttons run at the site's button measure — 13px, 0.16em,
+                16px of vertical padding — which is what the booking CTA and the
+                two buttons in every closing band are set in. They were a size
+                down and a notch wider, near enough to look like a mistake
+                rather than a decision. The outlined one inverts to a solid ink
+                fill on press, the way the outlined button beside every primary
+                CTA on this site does; it used to only darken its own border,
+                which is a gesture the site makes nowhere else.
 
                 The mark is WhatsApp's own shape in the site's green rather
                 than the brand's. #25D366 on sand is under 2:1 and looks
@@ -569,9 +605,12 @@ export default function Navbar() {
                 href={waLink(defaultWaMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex items-center justify-center gap-2.5 border border-ink/20 py-4 text-[12px] uppercase tracking-[0.18em] text-ink transition-colors hover:border-ink/40"
+                className="group mt-4 flex items-center justify-center gap-3 border border-ink/25 py-4 text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-sand"
               >
-                <WhatsAppMark size={17} className="text-moss" />
+                <WhatsAppMark
+                  size={18}
+                  className="text-moss transition-colors group-hover:text-mist"
+                />
                 WhatsApp us
               </a>
             </div>
@@ -583,9 +622,16 @@ export default function Navbar() {
                 third and a fourth outline underneath them turned the bottom of
                 the sheet into a stack of boxes — the icons started reading as
                 empty form fields rather than as a signature. The 44px target
-                stays; only the border goes. */}
+                stays; only the border goes.
+
+                Drawn at 1.5 rather than lucide's default 2. A two-pixel stroke
+                is a weight this sheet contains nowhere else now that the links
+                are set in Fraunces Light — the icons were the boldest marks in
+                a column whose type had just been made the finest. At 1.5 they
+                sit down among the hairlines, which is where the quietest thing
+                here belongs. */}
             <div style={riseDelay(links.length + 3)} className={rise}>
-              <ul className="mt-8 flex items-center justify-center gap-4">
+              <ul className="mt-8 flex items-center justify-center gap-5">
                 {menuSocials.map(({ name, handle, href }) => {
                   const Icon = menuSocialIcons[name];
                   return (
@@ -596,9 +642,9 @@ export default function Navbar() {
                         rel="noopener noreferrer"
                         aria-label={`${name} — ${handle}`}
                         title={`${name} — ${handle}`}
-                        className="flex h-11 w-11 items-center justify-center text-ink/65 transition-colors hover:text-copper-deep"
+                        className="flex h-11 w-11 items-center justify-center text-ink/55 transition-colors hover:text-copper-deep"
                       >
-                        <Icon size={19} aria-hidden />
+                        <Icon size={19} strokeWidth={1.5} aria-hidden />
                       </a>
                     </li>
                   );
