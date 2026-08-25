@@ -11,11 +11,10 @@ import FilteredCatalogue, {
   type CatalogueTour,
   type TourGroup,
 } from "@/components/tours/FilteredCatalogue";
-import { getSettings, getTours } from "@/lib/data";
+import { getDestinations, getSettings, getTours } from "@/lib/data";
 import { assetBySrc, fromCmsUrl } from "@/lib/media/registry";
 import { slotAsset, slotSrc } from "@/lib/media/slots";
 import { experienceCategories } from "@/lib/experiences";
-import { destinations } from "@/lib/destinations";
 import { regions } from "@/lib/regions";
 import { lowestDayRate, money, tripDays } from "@/lib/pricing";
 import { PackageStance } from "@/components/patterns/TransportRates";
@@ -209,12 +208,19 @@ function SeasonPanel({
         </div>
 
         {/* Out of the two-column block and back to full width. The rail is
-            navigation between the four panels, not part of any one of them. */}
+            navigation between the four panels, not part of any one of them.
+
+            `scroll={false}` for the same reason the map's region links carry
+            it: this is a query-string change on the page you are already on,
+            and next/link resets scroll to the top for those too. The rail sits
+            directly above the panel it swaps, so throwing the visitor to the
+            header is the one outcome that makes the control useless. */}
         <ul className="mt-12 flex flex-wrap gap-2 md:mt-14">
           {seasons.map((s) => (
             <li key={s.key}>
               <Link
                 href={s.key === nowKey ? "/tours" : `/tours?season=${s.key}`}
+                scroll={false}
                 aria-current={s.key === season.key ? "true" : undefined}
                 className={`inline-flex min-h-[44px] flex-col justify-center border px-4 py-1.5 transition-colors ${
                   s.key === season.key
@@ -352,7 +358,18 @@ function SeasonPanel({
 }
 
 export default async function ToursPage() {
-  const [all, settings] = await Promise.all([getTours(), getSettings()]);
+  /*
+    `getDestinations()` rather than the seed import this page used to carry.
+    Both the map's second marker layer and the catalogue's slug -> name lookup
+    read from it, so a destination renamed in the CMS is renamed in both, and a
+    destination added there appears in the region panel without a deploy. It is
+    `cache()`d alongside the other two, so this is still one read per request.
+  */
+  const [all, settings, allDestinations] = await Promise.all([
+    getTours(),
+    getSettings(),
+    getDestinations(),
+  ]);
   const nowKey = currentSeasonKey();
 
   /*
@@ -379,7 +396,7 @@ export default async function ToursPage() {
     experienceCategories.map((c) => [c.slug, c.name]),
   );
   const destinationNames = Object.fromEntries(
-    destinations.map((d) => [d.slug, d.name]),
+    allDestinations.map((d) => [d.slug, d.name]),
   );
 
   return (
@@ -406,17 +423,23 @@ export default async function ToursPage() {
           always-present region list all come along.
 
           Region membership is derived from each tour's own destinationSlugs —
-          no `region` field was added to the tour model. */}
+          no `region` field was added to the tour model.
+
+          Destinations are the map's second layer: the seven region markers say
+          which part of the island a journey covers, and the nine destination
+          pins say what is actually in it. Without them the map answered "where
+          would I go?" with a shape and a name; with them it answers with
+          Sigiriya, Ella and Yala sitting where they really are. */}
       <section className="section grain relative overflow-hidden bg-deep">
         <div className="relative z-10 mx-auto max-w-wrap px-5 md:px-8">
           <SectionHeading
             dark
             eyebrow="Journeys across Sri Lanka"
             title="Start with a region"
-            intro="Choose a region to see the journeys that go there."
+            intro="Seven regions and the places inside them. Choose a region to see the journeys that go there, or open a destination to read about it first."
           />
           <div className="section-body">
-            <IslandMap basePath="/tours" />
+            <IslandMap basePath="/tours" destinations={allDestinations} />
           </div>
         </div>
       </section>
@@ -567,7 +590,7 @@ export default async function ToursPage() {
                       </p>
                       <p className="mt-4 text-[13px] leading-relaxed text-ink/65">
                         {r.places.map((p, pi) => {
-                          const match = destinations.find(
+                          const match = allDestinations.find(
                             (d) => d.name.toLowerCase() === p.toLowerCase(),
                           );
                           return (

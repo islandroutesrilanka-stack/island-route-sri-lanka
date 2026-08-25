@@ -107,8 +107,12 @@ export default function FilteredCatalogue({
               Travelling as {PARTY_LABELS[filters.party] ?? filters.party}
             </p>
           )}
+          {/* Same-page navigation, so `scroll={false}` — clearing a filter
+              should leave you looking at the catalogue you just unfiltered,
+              not at the top of the page. See IslandMap for the full note. */}
           <Link
             href="/tours"
+            scroll={false}
             className="link-line ml-auto text-[12px] uppercase tracking-[0.16em] text-copper-deep"
           >
             Clear filters
@@ -132,7 +136,11 @@ export default function FilteredCatalogue({
             >
               <p className="mt-6 text-[13px] text-ink/65">
                 Or{" "}
-                <Link href="/tours" className="link-line text-copper-deep">
+                <Link
+                  href="/tours"
+                  scroll={false}
+                  className="link-line text-copper-deep"
+                >
                   browse every journey
                 </Link>
                 .

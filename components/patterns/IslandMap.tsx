@@ -10,11 +10,18 @@
  *    calls for Leaflet or Mapbox. On a homepage hero-adjacent section that
  *    trade is not close.
  *
- * 2. The SVG is decorative and aria-hidden. Every region is a real anchor
+ * 2. The SVG is decorative and aria-hidden. Every marker is a real anchor
  *    element overlaid on top — so it is keyboard-navigable, screen-reader
  *    legible and works with JavaScript disabled, and the region list beneath is
  *    always present rather than being a fallback nobody maintains. Nothing here
  *    is available only by pointing at a shape.
+ *
+ * 3. Two layers, drawn as different kinds of mark. Regions are the primary
+ *    index — filled, warm, on 44px targets. Destinations are points of
+ *    interest — hollow, cool, smaller, on 28px targets, and painted first so a
+ *    region always wins an overlapping tap. Filled-vs-hollow, warm-vs-cool and
+ *    large-vs-small are three separate channels, so the distinction survives
+ *    both a colour-vision deficiency and a 128px-wide phone map.
  *
  * The coastline is real geometry, not a drawn approximation — see the note on
  * ISLAND_PATH below. It is still presented as an index to the regions rather
@@ -22,9 +29,25 @@
  */
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { regions } from "@/lib/regions";
+
+/**
+ * What the map needs of a destination. Structural rather than an import of
+ * `Destination` so the caller can hand over whatever its own fetch returns —
+ * today that is `getDestinations()`, which reads the CMS table and falls back
+ * to the seed file.
+ */
+export type MapDestination = {
+  slug: string;
+  name: string;
+  /** Region *display name*, which is how lib/destinations records it. */
+  region: string;
+  headline: string;
+  bestFor: string[];
+};
 
 /**
  * Coastline derived from Natural Earth 1:10m Admin 0 Countries (public domain),
@@ -104,27 +127,66 @@ const JAFFNA_ISLANDS =
 const ISLAND_PATH = MAINLAND + MANNAR + DELFT + JAFFNA_ISLANDS;
 
 /**
- * One real place per region, projected through the same Mercator as the
- * coastline, expressed as % of the container. Every one is inside the mainland
- * polygon — checked by point-in-polygon against the simplified path, not by eye.
+ * Both marker tables are projected through the same Mercator as the coastline
+ * and expressed as % of the container. Every point was checked against the
+ * simplified mainland polygon by point-in-polygon, not by eye — with a 0.5
+ * viewBox-unit tolerance for the coastal ones, because a coastline simplified
+ * at ~1.3px cannot adjudicate whether a beach town is on the beach. Tangalle
+ * and Mirissa both fall 0.02–0.03 units outside it, which at the widest render
+ * is a twentieth of a pixel.
  *
- * north Jaffna · cultural-triangle Sigiriya · east-coast Batticaloa
- * hill-country Nuwara Eliya · west-coast Colombo · wild-south Tissamaharama
- * south-coast Galle
+ * ---------------------------------------------------------------------------
+ * Why the region anchors moved.
+ *
+ * Each one used to be a named town: cultural-triangle *was* Sigiriya,
+ * hill-country *was* Nuwara Eliya, west-coast *was* Colombo, south-coast *was*
+ * Galle. That was harmless while regions were the only layer. The moment
+ * destinations went on the same map, four region dots and four destination
+ * pins were coincident to 0.0px — the same coordinates twice, because they
+ * were the same coordinates.
+ *
+ * So the anchors became what they always denoted: an area, not a place. Each
+ * is now a real landmark elsewhere in its region, chosen for separation rather
+ * than for fame, and each is at least 21px from the nearest destination pin on
+ * a 128px phone map. The two closest markers anywhere on the map are now
+ * Galle–Mirissa and Ella–Nuwara Eliya, which is simply where those towns are.
  */
 const HOTSPOTS: Record<string, { x: number; y: number }> = {
-  north: { x: 16.6, y: 4.3 },
-  "cultural-triangle": { x: 49.4, y: 48.1 },
-  "east-coast": { x: 91, y: 54.4 },
-  "hill-country": { x: 50.7, y: 73.8 },
-  "west-coast": { x: 9.3, y: 74.4 },
-  "wild-south": { x: 72.9, y: 90.8 },
-  "south-coast": { x: 25.3, y: 96.7 },
+  north: { x: 16.6, y: 4.3 }, //             Jaffna
+  "cultural-triangle": { x: 33.5, y: 39 }, // Anuradhapura
+  "east-coast": { x: 91, y: 54.4 }, //        Batticaloa
+  "hill-country": { x: 37.7, y: 77.4 }, //    Adam's Peak
+  "west-coast": { x: 8.1, y: 67.2 }, //       Negombo
+  "wild-south": { x: 54.9, y: 86.1 }, //      Udawalawe
+  "south-coast": { x: 51, y: 97.4 }, //       Tangalle
 };
+
+/**
+ * The nine destinations that have a position. Keyed by slug, so a tenth added
+ * through the CMS simply has no pin until someone projects it — it still
+ * reaches the detail panel, the region's place list and its own page. A pin is
+ * a claim about where a thing is; guessing one would be a lie on a map.
+ */
+const DESTINATION_PINS: Record<string, { x: number; y: number }> = {
+  sigiriya: { x: 49.4, y: 48.1 },
+  kandy: { x: 43.7, y: 65.1 },
+  ella: { x: 62.2, y: 75.9 },
+  "nuwara-eliya": { x: 50.7, y: 73.8 },
+  yala: { x: 82.5, y: 88.5 },
+  galle: { x: 25.3, y: 96.7 },
+  mirissa: { x: 35.9, y: 99.3 },
+  "arugam-bay": { x: 97.3, y: 76.6 },
+  colombo: { x: 9.3, y: 74.4 },
+};
+
+type Selection =
+  | { kind: "region"; slug: string }
+  | { kind: "destination"; slug: string };
 
 export default function IslandMap({
   basePath = "/destinations",
   hash = "",
+  destinations = [],
 }: {
   /**
    * Where a region click goes. Defaults to /destinations so the homepage and
@@ -142,11 +204,62 @@ export default function IslandMap({
    * only callers whose target page has the anchor pass it.
    */
   hash?: string;
+  /**
+   * The second layer. Empty by default, so a caller that wants only the region
+   * index gets exactly the map it had before. Anything in here with an entry in
+   * DESTINATION_PINS is drawn; everything in here is reachable from the panel.
+   */
+  destinations?: MapDestination[];
 } = {}) {
-  const [active, setActive] = useState<string>(regions[0].slug);
-  const region = regions.find((r) => r.slug === active) ?? regions[0];
+  const [active, setActive] = useState<Selection>({
+    kind: "region",
+    slug: regions[0].slug,
+  });
+
+  const destination =
+    active.kind === "destination"
+      ? destinations.find((d) => d.slug === active.slug) ?? null
+      : null;
+
+  /*
+    The region shown in the panel, and the region dot that lights up. When a
+    destination is selected this resolves to its parent — so hovering Ella
+    lights Ella *and* Hill Country, and the two layers explain each other
+    instead of competing. lib/destinations stores the region as a display name,
+    which is the same string as Region.name for all nine.
+  */
+  const region =
+    (destination
+      ? regions.find((r) => r.name === destination.region)
+      : regions.find((r) => r.slug === active.slug)) ?? regions[0];
+
+  /* Place name -> destination, for turning the panel's place list into links.
+     Keyed lowercase: these names are CMS-editable on one side and hand-written
+     in lib/regions on the other, and "Nuwara Eliya" vs "Nuwara eliya" should
+     not decide whether a link exists. Same tolerance the region index on
+     /tours already uses for the same join. */
+  const byName = new Map(destinations.map((d) => [d.name.toLowerCase(), d]));
 
   const regionHref = (slug: string) => `${basePath}?region=${slug}${hash}`;
+  const destinationHref = (slug: string) => `/destinations/${slug}`;
+
+  /*
+    The scroll jump.
+
+    A region click is a query-string change on the page you are already on, and
+    next/link resets scroll to the top on every navigation by default —
+    including that one. The visitor scrolls down to the map, taps a region, and
+    is thrown back to the header, having asked for a filter and been given a
+    trip upstairs.
+
+    `scroll={false}` is the fix rather than preventDefault(), which would take
+    the navigation with it. It applies only when the link stays on this page and
+    no fragment was requested: a cross-page click still lands at the top of the
+    new document, and a caller that passes `hash` still gets scrolled to its
+    anchor. Destination links go to another page entirely and keep the default.
+  */
+  const pathname = usePathname();
+  const holdScroll = pathname === basePath && !hash;
 
   return (
     /*
@@ -210,16 +323,58 @@ export default function IslandMap({
             />
           </svg>
 
+          {/*
+            Destinations first, regions second — DOM order is the stacking
+            order here, and on a 128px phone map a 44px region target and a
+            28px destination target inevitably overlap. Painting regions last
+            means the region wins that tap, which is exactly what this page's
+            map did before destinations existed.
+
+            28px clears WCAG 2.2 SC 2.5.8 (24px minimum) with room, and every
+            pin also has a full-size route to the same page through the panel's
+            place list.
+          */}
+          {destinations.map((d) => {
+            const pos = DESTINATION_PINS[d.slug];
+            if (!pos) return null;
+            const isActive =
+              active.kind === "destination" && d.slug === active.slug;
+            return (
+              <Link
+                key={d.slug}
+                href={destinationHref(d.slug)}
+                onMouseEnter={() =>
+                  setActive({ kind: "destination", slug: d.slug })
+                }
+                onFocus={() => setActive({ kind: "destination", slug: d.slug })}
+                aria-current={isActive ? "true" : undefined}
+                className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+              >
+                <span className="sr-only">{d.name}</span>
+                <span
+                  aria-hidden
+                  className={`block rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "h-2.5 w-2.5 border-[1.5px] border-mist bg-mist/25 ring-4 ring-mist/15"
+                      : "h-[7px] w-[7px] border border-mist/75"
+                  }`}
+                />
+              </Link>
+            );
+          })}
+
           {regions.map((r) => {
             const pos = HOTSPOTS[r.slug];
             if (!pos) return null;
-            const isActive = r.slug === active;
+            const isActive = r.slug === region.slug;
             return (
               <Link
                 key={r.slug}
                 href={regionHref(r.slug)}
-                onMouseEnter={() => setActive(r.slug)}
-                onFocus={() => setActive(r.slug)}
+                scroll={!holdScroll}
+                onMouseEnter={() => setActive({ kind: "region", slug: r.slug })}
+                onFocus={() => setActive({ kind: "region", slug: r.slug })}
                 aria-current={isActive ? "true" : undefined}
                 className="absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
@@ -237,36 +392,95 @@ export default function IslandMap({
             );
           })}
         </div>
+
+        {/* Legend, shown only when there is a second layer to distinguish.
+            Both swatches are drawn in the resting state, which is what is on
+            screen for fifteen of the sixteen markers at any moment. Stacked
+            below `lg` because the map column is ~128px wide on a phone. */}
+        {destinations.length > 0 && (
+          <ul className="mt-4 flex flex-col gap-1.5 text-[11px] uppercase tracking-[0.12em] text-sand/60 lg:mt-5 lg:flex-row lg:justify-center lg:gap-5">
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="h-2 w-2 shrink-0 rounded-full bg-sand/60"
+              />
+              Regions
+            </li>
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="h-[7px] w-[7px] shrink-0 rounded-full border border-mist/75"
+              />
+              Destinations
+            </li>
+          </ul>
+        )}
       </div>
 
       {/* ------------------------------- Detail panel ------------------------------
           `min-w-0` because this is the `1fr` track: without it a long region
-          name sets the column's min-content width and pushes the map off. */}
+          name sets the column's min-content width and pushes the map off.
+
+          One panel, two subjects. A destination pin is a 7px circle with no
+          label — on its own it is an anchor to somewhere unnamed, which is a
+          worse map than the one that had no destinations on it. Reading the
+          hovered or focused marker here is what makes the layer legible, and it
+          costs no layout: both readings run eyebrow, name, one line of prose,
+          a row of short caps, and the same closing link. */}
       <div className="min-w-0 lg:col-span-4">
-        <p className="eyebrow text-copper-light">{`Region ${
-          regions.findIndex((r) => r.slug === region.slug) + 1
-        } of ${regions.length}`}</p>
-        <h3 className="h-display mt-2 text-[1.55rem] leading-[1.1] text-sand sm:mt-3 sm:text-3xl lg:text-4xl">
-          {region.name}
+        <p className="eyebrow text-copper-light">
+          {destination
+            ? `Destination · ${region.name}`
+            : `Region ${
+                regions.findIndex((r) => r.slug === region.slug) + 1
+              } of ${regions.length}`}
+        </p>
+        <h3 className="h-display mt-2 text-[1.55rem] text-sand sm:mt-3 sm:text-3xl lg:text-4xl">
+          {destination ? destination.name : region.name}
         </h3>
         <p className="mt-3 text-[15px] leading-relaxed text-sand/70 sm:mt-4 sm:text-base">
-          {region.character}
+          {destination ? destination.headline : region.character}
         </p>
+
+        {/* A region's places, with the ones that are destinations turned into
+            links to their own page. This is the second route to every pin —
+            full-size, in the tab order, and not dependent on hitting a 7px
+            circle. The mist is the map's own destination colour, so the panel
+            and the marker layer say the same thing; the hairline underline is
+            there because colour alone is not an affordance (WCAG 1.4.1). */}
         <ul className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 sm:mt-6 sm:gap-x-4 sm:gap-y-2">
-          {region.places.map((p) => (
-            <li
-              key={p}
-              className="text-[11px] uppercase tracking-[0.12em] text-sand/55 sm:text-[12px] sm:tracking-[0.14em]"
-            >
-              {p}
-            </li>
-          ))}
+          {(destination ? destination.bestFor : region.places).map((label) => {
+            const linked = destination ? undefined : byName.get(label.toLowerCase());
+            const type =
+              "text-[11px] uppercase tracking-[0.12em] sm:text-[12px] sm:tracking-[0.14em]";
+            return (
+              <li key={label}>
+                {linked ? (
+                  <Link
+                    href={destinationHref(linked.slug)}
+                    className={`${type} text-mist/85 underline decoration-mist/25 underline-offset-4 transition-colors hover:text-mist hover:decoration-mist`}
+                  >
+                    {label}
+                  </Link>
+                ) : (
+                  <span className={`${type} text-sand/55`}>{label}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
+
         <Link
-          href={regionHref(region.slug)}
+          href={
+            destination
+              ? destinationHref(destination.slug)
+              : regionHref(region.slug)
+          }
+          scroll={destination ? undefined : !holdScroll}
           className="link-line mt-5 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] text-copper-light sm:mt-8 sm:text-[13px]"
         >
-          Explore {region.name} <ArrowRight size={15} />
+          Explore {destination ? destination.name : region.name}{" "}
+          <ArrowRight size={15} />
         </Link>
       </div>
 
@@ -288,10 +502,11 @@ export default function IslandMap({
             <li key={r.slug} className="border-t border-sand/10">
               <Link
                 href={regionHref(r.slug)}
-                onMouseEnter={() => setActive(r.slug)}
-                onFocus={() => setActive(r.slug)}
+                scroll={!holdScroll}
+                onMouseEnter={() => setActive({ kind: "region", slug: r.slug })}
+                onFocus={() => setActive({ kind: "region", slug: r.slug })}
                 className={`flex items-center justify-between py-2.5 text-[11px] uppercase leading-tight tracking-[0.1em] transition-colors sm:text-[12px] lg:py-3.5 lg:text-[13px] lg:tracking-[0.14em] ${
-                  r.slug === active
+                  r.slug === region.slug
                     ? "text-copper-light"
                     : "text-sand/65 hover:text-sand"
                 }`}
