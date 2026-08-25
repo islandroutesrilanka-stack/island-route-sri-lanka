@@ -10,9 +10,10 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Instagram, Facebook } from "lucide-react";
 import LanguageSwitcher, { TranslateHost } from "@/components/LanguageSwitcher";
-import { waLink, defaultWaMessage } from "@/lib/site";
+import { WhatsAppMark } from "@/components/icons";
+import { socialProfiles, waLink, defaultWaMessage } from "@/lib/site";
 
 /**
  * Primary navigation — five destinations and one action.
@@ -40,6 +41,18 @@ import { waLink, defaultWaMessage } from "@/lib/site";
  * Services, Gallery and Reviews are demoted, not removed: they stay in the
  * mobile sheet and in the footer. Fleet and Contact live in the footer only —
  * they are merging into /about and /book respectively.
+ *
+ * ── The sheet ───────────────────────────────────────────────────────────────
+ *
+ * The phone menu is a centred column, and the order in it is an argument: five
+ * places to go, then the three quieter ones, then the two ways to start a
+ * conversation, then where to find us elsewhere. It descends from destination
+ * to intent to afterthought, and nothing in it competes with the booking
+ * button for weight.
+ *
+ * Its contents rise in on a stagger. See `riseDelay` for why that is a
+ * transition rather than an animation — the reason is Google Translate, and it
+ * is not optional.
  *
  * ── On the absence of an animation library ──────────────────────────────────
  *
@@ -74,6 +87,21 @@ const secondaryLinks = [
   { href: "/about#reviews", label: "Reviews" },
 ];
 
+/**
+ * The networks the mobile sheet links, and the glyph each one gets.
+ *
+ * Filtered from `socialProfiles` rather than listed again, so the sheet and the
+ * footer can never disagree about which accounts exist or where they point.
+ * WhatsApp is filtered out on purpose: it has its own button directly above,
+ * and a menu that offers the same channel twice reads as padding rather than
+ * as choice.
+ */
+const menuSocialIcons: Record<string, typeof Instagram> = {
+  Instagram,
+  Facebook,
+};
+const menuSocials = socialProfiles.filter((p) => p.name in menuSocialIcons);
+
 /** Entrance: transform and opacity only. See the note at the render below. */
 const enter = (delay: number, from: string, dur: string): CSSProperties =>
   ({
@@ -107,9 +135,23 @@ export default function Navbar() {
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    /*
+      Tell the page the sheet is open, so the floating WhatsApp button can get
+      out of its way (globals.css). The two collide: the float is fixed to the
+      bottom-right corner and the sheet ends with its own WhatsApp button, so
+      on a short phone the bubble sat directly on top of it — the same channel
+      offered twice, one covering the other.
+
+      A data attribute rather than a prop or a context because the float is a
+      server component in the root layout with no JavaScript of its own, and
+      making it a client component to hide it would add a hydration boundary
+      to every page on the site to solve a corner-of-the-screen problem.
+    */
+    document.documentElement.dataset.navOpen = "true";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      delete document.documentElement.dataset.navOpen;
     };
   }, [open]);
 
@@ -187,6 +229,36 @@ export default function Navbar() {
     document.fonts?.ready.then(measure).catch(() => {});
     return () => window.removeEventListener("resize", measure);
   }, [measure]);
+
+  /*
+    The sheet's staggered entrance.
+
+    A transition, not a keyed animation.
+
+    The stagger used to be a CSS animation restarted by giving each link a
+    `key` that carried `open`, because an animation only replays for an element
+    the browser has not seen before. Remounting is exactly what must not happen
+    once the page can be translated: Google rewrites the text nodes it finds,
+    and a node React creates afterwards is one it never revisits — so the sheet
+    reopened in English on an otherwise German page. A transition replays on
+    the same element, so the words survive.
+
+    The rise is vertical now rather than in from the leading edge. A centred
+    column has no leading edge to enter from; things arriving sideways under a
+    centred headline look like they missed their mark. Eight pixels up, and the
+    whole sheet settles rather than slides.
+
+    Closing collapses the delays to zero. A staggered exit means the last item
+    is still on screen a third of a second after the menu was dismissed, which
+    reads as lag — the gesture people want back is instant.
+  */
+  const riseDelay = (i: number): CSSProperties => ({
+    transitionDelay: open ? `${0.05 * i}s` : "0s",
+  });
+
+  const rise = `transition-[opacity,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+  }`;
 
   return (
     /*
@@ -387,80 +459,152 @@ export default function Navbar() {
           aria-label="Main"
           className="min-h-0 overflow-hidden border-b border-ink/10 bg-sand"
         >
-          <div className="max-h-[calc(100svh-4rem)] overflow-y-auto px-5 pb-8 pt-2">
+          {/*
+            One centred column.
+
+            Left-aligned links read as a list of options to be worked through.
+            Centred, at this size, on this much space, they read as a title
+            sequence — which is the difference between a menu that looks like
+            navigation and one that looks like an invitation. Everything below
+            inherits the alignment from here; the rows that need it add their
+            own `justify-center`.
+
+            The bottom padding clears the home indicator on phones that have
+            one, which matters because the social row is the last thing in the
+            sheet and sits exactly where the gesture bar lives.
+          */}
+          <div
+            style={{
+              paddingBottom: "max(2.25rem, env(safe-area-inset-bottom))",
+            }}
+            className="max-h-[calc(100svh-4rem)] overflow-y-auto px-6 pt-4 text-center"
+          >
             {links.map((l, i) => {
               const active = isActive(l.href);
               return (
-                /*
-                  A transition, not a keyed animation.
-
-                  The stagger used to be a CSS animation restarted by giving
-                  each link a `key` that carried `open`, because an animation
-                  only replays for an element the browser has not seen before.
-                  Remounting is exactly what must not happen once the page can
-                  be translated: Google rewrites the text nodes it finds, and a
-                  node React creates afterwards is one it never revisits — so
-                  the sheet reopened in English on an otherwise German page.
-                  A transition replays on the same element, so the gesture is
-                  unchanged (12px, 350ms, same curve) and the words survive.
-                */
-                <div
-                  key={l.href}
-                  style={
-                    {
-                      transitionDelay: open ? `${0.05 * i}s` : "0s",
-                    } as CSSProperties
-                  }
-                  className={`transition-[opacity,transform] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                    open
-                      ? "translate-x-0 opacity-100"
-                      : "-translate-x-3 opacity-0"
-                  }`}
-                >
+                <div key={l.href} style={riseDelay(i)} className={rise}>
                   <Link
                     href={l.href}
                     aria-current={active ? "page" : undefined}
-                    className={`block border-b border-ink/5 py-3 font-display text-2xl transition-colors ${
+                    /*
+                      Short screens compress rather than scroll. At this size
+                      the column is 687px, which a 390x844 phone holds with
+                      room over and an iPhone SE does not — and a menu you have
+                      to scroll to reach the booking button is a menu that has
+                      lost the argument. Above 720px of viewport the spacing is
+                      the generous one; below it the type steps down and the
+                      padding halves, and the whole sheet fits again.
+                    */
+                    className={`relative block py-4 font-display text-[1.7rem] leading-[1.15] transition-colors [@media(max-height:720px)]:py-2 [@media(max-height:720px)]:text-[1.45rem] ${
                       active ? "text-copper-deep" : "text-ink"
                     }`}
                   >
                     {l.label}
+                    {/*
+                      The same copper rule the desktop nav slides between its
+                      items, held still under one label. It is the flourish on
+                      a state the copper already carries, so it is absolutely
+                      positioned and cannot touch the rhythm of the column.
+
+                      It goes away on the compressed layout. There the padding
+                      is 8px, which is not enough clearance for a detached rule
+                      — it lands against the descenders and reads as an
+                      underline rather than as the mark it is on every other
+                      screen. The copper carries the state on its own.
+
+                      The hairlines that used to run under every link are gone.
+                      Edge-to-edge rules under centred type read as table rows,
+                      and the spacing does that job better.
+                    */}
+                    {active && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 bottom-2 mx-auto h-px w-8 bg-copper-deep/60 [@media(max-height:720px)]:hidden"
+                      />
+                    )}
                   </Link>
                 </div>
               );
             })}
 
-            {/* Secondary — present and reachable, given less weight */}
-            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
-              {secondaryLinks.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    className="text-[12px] uppercase tracking-[0.14em] text-ink/65"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/* Secondary — present and reachable, given less weight. The rule
+                above it is short and centred rather than edge to edge: it
+                closes the navigation group without drawing a box around it. */}
+            <div style={riseDelay(links.length)} className={rise}>
+              <div aria-hidden className="mx-auto mt-8 h-px w-10 bg-ink/15" />
+              <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+                {secondaryLinks.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      className="text-[11px] uppercase tracking-[0.18em] text-ink/60 transition-colors hover:text-ink"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            <Link
-              href="/book"
-              className="mt-6 block bg-ink py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-sand"
-            >
-              Plan your journey
-            </Link>
+            <div style={riseDelay(links.length + 1)} className={rise}>
+              <Link
+                href="/book"
+                className="mt-8 block bg-ink py-4 text-[12px] uppercase tracking-[0.18em] text-sand transition-colors hover:bg-copper-deep"
+              >
+                Plan your journey
+              </Link>
+            </div>
+
             {/* The WhatsApp channel stays — the raw number does not. It opens
                 a pre-filled chat, which is the useful part; printing the
-                digits only added noise the header had to carry. */}
-            <a
-              href={waLink(defaultWaMessage)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 block border border-ink/20 py-3.5 text-center text-[13px] uppercase tracking-[0.14em] text-ink"
-            >
-              WhatsApp us
-            </a>
+                digits only added noise the header had to carry.
+
+                The mark is WhatsApp's own shape in the site's green rather
+                than the brand's. #25D366 on sand is under 2:1 and looks
+                washed out at 17px; moss is a real colour from this palette
+                and reads as deliberate. The shape is what carries the
+                recognition, and the label carries the meaning. */}
+            <div style={riseDelay(links.length + 2)} className={rise}>
+              <a
+                href={waLink(defaultWaMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center justify-center gap-2.5 border border-ink/20 py-4 text-[12px] uppercase tracking-[0.18em] text-ink transition-colors hover:border-ink/40"
+              >
+                <WhatsAppMark size={17} className="text-moss" />
+                WhatsApp us
+              </a>
+            </div>
+
+            {/* Socials close the sheet, and are the quietest thing in it.
+
+                Bare, where the footer's are boxed. The two buttons directly
+                above are already a filled rectangle and an outlined one, and a
+                third and a fourth outline underneath them turned the bottom of
+                the sheet into a stack of boxes — the icons started reading as
+                empty form fields rather than as a signature. The 44px target
+                stays; only the border goes. */}
+            <div style={riseDelay(links.length + 3)} className={rise}>
+              <ul className="mt-8 flex items-center justify-center gap-4">
+                {menuSocials.map(({ name, handle, href }) => {
+                  const Icon = menuSocialIcons[name];
+                  return (
+                    <li key={name}>
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${name} — ${handle}`}
+                        title={`${name} — ${handle}`}
+                        className="flex h-11 w-11 items-center justify-center text-ink/65 transition-colors hover:text-copper-deep"
+                      >
+                        <Icon size={19} aria-hidden />
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
         </nav>
       </div>

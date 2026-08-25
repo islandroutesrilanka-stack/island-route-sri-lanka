@@ -58,6 +58,15 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    /*
+      Delays, not just durations. Zeroing the duration alone leaves a staggered
+      entrance staggered — every item still waits its turn, it just snaps in
+      when it arrives, which is a slower and jerkier version of the thing the
+      setting asked us to stop doing. The mobile menu stacks nine of these, so
+      the last item was landing four tenths of a second after the menu opened.
+    */
+    animation-delay: 0.01ms !important;
+    transition-delay: 0.01ms !important;
   }
 }
 
@@ -140,6 +149,25 @@ body {
 }
 .settle-in {
   animation: settle-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/*
+  The floating WhatsApp button, while the mobile menu is open.
+
+  It is fixed to the bottom-right corner and the sheet ends with its own
+  WhatsApp button, so on a short phone the bubble landed on top of it. It also
+  has nothing to add over a menu that is already offering the same
+  conversation, in words, one row up.
+
+  `visibility` is discrete, so it holds `visible` for the whole fade and only
+  then flips — the button dissolves rather than vanishing, and stops taking
+  taps either way. Set by Navbar on the root element; see the Escape and
+  scroll-lock effect there.
+*/
+[data-nav-open] [data-wa-float] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* Slow Ken-Burns push on hero imagery. */
