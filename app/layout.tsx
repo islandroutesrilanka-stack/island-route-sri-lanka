@@ -168,6 +168,19 @@ export async function generateMetadata(): Promise<Metadata> {
         "max-video-preview": -1,
       },
     },
+    /*
+      Google Search Console's ownership proof. Next emits this as
+      <meta name="google-site-verification" content="..."> into <head> on
+      every route, which is what Search Console's HTML-tag method checks.
+
+      It lives here rather than in the CMS settings on purpose: it is a
+      one-time property proof tied to this domain, not editable site copy, and
+      Search Console re-checks it periodically — losing the tag un-verifies
+      the property, so it should not sit behind an admin field someone can
+      clear. The token is public by design; it appears in the page source of
+      every verified site.
+    */
+    verification: { google: "PFXyqx0l9NePMDqgwIqLoMm8MGSGLcrI1d0djjRN7hQ" },
   };
 }
 
