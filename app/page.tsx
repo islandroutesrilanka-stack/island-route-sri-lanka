@@ -8,15 +8,24 @@ import {
 } from "@/components/ui";
 import VideoHero from "@/components/media/VideoHero";
 import TrustBand from "@/components/patterns/TrustBand";
+import FleetStrip from "@/components/patterns/FleetStrip";
+import ReviewRail from "@/components/patterns/ReviewRail";
 import { resolveHero } from "@/lib/media/hero";
-import { getSettings, getFeaturedTours, getDestinations } from "@/lib/data";
+import {
+  getSettings,
+  getFeaturedTours,
+  getDestinations,
+  getFleet,
+  getReviews,
+} from "@/lib/data";
 
 export const revalidate = 60;
 
 /**
  * The homepage.
  *
- * Five sections: the film, the argument, the journeys, the places, the ask.
+ * Five sections: the film, the argument, the journeys, the places, the ask —
+ * plus a sixth, the reviews, which renders only once there are reviews.
  *
  * It carried ten before — an island map, an experience rail, a fleet strip, a
  * guide profile, a long-form featured journey, three blog posts, a two-column
@@ -30,13 +39,28 @@ export const revalidate = 60;
  * The grounds alternate dark, light, dark, light, dark. With ten sections that
  * rhythm was inaudible; with five it does the work of separating them, which is
  * why none of these sections needs a divider or a container edge to be legible.
+ *
+ * ── What came back, and why it does not undo the above ─────────────────────
+ *
+ * The fleet strip returned, but not as a section: it is mounted inside the
+ * journeys section as a hairline footnote to the four cards, costing the page
+ * no new argument ahead of the product. That was always its designed shape.
+ *
+ * The reviews rail is a genuine sixth section, and the one exception worth
+ * making: the cut above was about moving *arguments we make about ourselves*
+ * off the page, and a review is not that. It also obeys the rule that governed
+ * the cut — it renders nothing while there is nothing to show, so the page
+ * stays exactly five sections until real proof exists to put in it.
  */
 export default async function HomePage() {
-  const [settings, featuredTours, destinations] = await Promise.all([
-    getSettings(),
-    getFeaturedTours(),
-    getDestinations(),
-  ]);
+  const [settings, featuredTours, destinations, fleet, reviews] =
+    await Promise.all([
+      getSettings(),
+      getFeaturedTours(),
+      getDestinations(),
+      getFleet(),
+      getReviews(),
+    ]);
 
   const hero = resolveHero(settings);
 
@@ -185,6 +209,22 @@ export default async function HomePage() {
               )}
             </>
           )}
+
+          {/*
+            The fleet, as a footnote to the journeys rather than a section of
+            its own — which is the relationship the component was written for
+            and the one it states in its own header: this is what you travel
+            in. It belongs *inside* this element, not after it. Its cards are
+            `bg-deep` with `text-sand`, so on the light ground of the section
+            below they would be invisible, and its heading is an `h3` that
+            needs this section's SectionHeading as the `h2` above it.
+
+            So it costs no new section and no new argument before the product:
+            a 140px hairline strip under the four journeys, which is the one
+            place on the page where "what do we actually drive?" is the next
+            question a reader has.
+          */}
+          <FleetStrip fleet={fleet} />
         </div>
       </section>
 
@@ -220,7 +260,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════ 05 — BEGIN THE JOURNEY ══════════════════
+      {/* ══════════════════ 05 — IN THEIR WORDS ══════════════════
+          Proof, immediately before the ask — the only point on the homepage
+          where a visitor has seen the product and not yet been asked for
+          anything.
+
+          This renders nothing at all while `reviews` is empty, which is the
+          state the site ships in today, so the five-section rhythm described
+          above is unchanged until the first review is published through the
+          admin. At that moment this appears by itself, with no deploy. That is
+          the whole reason it is mounted now rather than later. */}
+      <ReviewRail
+        reviews={reviews}
+        intro="Unedited, and written by people who have already done the drive."
+      />
+
+      {/* ══════════════════ 06 — BEGIN THE JOURNEY ══════════════════
           The same closing band as every other page on the site. The homepage
           used to end on a bespoke two-column planner instead, which meant the
           one page most likely to be a visitor's first had the one ending they

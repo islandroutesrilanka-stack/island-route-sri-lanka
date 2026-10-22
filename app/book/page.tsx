@@ -8,7 +8,8 @@ import BookingFormWithContext from "@/components/BookingFormWithContext";
 import { serviceScope } from "@/lib/pricing";
 import { RateCards, InclusionList } from "@/components/patterns/TransportRates";
 import FaqPreview from "@/components/patterns/FaqPreview";
-import { getTours } from "@/lib/data";
+import ReviewRail from "@/components/patterns/ReviewRail";
+import { getTours, getReviews } from "@/lib/data";
 import { journeys } from "@/lib/journeys";
 import { experienceCategories } from "@/lib/experiences";
 import { destinations } from "@/lib/destinations";
@@ -115,7 +116,7 @@ export default async function BookPage() {
     only for its slugs, which are the definition of "signature": they are stable
     identifiers, unlike titles, and they don't change when the copy does.
   */
-  const all = await getTours();
+  const [all, reviews] = await Promise.all([getTours(), getReviews()]);
   const signatureSlugs = new Set(journeys.map((j) => j.slug));
   const signature = all.filter((t) => signatureSlugs.has(t.slug)).map(toOption);
   const rest = all.filter((t) => !signatureSlugs.has(t.slug)).map(toOption);
@@ -277,6 +278,23 @@ export default async function BookPage() {
           </aside>
         </div>
       </section>
+
+      {/*
+        Proof after the form, not above it.
+
+        Mounting this above the form would have been the obvious reading of
+        "put proof where the decision is made", and it would have been wrong:
+        it pushes the one control this page exists for below the fold. Someone
+        who has scrolled past the form without filling it is the person who
+        needs reassuring, and this is exactly where they are. The form keeps
+        the top of the page; this catches the reader who did not use it.
+      */}
+      <ReviewRail
+        reviews={reviews}
+        eyebrow="Before you write"
+        title="What other travellers found"
+        limit={3}
+      />
 
       {/* The last objections, immediately below the form that answers them —
           moved here from the foot of the homepage, which is where a visitor

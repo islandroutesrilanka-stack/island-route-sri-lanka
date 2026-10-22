@@ -8,7 +8,8 @@ import { Check, Clock, Tag } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import { CTABand, TourCard } from "@/components/ui";
 import GradientPanel from "@/components/media/GradientPanel";
-import { getTours, getTourBySlug } from "@/lib/data";
+import ReviewRail from "@/components/patterns/ReviewRail";
+import { getTours, getTourBySlug, getReviews } from "@/lib/data";
 import { waLink, site } from "@/lib/site";
 import { lowestDayRate, money, tripDays } from "@/lib/pricing";
 import { PackageStance, TripCost } from "@/components/patterns/TransportRates";
@@ -49,7 +50,7 @@ export async function generateMetadata({
 }
 
 export default async function TourPage({ params }: { params: { slug: string } }) {
-  const tours = await getTours();
+  const [tours, reviews] = await Promise.all([getTours(), getReviews()]);
   const tour = tours.find((t) => t.slug === params.slug);
   if (!tour) notFound();
 
@@ -267,6 +268,21 @@ export default async function TourPage({ params }: { params: { slug: string } })
           />
         </div>
       </section>
+
+      {/*
+        Proof at the foot of the journey page, above the related cards.
+
+        This is the page a visitor reads longest and the last thing they see
+        before either enquiring or leaving, and until now it closed on four
+        more things to look at. Placed before "You may also love" on purpose:
+        a reason to trust us should come before an invitation to go and read
+        about a different journey.
+
+        Dark ground, because the band above it is `bg-dune` and the related
+        rail below is `bg-dune/60` — three light grounds running together is
+        what makes a long page read as undifferentiated.
+      */}
+      <ReviewRail reviews={reviews} dark limit={3} />
 
       {related.length > 0 && (
         <section className="bg-dune/60 py-16 md:py-24">
