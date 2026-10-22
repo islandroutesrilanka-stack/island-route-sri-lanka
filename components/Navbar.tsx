@@ -559,12 +559,19 @@ export default function Navbar() {
                 reading as a mark and starts reading as an artifact. */}
             <div style={riseDelay(links.length)} className={rise}>
               <div aria-hidden className="mx-auto mt-8 h-px w-12 bg-ink/15" />
-              <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+              {/* `inline-block py-1.5` buys the tap target, not the look. An
+                  11px uppercase label is a 14px-tall box, and the hit area of
+                  an inline anchor is that box — well under the 24px floor of
+                  WCAG 2.5.8, on the one menu that only ever exists on a
+                  touchscreen. The 12px row gap pays for the padding so the
+                  cluster keeps its spacing, and `mt-6` holds the gap to the
+                  rule above it. Nothing about the type changes. */}
+              <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-1">
                 {secondaryLinks.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-[11px] uppercase tracking-[0.2em] text-ink/70 transition-colors hover:text-ink"
+                      className="inline-block py-1.5 text-[11px] uppercase tracking-[0.2em] text-ink/70 transition-colors hover:text-ink"
                     >
                       {l.label}
                     </Link>
