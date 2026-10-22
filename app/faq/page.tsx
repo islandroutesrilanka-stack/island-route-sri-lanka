@@ -101,20 +101,22 @@ export default function FaqPage() {
         className="border-b border-ink/10 bg-dune/50"
       >
         <div className="mx-auto max-w-wrap px-5 md:px-8">
-          <ul className="no-scrollbar flex gap-6 overflow-x-auto py-2.5 md:gap-8">
+          <ul className="no-scrollbar flex h-[46px] items-center gap-6 overflow-x-auto md:gap-8">
             {FAQ_GROUPS.map((g) => (
               <li key={g.id} className="shrink-0">
                 {/*
-                  `inline-block py-1.5` rather than a bare inline anchor. A
-                  12px uppercase label gives a 14px-tall box, and the hit area
-                  of an inline element is the box, not the padded row around
+                  `tap-target` rather than a bare inline anchor. A 12px
+                  uppercase label gives a 14px-tall box, and the hit area of
+                  an inline element is that box, not the padded rail around
                   it — which put these under the 24px minimum of WCAG 2.5.8.
-                  The padding moved off the <ul> and onto the anchors, so the
-                  rail is the same 46px tall and the whole of it is tappable.
+                  The utility adds the target without adding padding, so the
+                  hover rule stays against the text where it was drawn.
+                  The rail states its own height, because the labels no longer
+                  carry the padding that used to make it.
                 */}
                 <a
                   href={`#${g.id}`}
-                  className="link-line inline-block py-1.5 text-[12px] uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-copper-deep"
+                  className="link-line tap-target text-[12px] uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-copper-deep"
                 >
                   {g.label}
                 </a>

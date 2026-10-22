@@ -144,10 +144,18 @@ export default async function HomePage() {
                 >
                   {hero.ctaPrimary.label}
                 </Link>
+                {/*
+                  `tap-target`, not padding. A 13px uppercase label makes a
+                  20px-tall box, and the hit area of an inline anchor is that
+                  box — which left the hero's only text link 4px under the
+                  24px floor of WCAG 2.5.8. The utility hangs the missing
+                  target off a transparent ::before, so the label, the hover
+                  rule and the button beside it do not move a pixel.
+                */}
                 {hero.ctaSecondary.label && (
                   <Link
                     href={hero.ctaSecondary.href}
-                    className="link-line text-[13px] uppercase tracking-[0.16em] text-sand/80 transition-colors hover:text-sand"
+                    className="link-line tap-target text-[13px] uppercase tracking-[0.16em] text-sand/80 transition-colors hover:text-sand"
                   >
                     {hero.ctaSecondary.label}
                   </Link>

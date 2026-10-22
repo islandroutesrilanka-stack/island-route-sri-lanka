@@ -249,6 +249,33 @@ body {
   transform-origin: left;
 }
 
+/* ---------------------------------------------------------------------------
+   Tap targets on small inline links.
+
+   WCAG 2.5.8 (AA) asks for 24x24 CSS px of target. A 11-13px uppercase label
+   is a 14-20px-tall box, and the hit area of an inline anchor is that box, not
+   the padded row it sits in — so several of these labels were a few pixels
+   short on the one device where it matters.
+
+   Padding the anchor fixes the target and breaks the look: .link-line's
+   underline is an absolutely positioned ::after, which resolves against the
+   padding box, so every pixel of padding drags the hover rule further from the
+   text it belongs to. This grows the target outside the box instead. ::before
+   is free (link-line only uses ::after), it is transparent, and it changes no
+   layout at all — the text, the underline, the flex gaps and the section
+   height are all exactly where they were.
+
+   Requires a positioned ancestor box: .link-line already sets
+   `position: relative`, so pair this with `relative` when used without it. The
+   overlay reaches 6px past the text on each side, so keep 8px or more of clear
+   space around anything else that can be clicked.
+   --------------------------------------------------------------------------- */
+.tap-target::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+
 /* Hide scrollbars on carousels */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

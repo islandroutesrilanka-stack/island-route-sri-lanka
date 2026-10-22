@@ -123,10 +123,11 @@ export default async function PrivacyPage() {
               className="lg:col-span-3 lg:sticky lg:top-28 lg:self-start"
             >
               <p className="eyebrow text-copper-deep">On this page</p>
-              {/* Same 24px tap-target reasoning as the FAQ jump rail: the hit
-                  area of an inline anchor is its text box, so the vertical
-                  rhythm is paid for with padding on the links rather than
-                  spacing between them, and every entry is tappable. */}
+              {/* Same 24px floor as the FAQ jump rail, paid for differently:
+                  there is no underline to keep against the text here, and a
+                  vertical list wants the extra spacing anyway, so these buy
+                  the target with padding. On the links and not the <ul>,
+                  because the hit area of an inline anchor is its own box. */}
               <ul className="mt-3 space-y-0.5">
                 {SECTIONS.map(([id, label]) => (
                   <li key={id}>
