@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { GalleryItem } from "@/lib/content";
 
 /**
@@ -24,6 +24,18 @@ const CATEGORY_ORDER: GalleryItem["category"][] = [
   "Journeys",
 ];
 
+/**
+ * The shape used for a frame whose real dimensions were never recorded.
+ *
+ * Only the seeded fallback assets are in that position — everything uploaded
+ * through scripts/upload-photography.mjs stores its measured width and height.
+ * One consistent upright default is the honest answer here: the previous code
+ * assigned a ratio from the item's *index*, so the same photograph changed
+ * shape when a filter was clicked, and every portrait frame that landed on a
+ * 4:3 cell lost its top and bottom.
+ */
+const DEFAULT_RATIO = { w: 4, h: 5 };
+
 export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
   const [cat, setCat] = useState<string>("All");
 
@@ -38,14 +50,65 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
     const extra = Array.from(found).filter((c) => !CATEGORY_ORDER.includes(c));
     return ["All", ...known, ...extra];
   }, [gallery]);
-  const [active, setActive] = useState<GalleryItem | null>(null);
+
+  const items = useMemo(
+    () => (cat === "All" ? gallery : gallery.filter((g) => g.category === cat)),
+    [cat, gallery],
+  );
+
+  /**
+   * The lightbox holds an index into `items`, not the item itself. That is what
+   * makes previous/next possible at all: the open photograph knows where it
+   * sits in the set the visitor is actually looking at, so navigation stays
+   * inside the filter rather than wandering into frames the grid is hiding.
+   */
+  const [open, setOpen] = useState<number | null>(null);
+  const active = open === null ? null : (items[open] ?? null);
+
+  const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
 
-  // Lightbox: Escape to close, lock background scroll, manage focus
+  const step = useCallback(
+    (delta: number) =>
+      setOpen((i) =>
+        i === null ? i : (i + delta + items.length) % items.length,
+      ),
+    [items.length],
+  );
+
+  /* An index into a list that just changed length means nothing, so changing
+     the filter closes the lightbox rather than silently showing a different
+     photograph than the one that was opened. */
+  useEffect(() => setOpen(null), [cat]);
+
+  // Lightbox: keyboard, background scroll lock, focus in and focus back out.
   useEffect(() => {
-    if (!active) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setActive(null);
+    if (open === null) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setOpen(null);
+      if (e.key === "ArrowRight") return step(1);
+      if (e.key === "ArrowLeft") return step(-1);
+      if (e.key !== "Tab") return;
+      /* aria-modal="true" is a promise that Tab cannot leave the dialog.
+         Without this the next Tab lands on the page behind, where a screen
+         reader has been told there is nothing. */
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        "button:not([disabled])",
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -55,10 +118,7 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
       document.body.style.overflow = prev;
       openerRef.current?.focus();
     };
-  }, [active]);
-
-  const items =
-    cat === "All" ? gallery : gallery.filter((g) => g.category === cat);
+  }, [open, step]);
 
   return (
     /* Declared here rather than in the root layout: framer-motion is only
@@ -98,81 +158,142 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
           className="mt-10 columns-2 md:columns-3 gap-4 [column-fill:_balance]"
         >
           <AnimatePresence mode="popLayout">
-            {items.map((g, i) => (
-              <motion.button
-                key={g.src + g.caption}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.45, delay: i * 0.04 }}
-                type="button"
-                aria-label={`View larger: ${g.caption}`}
-                onClick={(e) => {
-                  openerRef.current = e.currentTarget;
-                  setActive(g);
-                }}
-                className="img-frame group mb-4 block w-full break-inside-avoid text-left"
-              >
-                <div
-                  className={`relative ${i % 3 === 0 ? "aspect-[3/4]" : i % 3 === 1 ? "aspect-square" : "aspect-[4/3]"}`}
+            {items.map((g, i) => {
+              const w = g.width ?? DEFAULT_RATIO.w;
+              const h = g.height ?? DEFAULT_RATIO.h;
+              return (
+                <motion.button
+                  key={g.src}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.45, delay: Math.min(i, 9) * 0.04 }}
+                  type="button"
+                  aria-label={`View larger: ${g.caption}`}
+                  onClick={(e) => {
+                    openerRef.current = e.currentTarget;
+                    setOpen(i);
+                  }}
+                  className="img-frame group mb-4 block w-full break-inside-avoid text-left"
                 >
-                  <Image
-                    src={g.src}
-                    alt={g.caption}
-                    fill
-                    sizes="(max-width:768px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-[1.2s] group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-deep/0 group-hover:bg-deep/25 transition-colors" />
-                </div>
-                <p className="py-3 px-1 text-xs text-ink/70">{g.caption}</p>
-              </motion.button>
-            ))}
+                  {/* The cell takes the photograph's own ratio, so object-cover
+                      has nothing left to crop. That is the point: a portrait
+                      frame stays portrait and the columns do the composing. */}
+                  <div className="relative" style={{ aspectRatio: `${w} / ${h}` }}>
+                    <Image
+                      src={g.src}
+                      alt={g.alt || g.caption}
+                      fill
+                      sizes="(max-width:768px) 50vw, 33vw"
+                      /* The first row is the largest-contentful candidate on
+                         this page; everything below it can wait for the
+                         viewport. */
+                      priority={i < 3}
+                      placeholder={g.blurDataURL ? "blur" : "empty"}
+                      blurDataURL={g.blurDataURL}
+                      className="object-cover transition-transform duration-[1.2s] group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-deep/0 group-hover:bg-deep/25 transition-colors" />
+                  </div>
+                  <p className="py-3 px-1 text-xs text-ink/70">{g.caption}</p>
+                </motion.button>
+              );
+            })}
           </AnimatePresence>
         </motion.div>
 
         <AnimatePresence>
           {active && (
             <motion.div
+              ref={dialogRef}
               role="dialog"
               aria-modal="true"
               aria-label={active.caption || "Gallery image"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setActive(null)}
-              className="fixed inset-0 z-[60] flex items-center justify-center bg-deep/90 p-5 backdrop-blur-sm"
+              onClick={() => setOpen(null)}
+              className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-deep/95 p-5 backdrop-blur-sm"
             >
               <button
                 ref={closeRef}
                 type="button"
                 aria-label="Close image"
-                onClick={() => setActive(null)}
-                className="absolute right-4 top-4 flex h-12 w-12 items-center justify-center text-sand/80 hover:text-sand"
+                onClick={() => setOpen(null)}
+                className="absolute right-3 top-3 flex h-12 w-12 items-center justify-center text-sand/80 transition-colors hover:text-sand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-light"
               >
-                <X size={30} />
+                <X size={28} />
               </button>
+
+              {items.length > 1 && (
+                <>
+                  {/* 48px square, clear of the figure on every breakpoint.
+                      WCAG 2.5.8 asks for 24; a control you hunt for on a phone
+                      while holding it one-handed wants twice that. */}
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      step(-1);
+                    }}
+                    className="absolute left-1 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-sand/70 transition-colors hover:text-sand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-light sm:left-4"
+                  >
+                    <ChevronLeft size={32} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      step(1);
+                    }}
+                    className="absolute right-1 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-sand/70 transition-colors hover:text-sand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-light sm:right-4"
+                  >
+                    <ChevronRight size={32} />
+                  </button>
+                </>
+              )}
+
               <motion.figure
-                initial={{ scale: 0.92, opacity: 0 }}
+                key={active.src}
+                initial={{ scale: 0.96, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 220, damping: 24 }}
-                className="max-h-[85vh] w-full max-w-4xl"
+                exit={{ opacity: 0 }}
+                transition={{ type: "spring", stiffness: 240, damping: 26 }}
+                className="flex max-w-5xl flex-col items-center px-10 sm:px-14"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="relative aspect-[3/2]">
-                  <Image
-                    src={active.src}
-                    alt={active.caption}
-                    fill
-                    sizes="90vw"
-                    className="object-contain"
-                  />
-                </div>
-                <figcaption className="mt-4 text-center text-sm text-sand/70">
-                  {active.caption} ·{" "}
-                  <span className="text-copper-light">{active.category}</span>
+                {/* Intrinsic sizing rather than a fixed 3:2 box. The old frame
+                    letterboxed every landscape photograph and shrank every
+                    portrait one to a third of the screen; handing the real
+                    dimensions to the browser lets it fill whichever axis runs
+                    out first. */}
+                <Image
+                  src={active.src}
+                  alt={active.alt || active.caption}
+                  width={active.width ?? 1200}
+                  height={active.height ?? 1500}
+                  sizes="(max-width:768px) 92vw, 1100px"
+                  placeholder={active.blurDataURL ? "blur" : "empty"}
+                  blurDataURL={active.blurDataURL}
+                  className="h-auto max-h-[76vh] w-auto max-w-full object-contain"
+                />
+                <figcaption className="mt-4 max-w-prose text-center text-sm text-sand/75">
+                  {active.caption}
+                  {active.place && (
+                    <span className="text-sand/50"> · {active.place}</span>
+                  )}
+                  <span className="mt-1.5 block text-[11px] uppercase tracking-[0.16em] text-copper-light">
+                    {active.category}
+                    {items.length > 1 && (
+                      <span className="text-sand/40">
+                        {" "}
+                        · {open! + 1} of {items.length}
+                      </span>
+                    )}
+                  </span>
                 </figcaption>
               </motion.figure>
             </motion.div>

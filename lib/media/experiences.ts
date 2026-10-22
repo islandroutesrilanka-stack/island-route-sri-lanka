@@ -5,6 +5,7 @@ import {
   commonsSubjects,
   type CommonsPlaceAsset,
 } from "./commons";
+import { photography } from "./photography";
 
 /**
  * Photography for the twelve experience categories.
@@ -216,13 +217,19 @@ export const experienceMedia: Record<string, MediaAsset> = {
   wildlife: media.yalaLeopard,
   "surf-ocean": media.whiskyPoint,
   beaches: media.arugamBayEvening,
-  "culture-heritage": media.sigiriyaRock,
-  food: commonsExperiences.food,
+  /* The operator's own Gal Vihara standing figure, in place of a stock
+     Sigiriya. Sigiriya is the more famous rock and the weaker argument: it
+     still fronts the Cultural Triangle region tile and the tours header, so
+     the island's best-known silhouette has not left the site. */
+  "culture-heritage": photography.galViharaStandingBuddha,
+  /* Replaces a Commons restaurant plate with a tour's own lunch. The licence
+     obligation leaves with it: this one needs no credit line. */
+  food: photography.riceAndCurryClayPots,
   wellness: commonsExperiences.wellness,
   adventure: commonsExperiences.adventure,
   nature: commonsPlaces["Horton Plains"],
-  "tea-country": commonsPlaces.Haputale,
-  "local-life": commonsPlaces.Negombo,
+  "tea-country": photography.teaBasketsUpThePath,
+  "local-life": photography.spiceTastingTable,
   "slow-travel": media.nineArchBridge,
   luxury: media.galleFortStreet,
 };

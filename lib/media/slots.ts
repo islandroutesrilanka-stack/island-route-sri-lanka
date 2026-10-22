@@ -4,6 +4,7 @@ import { commonsPlaces } from "./commons";
 import { experienceMedia } from "./experiences";
 import { experienceCategories } from "@/lib/experiences";
 import { regions } from "@/lib/regions";
+import { photography } from "./photography";
 
 /**
  * Editable image slots — the pictures that are part of the layout rather than
@@ -119,7 +120,11 @@ const headerSlots: ImageSlot[] = [
     group: "Page headers",
     help: "Behind the title on /gallery.",
     ratio: "Wide — about 16:9, 2000px or more across",
-    fallback: media.lagoonHeronSunset,
+    /* One of the only two frames in the operator's collection that is
+       genuinely 16:9, so it lands here uncropped. The page it heads is the
+       gallery, so opening it with their own photography rather than a stock
+       lagoon is the whole point. */
+    fallback: photography.traditionalMasksWall,
   },
   {
     key: "header-book",
@@ -141,7 +146,10 @@ const bandSlots: ImageSlot[] = [
        column beside the type rather than behind it, so a tall crop fits and a
        wide one gets cut to a strip. */
     ratio: "Upright — about 2:3, 1200px or more tall",
-    fallback: media.kandyTempleMoat,
+    /* The band is the last thing on every page and the one asking for the
+       enquiry, so it gets the single best upright frame in the collection:
+       the operator's own train on the Demodara curve, at a verified place. */
+    fallback: photography.nineArchBridgeTrain,
   },
 ];
 
@@ -149,7 +157,7 @@ const bandSlots: ImageSlot[] = [
    none of them repeats the header of a page the tiles appear on. The North has
    no destination page and no journey yet — Jaffna stands for it honestly. */
 const regionFallbacks: Record<string, MediaAsset> = {
-  "cultural-triangle": commonsPlaces.Dambulla,
+  "cultural-triangle": photography.dambullaCaveTempleVerandah,
   "hill-country": commonsPlaces["Nuwara Eliya"],
   "south-coast": media.galleFortStreet,
   "wild-south": media.yalaLeopard,

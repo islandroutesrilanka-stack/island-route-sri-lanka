@@ -33,8 +33,17 @@ export type MediaProvenance =
       photographer?: string;
       /** ISO date or free text — when and where it was shot. */
       shotAt?: string;
-      /** Original photography of a known location is verified by definition. */
-      verifiedLocation?: true;
+      /**
+       * Defaults to true: an operator photographing their own tour knows
+       * where they were standing.
+       *
+       * Set it explicitly false for an original frame whose place was never
+       * confirmed — a generic elephant, a tea field that could be any estate.
+       * Those are genuinely original *and* genuinely unplaced, and the type
+       * used to make that state inexpressible, so such a frame dropped into a
+       * destination slot would have claimed whatever name sat beside it.
+       */
+      verifiedLocation?: boolean;
     }
   | {
       kind: "cms";
@@ -100,7 +109,10 @@ export function isLocationVerified(asset: MediaAsset | null | undefined): boolea
   if (!asset) return false;
   const p = asset.provenance;
   if (p.kind === "placeholder") return false;
-  if (p.kind === "original") return true;
+  /* Original by default means placed by default — see the note on the
+     variant. `!== false` keeps every existing original verified while letting
+     an unplaced one opt out. */
+  if (p.kind === "original") return p.verifiedLocation !== false;
   return p.verifiedLocation === true;
 }
 

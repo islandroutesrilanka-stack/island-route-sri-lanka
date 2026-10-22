@@ -265,23 +265,69 @@ export const reviews: Review[] = [];
 
 /* ---------------------------------- Gallery ----------------------------------- */
 
+/**
+ * One frame in the gallery.
+ *
+ * `caption` and `alt` are deliberately separate fields doing separate jobs.
+ * The caption is read *beside* the photograph, so it can say what the moment
+ * was; the alt text stands *in place of* the photograph, so it has to say what
+ * is visible. Collapsing them means a screen reader hears the sentence the
+ * sighted visitor already read, and learns nothing about the picture.
+ *
+ * `width` and `height` are the real pixel dimensions of the stored file. The
+ * grid lays each frame out at its own aspect ratio, so a portrait photograph
+ * stays portrait instead of being cropped into whatever cell it landed in.
+ * They are optional because the seeded fallback assets below predate them; a
+ * frame without them gets one consistent upright default rather than a guess.
+ *
+ * `place` is non-null only where the location was actually confirmed. See
+ * lib/media/types.ts — a place name on this site is a claim, not a label.
+ */
 export type GalleryItem = {
   src: string;
   caption: string;
+  alt: string;
   category: "Beaches" | "Wildlife" | "Hills" | "Culture" | "Surf" | "Journeys";
+  width?: number;
+  height?: number;
+  blurDataURL?: string;
+  place?: string | null;
 };
 
+/**
+ * Builds a gallery item from a registry asset, so alt text, dimensions, blur
+ * placeholder and verified place come from the one place they are maintained
+ * rather than being retyped — and in particular so no alt text gets invented
+ * here that contradicts what the asset says about itself.
+ */
+function galleryItem(
+  asset: { src: string; alt: string; width?: number; height?: number; blurDataURL?: string; depicts?: string },
+  caption: string,
+  category: GalleryItem["category"],
+): GalleryItem {
+  return {
+    src: asset.src,
+    alt: asset.alt,
+    caption,
+    category,
+    width: asset.width,
+    height: asset.height,
+    blurDataURL: asset.blurDataURL,
+    place: asset.depicts ?? null,
+  };
+}
+
 export const gallery: GalleryItem[] = [
-  { src: media.nineArchBridge.src, caption: "The Nine Arch Bridge, Demodara", category: "Journeys" },
-  { src: commonsPlaces.Tangalle.src, caption: "Goyambokka Beach, Tangalle", category: "Beaches" },
-  { src: media.yalaLeopard.src, caption: "Leopard, Yala National Park", category: "Wildlife" },
-  { src: commonsPlaces.Haputale.src, caption: "Tea country from Lipton's Seat, Haputale", category: "Hills" },
-  { src: media.sigiriyaRock.src, caption: "Sigiriya — the Lion Rock", category: "Culture" },
-  { src: media.surfRightHander.src, caption: "A clean right-hander, east coast", category: "Surf" },
-  { src: commonsPlaces.Habarana.src, caption: "Wild elephant, Hurulu Eco Park", category: "Wildlife" },
-  { src: media.mirissaCoconutHill.src, caption: "Coconut Tree Hill, Mirissa", category: "Beaches" },
-  { src: media.kandyTempleMoat.src, caption: "The Temple of the Tooth, Kandy", category: "Culture" },
-  { src: commonsPlaces["Nuwara Eliya"].src, caption: "Nuwara Eliya from the ridge", category: "Hills" },
-  { src: commonsSubjects.hikkaduwaReef.src, caption: "The coral sanctuary at Hikkaduwa", category: "Wildlife" },
-  { src: commonsPlaces.Negombo.src, caption: "Fishing boats at rest, Negombo", category: "Beaches" },
+  galleryItem(media.nineArchBridge, "The Nine Arch Bridge, Demodara", "Journeys"),
+  galleryItem(commonsPlaces.Tangalle, "Goyambokka Beach, Tangalle", "Beaches"),
+  galleryItem(media.yalaLeopard, "Leopard, Yala National Park", "Wildlife"),
+  galleryItem(commonsPlaces.Haputale, "Tea country from Lipton's Seat, Haputale", "Hills"),
+  galleryItem(media.sigiriyaRock, "Sigiriya — the Lion Rock", "Culture"),
+  galleryItem(media.surfRightHander, "A clean right-hander, east coast", "Surf"),
+  galleryItem(commonsPlaces.Habarana, "Wild elephant, Hurulu Eco Park", "Wildlife"),
+  galleryItem(media.mirissaCoconutHill, "Coconut Tree Hill, Mirissa", "Beaches"),
+  galleryItem(media.kandyTempleMoat, "The Temple of the Tooth, Kandy", "Culture"),
+  galleryItem(commonsPlaces["Nuwara Eliya"], "Nuwara Eliya from the ridge", "Hills"),
+  galleryItem(commonsSubjects.hikkaduwaReef, "The coral sanctuary at Hikkaduwa", "Wildlife"),
+  galleryItem(commonsPlaces.Negombo, "Fishing boats at rest, Negombo", "Beaches"),
 ];

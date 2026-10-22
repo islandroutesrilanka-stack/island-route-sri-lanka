@@ -21,3 +21,6 @@ qa-results.md
 # Source photographs (working originals, 2-15MB each).
 # Optimised, web-ready derivatives live in public/photography/ and ARE committed.
 photo-candidates/
+
+# Local photo-release review sheet: absolute paths to one machine.
+photography-review.html

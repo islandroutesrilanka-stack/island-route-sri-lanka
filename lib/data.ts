@@ -356,13 +356,29 @@ type GalleryRow = {
   src: string;
   caption: string | null;
   category: GalleryItem["category"];
+  /* Added by supabase/add-gallery-metadata.sql. Nullable here rather than
+     optional because a row written before that migration genuinely has them
+     as null, and a deployment where the migration has not run yet should
+     degrade to a plain image rather than throw. */
+  alt: string | null;
+  width: number | null;
+  height: number | null;
+  blur_data_url: string | null;
+  place: string | null;
 };
 
 export const getGallery = cache(() =>
   fromTable<GalleryRow, GalleryItem>("gallery", seedGallery, (r) => ({
     src: r.src,
     caption: r.caption ?? "",
+    /* Falling back to the caption is worse than purpose-written alt text and
+       far better than an empty alt on a photograph that carries meaning. */
+    alt: r.alt ?? r.caption ?? "",
     category: r.category,
+    width: r.width ?? undefined,
+    height: r.height ?? undefined,
+    blurDataURL: r.blur_data_url ?? undefined,
+    place: r.place,
   })),
 );
 
