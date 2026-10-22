@@ -78,10 +78,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/blog",
     "/about",
     "/book",
+    "/faq",
   ].map((p) => entry(p, "weekly", p === "" ? 1 : 0.8));
 
   return [
     ...staticPages,
+    /*
+      The privacy notice, listed separately rather than folded into the block
+      above. It is a real, canonical, 200-returning URL and belongs in the
+      sitemap — but it is not a page we want competing with the journeys for
+      crawl attention, and "weekly" would be a lie about a document that
+      changes when the law does. Low priority, yearly, no promises.
+    */
+    entry("/privacy", "yearly", 0.2),
     ...tours.map((t) =>
       entry(`/tours/${t.slug}`, "weekly", 0.7, tourStamps.get(t.slug))
     ),

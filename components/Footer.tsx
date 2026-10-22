@@ -19,6 +19,7 @@ const explore: [label: string, href: string][] = [
   ["Destinations", "/destinations"],
   ["Experiences", "/experiences"],
   ["Plan your journey", "/book"],
+  ["Questions, answered", "/faq"],
 ];
 
 /* Reviews and the fleet are sections of /about since the merge, and contact is
@@ -35,6 +36,7 @@ const company: [label: string, href: string][] = [
   ["About us", "/about"],
   ["Journal", "/blog"],
   ["Contact us", "/book#contact"],
+  ["Privacy notice", "/privacy"],
 ];
 
 /**

@@ -1328,6 +1328,24 @@ export default function BookingForm({
             {pending ? "Sending…" : "Request your proposal"}
           </motion.button>
 
+          {/*
+            The notice goes here, under the button, because this is the point
+            of collection — a privacy link that exists only in the footer is
+            not shown to the person deciding whether to type their phone
+            number in. Deliberately one short sentence rather than a consent
+            checkbox: the lawful basis for answering an enquiry someone sent
+            us is not consent, and a tickbox implying otherwise would both
+            mislead and add friction to the highest-intent action on the site.
+          */}
+          <p className="pt-4 text-xs leading-relaxed text-ink/55">
+            We use these details to answer you and plan your journey, nothing
+            else — see our{" "}
+            <Link href="/privacy" className="underline hover:text-copper-deep">
+              privacy notice
+            </Link>
+            .
+          </p>
+
           <div aria-live="polite">
             {state === "error" && (
               <p className="pt-4 text-sm text-copper-deep">
