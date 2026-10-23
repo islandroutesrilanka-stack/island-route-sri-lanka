@@ -64,6 +64,25 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
    */
   const [open, setOpen] = useState<number | null>(null);
   const active = open === null ? null : (items[open] ?? null);
+  /* The enlarged frame reserves its box from the real dimensions when we have
+     them. An <img> with CSS width and height both auto has no box until its
+     file decodes, so the lightbox opened onto nothing for as long as the
+     optimizer took to transcode the original — and the blur placeholder, which
+     exists precisely for that gap, had no box to paint into.
+
+     Only when they are real, though. Guessing a ratio here is worse than not
+     reserving: a row with no stored dimensions would get the 4:5 default
+     locked in, and `object-contain` would letterbox the photograph inside it
+     for good, where `w-auto` at least recovers the true shape once the file
+     lands. So a frame with no measurements keeps the old behaviour and gains
+     the reservation the moment its row is backfilled. */
+  const reserved =
+    active?.width && active.height
+      ? {
+          width: `min(100%, calc(76vh * ${active.width / active.height}))`,
+          aspectRatio: `${active.width} / ${active.height}`,
+        }
+      : undefined;
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -278,7 +297,10 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
                   sizes="(max-width:768px) 92vw, 1100px"
                   placeholder={active.blurDataURL ? "blur" : "empty"}
                   blurDataURL={active.blurDataURL}
-                  className="h-auto max-h-[76vh] w-auto max-w-full object-contain"
+                  style={reserved}
+                  className={`h-auto max-h-[76vh] max-w-full object-contain${
+                    reserved ? "" : " w-auto"
+                  }`}
                 />
                 <figcaption className="mt-4 max-w-prose text-center text-sm text-sand/75">
                   {active.caption}
