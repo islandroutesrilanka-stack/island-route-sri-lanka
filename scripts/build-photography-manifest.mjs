@@ -49,7 +49,7 @@ const SRC =
    alt      what a screen reader hears; describes, never repeats the caption
    place    only where the frame proves it (see `ev`)
    ev       the feature in the frame that proves the place
-   hold     why it is not published: guests | person | quality
+   hold     why it is not published: guests | person | quality | wardrobe
    --------------------------------------------------------------------------- */
 
 const CATALOGUE = [
@@ -275,59 +275,285 @@ const CATALOGUE = [
     ev: "The same headland at Coconut Tree Hill, the palms and red earth unchanged between frames.",
   },
 
-  // ---- Held: recognisable guests -----------------------------------------
-  { n: 2, slug: "guests-leaning-from-the-train", hold: "guests", subject: "Guests leaning out of the hill-country train" },
-  { n: 3, slug: "guests-at-the-vatadage", hold: "guests", subject: "Two guests on the Vatadage steps, Polonnaruwa" },
-  { n: 4, slug: "family-portrait-roadside", hold: "guests", subject: "A family of four posed at a roadside stop" },
-  { n: 5, slug: "group-with-elephant", hold: "guests", subject: "Tour group lined up beside an elephant" },
-  { n: 6, slug: "elephant-back-ride", hold: "guests", subject: "Two guests riding on an elephant's back" },
-  { n: 7, slug: "guests-in-the-spice-garden", hold: "guests", subject: "Two guests at a spice garden planting bed" },
-  { n: 8, slug: "guest-with-tea-plucker", hold: "guests", subject: "A guest and a tea plucker in the field" },
-  { n: 11, slug: "couple-at-the-gap", hold: "guests", subject: "A couple at a hill-country viewpoint" },
-  { n: 12, slug: "guest-under-elephant-trunk", hold: "guests", subject: "A guest posing beneath an elephant's trunk" },
-  { n: 14, slug: "couple-with-elephant", hold: "guests", subject: "A couple standing with an elephant" },
-  { n: 15, slug: "group-below-sigiriya", hold: "guests", subject: "Tour group with Sigiriya rock behind" },
-  { n: 19, slug: "couple-in-the-tea-field", hold: "guests", subject: "A couple and a tea plucker among the bushes" },
-  { n: 22, slug: "couple-jeep-elephant", hold: "guests", subject: "A couple in a safari jeep, elephant behind" },
-  { n: 23, slug: "guest-paddling", hold: "guests", subject: "A guest paddling a canoe through a wetland" },
-  { n: 24, slug: "guests-bathing-elephant", hold: "guests", subject: "Guests washing an elephant in the river" },
-  { n: 25, slug: "guest-plucking-tea", hold: "guests", subject: "A guest being shown how to pluck tea" },
-  { n: 26, slug: "raptor-in-enclosure", hold: "quality", subject: "A raptor on a branch behind wire mesh" },
-  { n: 29, slug: "group-jeep-selfie", hold: "guests", subject: "Group selfie from the back of a jeep" },
-  { n: 30, slug: "couple-at-the-falls", hold: "guests", subject: "A couple at a waterfall railing" },
-  { n: 31, slug: "couple-on-elephant", hold: "guests", subject: "A couple seated on an elephant" },
-  { n: 33, slug: "couple-sigiriya-dusk", hold: "guests", subject: "A couple above the canopy, Sigiriya at dusk" },
-  { n: 34, slug: "guest-and-plucker-tea", hold: "guests", subject: "A guest and a tea plucker, baskets on" },
-  { n: 41, slug: "group-on-the-estate", hold: "guests", subject: "Tour group on an estate road" },
-  { n: 43, slug: "guest-weaving-palm", hold: "guests", subject: "A guest learning to weave palm fronds" },
-  { n: 45, slug: "guest-at-dambulla", hold: "guests", subject: "A guest below the Dambulla cave verandah" },
-  { n: 46, slug: "guest-at-the-image-house", hold: "guests", subject: "A guest between the walls of a brick image house" },
-  { n: 47, slug: "guest-on-the-falls-boulder", hold: "guests", subject: "A guest standing on a boulder at a waterfall" },
-  { n: 49, slug: "family-sigiriya-sunrise", hold: "guests", subject: "A family at sunrise with Sigiriya behind" },
-  { n: 50, slug: "guest-in-the-mud-house", hold: "guests", subject: "A guest seated inside a mud-walled house" },
-  { n: 51, slug: "group-on-the-rock-path", hold: "guests", subject: "Tour group on an open rock path" },
-  { n: 52, slug: "group-in-the-workshop", hold: "guests", subject: "Group watching a gem and stone workshop" },
-  { n: 54, slug: "guests-at-the-palace-ruins", hold: "guests", subject: "Guests before the royal palace brickwork" },
-  { n: 56, slug: "guest-in-the-canoe", hold: "guests", subject: "A guest paddling under a thatched canopy" },
-  { n: 58, slug: "guest-on-the-tower-stair", hold: "guests", subject: "A guest on a spiral tower stair above the hills" },
-  { n: 59, slug: "guests-in-the-boat", hold: "guests", subject: "Guests aboard a covered river boat" },
-  { n: 61, slug: "guest-on-the-terraces", hold: "guests", subject: "A guest above the water gardens at Sigiriya" },
-  { n: 63, slug: "cookery-demonstration", hold: "guests", subject: "A cookery demonstration over clay pots" },
-  { n: 64, slug: "couple-jeep-elephants", hold: "guests", subject: "A couple in a jeep, elephants behind" },
-  { n: 65, slug: "bullock-cart-ride", hold: "guests", subject: "Guests riding a bullock cart" },
-  { n: 66, slug: "guest-among-the-bushes", hold: "guests", subject: "A guest standing in the tea bushes" },
-  { n: 68, slug: "guest-with-tea-basket", hold: "guests", subject: "A guest with a tea basket by an estate sign" },
-  { n: 71, slug: "guests-at-rice-and-curry", hold: "guests", subject: "Guests eating a rice and curry spread" },
-  { n: 76, slug: "group-jeep-elephants", hold: "guests", subject: "Group in a jeep with elephants on the track" },
-  { n: 80, slug: "bird-against-white-sky", hold: "quality", subject: "A small bird on a branch against blown-out sky" },
-  { n: 81, slug: "guests-hair-braiding", hold: "guests", subject: "Guests having their hair braided" },
-  { n: 82, slug: "guest-grinding-spices", hold: "guests", subject: "A guest grinding spices on a stone" },
-  { n: 84, slug: "guests-eating-together", hold: "guests", subject: "Guests eating from plates on a bench" },
-  { n: 86, slug: "group-with-the-guide", hold: "guests", subject: "Tour group with their guide on an estate" },
+  // ---- Released: the frames with guests in them ---------------------------
+  //
+  // Held until the operator cleared them, then written up the same way as
+  // every other row: by looking at the frame. Captions say "travellers"
+  // rather than naming anyone, which is the most a consent release of this
+  // kind can honestly carry.
+
+  // On the road
   {
-    n: 27, slug: "stilt-fisherman", hold: "person",
-    subject: "A stilt fisherman on his pole off the south coast",
+    n: 2, slug: "guests-leaning-from-the-train", cat: "Journeys", folder: "journeys",
+    caption: "Doors open on the hill-country line",
+    alt: "Travellers leaning out of the open doorway of a blue train carriage running along a track cut into a jungle hillside",
   },
+  {
+    n: 4, slug: "family-portrait-roadside", cat: "Journeys", folder: "journeys",
+    caption: "Gathering before the morning drive",
+    alt: "A family of four standing together at a roadside stop in front of a large white building, with parked vehicles behind them",
+  },
+  {
+    n: 5, slug: "group-with-elephant", cat: "Journeys", folder: "journeys",
+    caption: "The group meets an elephant on the track",
+    alt: "A line of about ten travellers standing beside a standing elephant on a dirt track under coconut palms",
+  },
+  {
+    n: 6, slug: "elephant-back-ride", cat: "Journeys", folder: "journeys",
+    caption: "Riding out on an elephant's back",
+    alt: "Two travellers seated on the neck and back of an elephant on a sandy track, with palms and hills behind",
+  },
+  {
+    n: 12, slug: "guest-under-elephant-trunk", cat: "Journeys", folder: "journeys",
+    caption: "A trunk raised overhead",
+    alt: "A traveller standing with his arms up beneath the curled trunk of an elephant on a forest track",
+  },
+  {
+    n: 14, slug: "couple-with-elephant", cat: "Journeys", folder: "journeys",
+    caption: "Standing with an elephant on the forest track",
+    alt: "Two travellers standing either side of an elephant lifting its trunk, on a red dirt track in the forest",
+  },
+  {
+    n: 23, slug: "guest-paddling", cat: "Journeys", folder: "journeys",
+    caption: "Out on the water with a single paddle",
+    alt: "A traveller seated in a green kayak on a flooded plain, lifting a wooden paddle, drowned trees along the far bank",
+  },
+  {
+    n: 24, slug: "guests-bathing-elephant", cat: "Journeys", folder: "journeys",
+    caption: "Washing an elephant in the river",
+    alt: "Two travellers standing waist-deep in a brown river beside an elephant lying in the shallows, scrubbing its head",
+  },
+  {
+    n: 29, slug: "group-jeep-selfie", cat: "Journeys", folder: "journeys",
+    caption: "From the back of the jeep, somewhere past the gate",
+    alt: "Four travellers crowded into the open back of a safari jeep on a grass track, an elephant grazing in the scrub behind",
+  },
+  {
+    n: 31, slug: "couple-on-elephant", cat: "Journeys", folder: "journeys",
+    caption: "Up on the elephant, the mahout alongside",
+    alt: "Two travellers sitting on an elephant's back while its mahout stands beside it on bare ground, coconut palms behind",
+  },
+  {
+    n: 51, slug: "group-on-the-rock-path", cat: "Journeys", folder: "journeys",
+    caption: "Out on the open rock",
+    alt: "Five travellers standing together on a bare expanse of pale rock and earth, low scrub and a watchtower behind",
+  },
+  {
+    n: 56, slug: "guest-in-the-canoe", cat: "Journeys", folder: "journeys",
+    caption: "Paddling out from under the canopy",
+    alt: "A traveller paddling a narrow green and blue canoe across a wide lake, framed by the thatched roof of another boat",
+  },
+  {
+    n: 59, slug: "guests-in-the-boat", cat: "Journeys", folder: "journeys",
+    caption: "Aboard the covered boat",
+    alt: "Travellers seated along the benches of a boat under a thatched roof, the water visible beyond the open side",
+  },
+  {
+    n: 65, slug: "bullock-cart-ride", cat: "Journeys", folder: "journeys",
+    caption: "A bullock cart on the village lane",
+    alt: "A pale bullock drawing a two-wheeled cart with a woven canopy along a shaded lane, two travellers riding behind the driver",
+  },
+  {
+    n: 76, slug: "group-jeep-elephants", cat: "Journeys", folder: "journeys",
+    caption: "Elephants on the track ahead",
+    alt: "A group of travellers crowded into a jeep looking back at the camera, two elephants standing on the track behind them",
+  },
+
+  // Heritage and craft
+  {
+    n: 3, slug: "guests-at-the-vatadage", cat: "Culture", folder: "heritage",
+    caption: "On the steps of the Vatadage",
+    alt: "Two travellers standing either side of a stone stairway up to a circular brick shrine, a seated Buddha visible between the pillars",
+    place: "Polonnaruwa, Cultural Triangle",
+    ev: "The circular terrace of the Polonnaruwa Vatadage, with its carved moonstone, flanking guardstones and seated Buddha.",
+  },
+  {
+    n: 7, slug: "guests-in-the-spice-garden", cat: "Culture", folder: "heritage",
+    caption: "Among the beds at the spice garden",
+    alt: "Two travellers beside rows of young plants in black pots at a spice garden, one filming on a phone, a thatched shelter behind",
+  },
+  {
+    n: 15, slug: "group-below-sigiriya", cat: "Culture", folder: "heritage",
+    caption: "The whole group, and the rock behind",
+    alt: "About ten travellers standing in a line on grass, a tall flat-topped rock rising out of the forest behind them",
+    place: "Sigiriya, Cultural Triangle",
+    ev: "The flat-topped granite monolith of Sigiriya standing alone above the surrounding forest.",
+  },
+  {
+    n: 43, slug: "guest-weaving-palm", cat: "Culture", folder: "heritage",
+    caption: "Learning to work a palm frond",
+    alt: "A traveller bending over a split palm frond under a woven roof while a woman shows him how to plait it",
+  },
+  {
+    n: 45, slug: "guest-at-dambulla", cat: "Culture", folder: "heritage",
+    caption: "Below the cave temple verandah",
+    alt: "A traveller standing on bare rock before a long whitewashed colonnade built under a vast overhanging granite cliff",
+    place: "Dambulla, Cultural Triangle",
+    ev: "The whitewashed shrine verandah of the Dambulla cave temple, built along the base of its overhanging rock.",
+  },
+  {
+    n: 46, slug: "guest-at-the-image-house", cat: "Culture", folder: "heritage",
+    caption: "Between the walls of the image house",
+    alt: "A traveller at the foot of a paved approach between two towering roofless brick walls, a headless standing Buddha in the recess behind",
+    place: "Polonnaruwa, Cultural Triangle",
+    ev: "The Lankatilaka image house at Polonnaruwa, its two brick side walls still standing around the headless standing Buddha.",
+  },
+  {
+    n: 49, slug: "family-sigiriya-sunrise", cat: "Culture", folder: "heritage",
+    caption: "Sunrise, and the rock across the plain",
+    alt: "A family of three standing on a rock outcrop with their arms raised, the sun low behind them and a flat-topped rock across the forest",
+    place: "Sigiriya, Cultural Triangle",
+    ev: "The flat-topped monolith of Sigiriya rising from the forest plain, seen across it at dawn.",
+  },
+  {
+    n: 50, slug: "guest-in-the-mud-house", cat: "Culture", folder: "heritage",
+    caption: "Inside the mud-walled house",
+    alt: "A traveller sitting on a low earthen bench inside a house of smoothed red mud walls under a woven roof, a clay dish beside her",
+  },
+  {
+    n: 52, slug: "group-in-the-workshop", cat: "Culture", folder: "heritage",
+    caption: "At the carver's bench",
+    alt: "Travellers gathered around a workbench watching a man carve a block of wood, carved masks and elephant panels hung on the wall behind",
+  },
+  {
+    n: 54, slug: "guests-at-the-palace-ruins", cat: "Culture", folder: "heritage",
+    caption: "The royal palace walls",
+    alt: "Two travellers at the foot of enormous moss-streaked brick walls pierced with rows of square beam holes, a sand path running between them",
+    place: "Polonnaruwa, Cultural Triangle",
+    ev: "The brick walls of Parakramabahu's royal palace at Polonnaruwa, with the rows of sockets that carried its upper floors.",
+  },
+  {
+    n: 61, slug: "guest-on-the-terraces", cat: "Culture", folder: "heritage",
+    caption: "Above the water gardens",
+    alt: "A traveller standing on a brick terrace high above symmetrical walled water gardens, the forest plain beyond",
+    place: "Sigiriya, Cultural Triangle",
+    ev: "The symmetrical walled water gardens laid out below the Sigiriya rock, seen from its terraces.",
+  },
+  {
+    n: 81, slug: "guests-hair-braiding", cat: "Culture", folder: "heritage",
+    caption: "Hair braided on the verandah",
+    alt: "Three travellers seated on a wooden bench on an open verandah while two women in bright saris braid their hair",
+  },
+
+  // The table
+  {
+    n: 63, slug: "cookery-demonstration", cat: "Culture", folder: "table",
+    caption: "The pan goes on the clay fire",
+    alt: "A woman and a traveller standing over two shallow pans on a clay hearth under a thatched roof, one of oil and one of ground spice",
+  },
+  {
+    n: 71, slug: "guests-at-rice-and-curry", cat: "Culture", folder: "table",
+    caption: "Rice and curry, every bowl a different thing",
+    alt: "Two travellers sitting on an earthen floor helping themselves from a dozen small clay bowls of curry and rice set out on a low bench with banana leaves",
+  },
+  {
+    n: 82, slug: "guest-grinding-spices", cat: "Culture", folder: "table",
+    caption: "Scraping coconut into the bowl",
+    alt: "A traveller crouched on an earthen floor laughing as she scrapes coconut into a clay dish, rows of pots on a shelf behind her",
+  },
+  {
+    n: 84, slug: "guests-eating-together", cat: "Culture", folder: "table",
+    caption: "Lunch on the low wall",
+    alt: "Three travellers sitting along a low earthen wall under a tiled roof, eating from shallow bowls held in their laps",
+  },
+
+  // Hill country
+  {
+    n: 8, slug: "guest-with-tea-plucker", cat: "Hills", folder: "hill-country",
+    caption: "A basket on, beside the plucker",
+    alt: "A traveller with a wicker tea basket strapped to her back standing shoulder to shoulder with a tea plucker among the bushes, both smiling",
+  },
+  {
+    n: 11, slug: "couple-at-the-gap", cat: "Hills", folder: "hill-country",
+    caption: "The whole valley, from the edge",
+    alt: "Two travellers standing at a hilltop viewpoint with a wide green mountain valley opening out behind them",
+  },
+  {
+    n: 19, slug: "couple-in-the-tea-field", cat: "Hills", folder: "hill-country",
+    caption: "Out in the tea with a plucker",
+    alt: "Two travellers in a tea field with a plucker between them, one carrying a wicker basket, rows of bushes running up the slope behind",
+  },
+  {
+    n: 25, slug: "guest-plucking-tea", cat: "Hills", folder: "hill-country",
+    caption: "Being shown which two leaves",
+    alt: "A tea plucker guiding a traveller's hands to the top of a tea bush while she leans in with a basket strapped to her back",
+  },
+  {
+    n: 30, slug: "couple-at-the-falls", cat: "Hills", folder: "hill-country",
+    caption: "At the rail below the falls",
+    alt: "Two travellers standing at a metal railing before a tall waterfall dropping in stages through dense green forest",
+  },
+  {
+    n: 34, slug: "guest-and-plucker-tea", cat: "Hills", folder: "hill-country",
+    caption: "Hands full, in the middle of the field",
+    alt: "A tea plucker and a traveller standing waist-deep in tea bushes holding a handful of picked leaf between them, baskets on their backs",
+  },
+  {
+    n: 41, slug: "group-on-the-estate", cat: "Hills", folder: "hill-country",
+    caption: "The group on the estate road",
+    alt: "About a dozen travellers standing together on a red earth track through a tea estate, several in printed sarongs and head cloths, mountains behind",
+  },
+  {
+    n: 47, slug: "guest-on-the-falls-boulder", cat: "Hills", folder: "hill-country",
+    caption: "Out on the boulder, mid-river",
+    alt: "A traveller standing with his arms outstretched on a boulder in a shallow river, water running down the rock behind him between steep green walls",
+  },
+  {
+    n: 58, slug: "guest-on-the-tower-stair", cat: "Hills", folder: "hill-country",
+    caption: "Coming down the spiral stair",
+    alt: "A traveller descending a narrow white spiral staircase wrapped around a tower, ridges of hill country spread out far below",
+  },
+  {
+    n: 66, slug: "guest-among-the-bushes", cat: "Hills", folder: "hill-country",
+    caption: "Standing in the tea",
+    alt: "A traveller standing on a narrow path between clipped tea bushes with a wicker basket at her back, the valley and its estate buildings behind",
+  },
+  {
+    n: 68, slug: "guest-with-tea-basket", cat: "Hills", folder: "hill-country",
+    caption: "A basket, and the valley behind",
+    alt: "A traveller with a wicker tea basket on her back standing in the bushes beside a round timber estate sign, hills receding behind",
+    place: "Bluefield Tea Gardens, Ramboda",
+    ev: "The Bluefield estate's round timber sign standing at the edge of its own tea field.",
+  },
+  {
+    n: 86, slug: "group-with-the-guide", cat: "Hills", folder: "hill-country",
+    caption: "The guide explains the field",
+    alt: "A woman in a sarong talking to a group of travellers standing on a red earth track between tea bushes, forested hills behind",
+  },
+
+  // Wildlife
+  {
+    n: 26, slug: "raptor-in-enclosure", cat: "Wildlife", folder: "wildlife",
+    caption: "A raptor on a broken branch",
+    alt: "A brown raptor perched on a jagged broken branch above low green scrub, bare trees standing behind",
+  },
+  {
+    n: 80, slug: "bird-against-white-sky", cat: "Wildlife", folder: "wildlife",
+    caption: "Perched against a white sky",
+    alt: "A dark bird of prey perched on a long bare branch, silhouetted against a featureless pale sky",
+  },
+
+  // Coast
+  {
+    n: 27, slug: "stilt-fisherman", cat: "Beaches", folder: "coast",
+    caption: "A stilt fisherman on his pole",
+    alt: "A fisherman perched on a crossbar lashed to a pole driven into the seabed, his rod out over the water, more poles standing empty beyond",
+  },
+
+  // ---- Held: a slogan on a shirt -----------------------------------------
+  //
+  // Not a consent hold. The operator cleared all forty-nine held frames, but
+  // these three were held again for a reason nobody had written down, because
+  // it only shows up at full size: the same guest wears a shirt with a
+  // censored expletive across the chest, white and green on black, filling
+  // about a third of the frame. At grid size it reads as a graphic. In the
+  // lightbox, at 1100px, it reads as the word.
+  //
+  // Releasing one is a small edit: delete `hold` and `subject`, give it
+  // `cat`, `folder`, `caption` and `alt` like any row above, and rerun.
+  { n: 22, slug: "couple-jeep-elephant", hold: "wardrobe", subject: "A couple in a safari jeep, elephant behind" },
+  { n: 33, slug: "couple-sigiriya-dusk", hold: "wardrobe", subject: "A couple above the canopy, Sigiriya at dusk" },
+  { n: 64, slug: "couple-jeep-elephants", hold: "wardrobe", subject: "A couple in a jeep, elephants behind" },
 ];
 
 /* --------------------------------------------------------------------------

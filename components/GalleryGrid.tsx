@@ -281,7 +281,16 @@ export default function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 240, damping: 26 }}
-                className="flex max-w-5xl flex-col items-center px-10 sm:px-14"
+                /* `w-full` is load-bearing, not decoration. The reserved box
+                   below is `width: min(100%, …)`, and a shrink-to-fit figure
+                   gives that percentage nothing definite to resolve against:
+                   before the file decodes the image contributes no intrinsic
+                   width, so the figure sizes to its widest definite child —
+                   the caption at `max-w-prose` — and the reservation came out
+                   453px wide on a 1440px viewport, then jumped to 912 on
+                   decode. Reserving the wrong box is the bug it was meant to
+                   fix, one step quieter. */
+                className="flex w-full max-w-5xl flex-col items-center px-10 sm:px-14"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Intrinsic sizing rather than a fixed 3:2 box. The old frame

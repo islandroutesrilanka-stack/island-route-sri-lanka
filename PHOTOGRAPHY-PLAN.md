@@ -8,31 +8,35 @@ looking at the actual photographs changed the answer.
 
 ## Read this part first
 
-**1. Half the collection cannot be published without your say-so.**
+**1. Eighty-four of the eighty-seven frames are published. Three are not.**
 
 Eighty-seven of the ninety-two files are unique frames (five are duplicates).
-**Forty-nine of those eighty-seven are held back.** Forty-six show a guest's face
-clearly enough to recognise them; one shows a stilt fisherman, held on the same
-principle; two are held on quality rather than consent.
+Forty-nine were held back for consent on the first pass; you cleared all
+forty-nine, and forty-six of them are now live with captions and alt text
+written the same way as every other row — by looking at the frame.
 
-Publishing a recognisable customer on a commercial site is their decision, not a
-developer's, and this site already carries a privacy notice that makes a promise
-about personal data. So those frames were catalogued, numbered, described — and
-stopped.
+**Three are held again, for a reason that was never in a hold line, because it
+only shows up at full size.** Frames **22**, **33** and **64** show the same
+guest in a shirt carrying a censored expletive across the chest — white and
+green on black, filling about a third of the frame. At grid size it reads as a
+graphic. In the lightbox, at 1100px, it reads as the word. Your clearance was
+given against holds recorded as `guests`, `person` and `quality`, so it cannot
+have covered this one; publishing it is outward-facing and hard to take back,
+while holding three frames is a small edit to reverse. They carry a new hold
+reason, `wardrobe`, with the reason written next to them in the catalogue.
 
-```bash
-node scripts/review-photography.mjs
-```
+If you want them published anyway, say so and they go up — or crop them: the
+shirt is in the lower third of all three, and a tighter frame on the elephant
+would keep the picture.
 
-That writes `photography-review.html`. Open it in a browser: every held frame,
-full size, with the reason it is held and a button to mark it cleared. Nothing
-uploads; the marks stay in your browser and the button at the bottom copies them
-out as a list. Send the list back and the frames get released.
-
-Three of the held frames are flagged **brand decision** instead of consent: two
-show elephant riding and one shows elephant bathing. Many operators have stopped
-showing those. That one is about what you want the brand to say, and it is yours
-to make either way.
+**The three elephant-contact frames went up on your clearance, against my
+recommendation.** Frames **6** and **31** (riding) and **24** (bathing) are
+published, as are **5**, **12** and **14** (standing with, trunk overhead). My
+note from the first pass stands: a signed release makes them legal to publish,
+not good for the brand, and they are the frames most likely to be quoted back at
+you in a review. Frames **26** and **80** (a raptor through wire mesh, a bird
+against blown-out sky) and **27** (a stilt fisherman, an identifiable stranger
+with nobody to ask) are published on the same clearance.
 
 **2. There is no fleet photography in the collection.**
 
@@ -79,7 +83,7 @@ specific count — it is yours, or it is the right shape, or both.
 | Culture & Heritage tile | The standing figure at Gal Vihara | Sigiriya (stock) | Yours, and verifiable: the crossed-arm posture is unique to that carving in Sri Lanka. Sigiriya has not left the site — it still fronts the tours header. |
 | Local Life tile | A spice garden's tasting table | Negombo street (Commons) | A thing a guest is handed and asked to smell beats a stranger's street as an illustration of local life. |
 
-Everything else publishable — thirty-one frames — goes to the gallery and
+Everything else publishable — seventy-seven frames — goes to the gallery and
 nowhere else. **That is the design, not an omission.** A section carries a
 photograph because that photograph is the best available answer for that
 section, not because the photograph exists. Filling every slot from one
@@ -170,48 +174,57 @@ more typing than a `--include-guests` switch, and it is the right amount: the
 decision lands in version control next to its reason, where the next person can
 see that somebody decided rather than that somebody passed a flag.
 
-### The 49 held frames, specifically
+### What was released, and what is still held
+
+All forty-nine were cleared. Forty-six went up; three were held again.
 
 | Reason | Frames | What unblocks them |
 |---|---|---|
-| `guests` | 46 | A photo release from the people in them. |
-| `quality` | 2 | Nothing — n/a. A raptor shot through wire mesh and a small bird against blown-out sky. Both read as snapshots next to the 38 that shipped. |
-| `person` | 1 | A stilt fisherman off the south coast: an identifiable stranger, not a guest, so there is nobody to ask. Stilt fishing is also now largely performed for cameras, which makes it a weak claim about the coast. |
+| released | 46 | Nothing — live now, captioned and alt-texted. |
+| `wardrobe` | 3 | Frames 22, 33, 64. A censored expletive on a guest's shirt, legible at lightbox size. Your call, or a crop. |
 
-So the practical queue is the 46 guest frames, and the only question for 43 of
-them is consent. Work the review sheet (`node scripts/review-photography.mjs`,
-then open `photography-review.html`), tick the ones you have a release for, and
-press **Copy cleared list** — it gives you the frame numbers to edit in the
-manifest.
+The forty-six landed in the folders by subject, not by page:
 
-**Three of the 46 are a brand decision, not a consent one, and the review sheet
-flags them as such.** Frames **6** ("two guests riding on an elephant's back"),
-**31** ("a couple seated on an elephant") and **24** ("guests washing an
-elephant in the river") would publish well-meant pictures of a practice that a
-large part of the market now reads as mistreatment — captive elephants are
-broken to carry riders, and bathing sessions are the same captivity with a
-gentler caption. A signed release makes them legal to publish; it does not make
-them good for the brand, and they are the frames most likely to be quoted back
-at the operator in a review. My recommendation is to leave all three held
-permanently.
+| Folder | Released | Total published |
+|---|---|---|
+| journeys | 15 | 20 |
+| heritage | 12 | 25 |
+| hill-country | 12 | 15 |
+| table | 4 | 6 |
+| wildlife | 2 | 15 |
+| coast | 1 | 3 |
 
-Nothing is lost by it: frames **22**, **29**, **64** and **76** put guests with
-elephants from a safari jeep, which is the same promise told the way the market
-now wants to hear it. Those four need only the release.
+Nineteen frames now carry a `place`, up from eleven. The eight added are the
+ones where the frame itself proves where it was taken: the Polonnaruwa Vatadage
+by its circular terrace and moonstone, the Lankatilaka image house by its two
+standing brick walls, Parakramabahu's palace by the beam sockets in its walls,
+the Dambulla verandah by its whitewashed colonnade under the overhang, Sigiriya
+three times over by the monolith and its water gardens, and the Bluefield
+estate by its own timber sign at the edge of its tea field.
+
+Two were deliberately left unplaced despite a strong guess, because the rule is
+in-frame proof and not inference: frame **58**, a white spiral stair around a
+tower that is almost certainly Ambuluwawa, and frame **30**, a staged waterfall
+that may be Ravana. A caption that names the wrong waterfall is worse than one
+that names none.
+
+Captions for the released frames say **travellers**, never names. A consent
+release of this kind covers the likeness; it does not hand over an identity to
+print under it.
 
 **About the service role key.** The script needs it because both the Storage
 insert and the `gallery` insert are gated on `is_admin()`, and a script has no
 session. The key bypasses every row-level security policy in the project, so:
 `.env.local` only, never Vercel, never a commit, never a log line. The script
 never prints it. If you would rather not hold it at all, the alternative is to
-run the uploads from the admin picker by hand, thirty-eight times.
+run the uploads from the admin picker by hand, eighty-four times.
 
 ### Supporting scripts
 
 | Script | What it does |
 |---|---|
 | `scripts/build-photography-manifest.mjs` | The catalogue. Hand-authored, because every source file is a UUID and the only way to know what is in a frame is to look at it. Everything else derives from this. |
-| `scripts/review-photography.mjs` | The consent review sheet described above. |
+| `scripts/review-photography.mjs` | The consent review sheet: renders every held frame full size with the reason it is held. Three frames left in it. |
 | `scripts/lib/photo-blur.mjs` | Generates the blur placeholders. Cached in `scripts/photography.blur.json`, so it runs once per new frame. |
 
 The blur generation is worth one note. This machine has no `sharp`, no
@@ -256,10 +269,28 @@ from the stored dimensions.
 Only from *stored* dimensions, though. Reserving a box from the 4:5 default
 would be worse than not reserving one: `object-contain` would letterbox the
 photograph inside a permanently wrong frame, where `auto` at least recovers the
-true shape once the file lands. A row with no measurements keeps the old
-behaviour and gains the reservation the moment the backfill runs. Measured both
-ways, the drift between the laid-out box and the intrinsic ratio is 0.001 or
-less in every case.
+true shape once the file lands. Every one of the 96 rows now carries measured
+dimensions, so every frame gets the reservation.
+
+**And the reservation has to have something to resolve against, which took a
+second pass to get right.** The reserved width is `min(100%, …)`, and the
+figure around it was shrink-to-fit. Before a file decodes, an `<img>`
+contributes no intrinsic width, so the figure sized itself to its widest
+definite child instead — the caption, at `max-w-prose`. Measured on a 1440px
+viewport, the enlarged frame reserved **453 × 302** and then jumped to 912 ×
+608 when the file arrived. Reserving the wrong box is the same bug one step
+quieter. One `w-full` on the figure gives the percentage a definite containing
+block; with animation disabled so the entry spring cannot be mistaken for a
+shift, the frame now reserves 912 × 608 and lands at 912 × 608 — no drift at
+all, on three ratios at desktop width and three at 375px.
+
+The one shift left is 10px wide, happens once, and is not the reservation:
+opening the lightbox sets `body { overflow: hidden }`, which removes the
+scrollbar and widens the viewport, so the very first frame on a narrow screen
+lays out 245px wide and settles at 255px. Fixing it properly means a permanent
+`scrollbar-gutter` on every page of the site, which is a worse trade than a
+10px nudge inside a modal. Cumulative layout shift on `/gallery`, measured over
+six seconds from navigation, is **0.019** against the 0.1 "good" threshold.
 
 Placeholders, sizes and priority: `placeholder="blur"` wherever a frame has one,
 `sizes="(max-width:768px) 50vw, 33vw"` on the grid so phones fetch half-width
@@ -273,6 +304,41 @@ Tap targets, against the WCAG 2.5.8 floor of 24 CSS pixels:
 | Filter chips | 44 px tall |
 | Previous / Next / Close | 48 × 48 px |
 | Release buttons on the review sheet | 44 px tall |
+
+### Re-verified after the upload
+
+Fifteen routes, every non-GET request aborted so the sweep could not write an
+enquiry into the live database:
+
+| | |
+|---|---|
+| Routes returning 200 | 15 / 15 |
+| Image responses | 97 on `/gallery`, all 200 |
+| Broken `<img>` after scrolling the whole page | 0 |
+| Contour fallbacks rendered instead of a photograph | 0 |
+| `<img>` with no `alt` attribute | 0 |
+| `alt=""` images | 14, all decorative — page headers and 68px thumbnails beside their own text label |
+| Gallery rows | 96, all published, all with measured dimensions and alt text |
+| Filter counts | Beaches 6, Wildlife 18, Hills 17, Culture 33, Surf 1, Journeys 21 — summing to 96 |
+| Lightbox counter | "1 of 96"; ArrowLeft from the first wraps to "96 of 96" |
+| Six Tabs inside the dialog | stayed inside |
+| Escape | detaches the dialog, restores `body` overflow, returns focus to the cell that opened it |
+| JSON-LD `ImageGallery` | 96 items, 96 absolute `contentUrl`, 96 with width and height, 96 with a description distinct from the caption, 30 with `contentLocation` |
+| Horizontal overflow at 375px | none on `/`, `/gallery`, `/destinations`, `/experiences`, `/tours`, `/about` |
+| Console errors | 0 |
+
+**What the gallery costs now that it is 96 frames.** On a warm ISR cache the
+document arrives in 509ms and the first cell paints at 694ms; the frames above
+the fold are decoded at 770ms. Scrolling the full 18,462px page pulls all 97
+images in 31.6 seconds, with nothing broken and nothing left pending. That is
+the honest worst case, and it is a worst case almost nobody pays: the filter
+chips cut the set to between 1 and 33 frames, and everything below the first
+row is lazy.
+
+Local figures are pessimistic in one specific way — `next start` here has no
+`sharp`, so it transcodes through the WASM fallback. Vercel supplies `sharp` on
+the platform, so the optimizer is faster in production than in any measurement
+above. Nothing needs installing for that.
 
 ---
 
@@ -320,7 +386,7 @@ uploader has deliberately not been run: six image requests returning 400, all of
 them the owner frames, everything else loading.
 
 After the upload, `/gallery` serves from the database rather than the seed, and
-the thirty-one unplaced frames appear there.
+the seventy-seven unplaced frames appear there.
 
 ---
 
@@ -345,50 +411,38 @@ the pages render from the committed seed data rather than the live database:
 - Zero console errors other than the six expected 400s for the not-yet-uploaded
   frames.
 
-### Re-verified after the upload, against the live database
+### Against the live database and Storage
 
-With the real Supabase project behind it, a production build, and a browser that
-aborts every non-GET request, because the same server writes enquiries to the
-production table:
+Queried directly, not through a page. The browser-side numbers are in the
+table under section 3; what follows is what the database and the bucket
+actually contain.
 
-- All 38 publishable Storage objects answer a range request: 38 × 206, nothing else.
-- The `gallery` table holds 50 published rows — the 38 uploaded plus the 12 that
-  predate them. No duplicate slug, no duplicate `src`, and all 12 older files
-  still present in `public/`.
-- 24 routes, every one 200. **Zero** broken images, **zero** contour fallbacks,
-  **zero** console errors, **zero** failed requests, and no image response
-  outside 200 anywhere (128 image responses, all 200). The six 400s above are
-  gone: they were the missing objects, not the configuration.
-- Gallery: 50 cells, 52 images, all 52 decoded, none failed. 12 distinct cell
-  ratios.
-- Filters: All 50, Beaches 5, Wildlife 16, Hills 5, Culture 17, Surf 1,
-  Journeys 6 — the six categories sum to exactly 50.
-- Lightbox at 50 frames: counter "1 OF 50", ArrowLeft from the first wraps to
-  "50 OF 50", six Tab presses stay inside the dialog, scroll locks and restores,
-  Escape returns focus to the opening thumbnail. Inside Beaches the counter
-  reads "1 OF 5" and a full arrow cycle returns to 1 without leaving the filter.
-- Targets: filter chips 44 px on desktop and on a 375 px viewport; close,
-  previous and next 48 × 48 on both. No horizontal overflow at 375 px.
-- Enlarged image ratio drift against intrinsic dimensions: 0.001 or less on
-  every frame measured, portrait and landscape, desktop and phone.
-- `ImageGallery` JSON-LD: 50 items, 50 absolute `contentUrl`s.
+- The `gallery` table holds 96 published rows: 84 served from Storage, 12 still
+  served from `public/`. No duplicate slug, no duplicate `src`, and all 12
+  older files still present on disk.
+- All 84 Storage objects answer a byte-range request — 84 × 206 with a
+  `content-range` header, nothing else, no exceptions. That matters because
+  it is what the image optimizer does on a cold variant.
+- Every one of the 96 rows carries measured `width` and `height` and an `alt`
+  distinct from its `caption`. Thirty carry a `place`.
+- `ImageGallery` JSON-LD: 96 items, 96 absolute `contentUrl`, 96 with width and
+  height, 30 with `contentLocation`.
 
-Two gaps, both the same cause, both in the 12 older rows rather than in the
-code: `width`/`height` and `place` were never stored, and `alt` was set equal to
-`caption`. The visible consequences are that eleven landscape frames and one
-portrait frame are drawn in the 4:5 default cell and cropped, that the schema
-carries dimensions for 38 of 50 and a location for 11 of 50, and that a screen
-reader hears each of those twelve captions twice.
-`supabase/backfill-gallery-seed-metadata.sql` repairs all three from the seed's
-own values; every one of the twelve place claims was checked against
-`isLocationVerified()` first, so the backfill adds no unverified location to the
-schema. Expect `UPDATE 12`.
+The two gaps this file used to list here are closed.
+`supabase/backfill-gallery-seed-metadata.sql` has been run: the 12 older rows
+had no stored dimensions, no `place`, and `alt` set equal to `caption`, so
+eleven landscape frames and one portrait frame were drawn in the 4:5 default
+cell and cropped, and a screen reader heard each of those captions twice.
+Re-queried now, zero rows are missing dimensions and zero have `alt` equal to
+`caption`. Every one of the twelve place claims was checked against
+`isLocationVerified()` before it went in, so the backfill added no unverified
+location to the schema. There is nothing left to run.
 
 One cost worth stating plainly: on a cold deployment `/gallery` asks the
-optimizer for fifty variants at once, each a 0.5–2.5 MB original fetched from
-Storage and transcoded on demand. Measured cold it took 46 seconds for all 52 to
-finish, and 3 seconds once warm. `minimumCacheTTL` is 31 days, so it is a
-one-time cost per variant — but the first visitor after a deploy pays it.
+optimizer for 96 variants, each a 0.5–2.5 MB original fetched from Storage and
+transcoded on demand. `minimumCacheTTL` is 31 days, so it is a one-time cost
+per variant — but the first visitor after a deploy pays it, and the measured
+full-scroll figure above is what that costs.
 
 One code change outside the photography modules: `isLocationVerified()` in
 `lib/media/types.ts` returned `true` for anything marked `kind: "original"`,

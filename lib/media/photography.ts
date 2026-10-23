@@ -5,12 +5,12 @@ import type { MediaAsset } from "./types";
  *
  * ── What is in here and what is deliberately not ────────────────────────────
  *
- * The collection this came from is 87 unique frames. Thirty-eight of them are
- * publishable; seven are in this file. The other thirty-one are in the gallery
+ * The collection this came from is 87 unique frames. Eighty-four of them are
+ * publishable; seven are in this file. The other seventy-seven are in the gallery
  * and nowhere else, and that is the point rather than an omission: a page
  * section carries a photograph because that photograph is the best available
  * answer for that section, not because the photograph exists. Dropping all
- * thirty-eight into slots would have replaced a set of considered frames with
+ * eighty-four into slots would have replaced a set of considered frames with
  * a set of adequate ones, and the first thing a visitor notices about a site
  * built that way is that nobody chose anything.
  *
